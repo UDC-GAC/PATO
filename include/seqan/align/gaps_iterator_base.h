@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,295 +29,497 @@
 // DAMAGE.
 //
 // ==========================================================================
-//  Author: Andreas Gogol-Doering <andreas.doering@mdc-berlin.de>
+// Author: Andreas Gogol-Doering <andreas.doering@mdc-berlin.de>
+// Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
 // ==========================================================================
 
-#ifndef SEQAN_HEADER_GAPS_ITERATOR_BASE_H
-#define SEQAN_HEADER_GAPS_ITERATOR_BASE_H
+// TODO(holtgrew): Switch to Host interface.
 
-namespace SEQAN_NAMESPACE_MAIN
-{
+#ifndef SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_ITERATOR_BASE_H_
+#define SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_ITERATOR_BASE_H_
 
-//////////////////////////////////////////////////////////////////////////////
-// Source
-//////////////////////////////////////////////////////////////////////////////
+namespace seqan {
+
+// ============================================================================
+// Forwards
+// ============================================================================
+
+// Internally used tag for creating iterators at the begin of containers.
+struct Begin__;
+typedef Tag<Begin__> Begin_;
+
+// Internally used tag for creating iterators at the end of containers.
+struct End__;
+typedef Tag<End__> End_;
+
+// Internally used tag for creating iterators inside of containers.
+struct Position__;
+typedef Tag<Position__> Position_;
+
+// ============================================================================
+// Tags, Classes, Enums
+// ============================================================================
+
+/*!
+ * @class GapsIterator
+ * @implements RandomAccessIteratorConcept
+ *
+ * @brief Iterator class for @link Gaps @endlink.
+ *
+ * @signature template <typename TGaps, typename TSpec>
+ *            class Iter<TGaps, GapsIterator<TSpec> >;
+ *
+ * @tparam TGaps The @link Gaps @endlink object for the iterator.
+ * @tparam TSpec The specializing tag.
+ */
+
+template <typename TSpec>
+struct GapsIterator;
+
+// ============================================================================
+// Metafunctions
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// Metafunction Position
+// ----------------------------------------------------------------------------
+
+template <typename TGaps, typename TSpec>
+struct Position<Iter<TGaps, GapsIterator<TSpec> > > :
+            Position<TGaps>
+{};
+
+template <typename TGaps, typename TSpec>
+struct Position<Iter<TGaps, GapsIterator<TSpec> > const> :
+            Position<Iter<TGaps, GapsIterator<TSpec> > >
+{};
+
+// ----------------------------------------------------------------------------
+// Metafunction Difference
+// ----------------------------------------------------------------------------
+
+template <typename TGaps, typename TSpec>
+struct Difference<Iter<TGaps, GapsIterator<TSpec> > > :
+            Difference<TGaps>
+{};
+
+template <typename TGaps, typename TSpec>
+struct Difference<Iter<TGaps, GapsIterator<TSpec> > const> :
+            Difference<Iter<TGaps, GapsIterator<TSpec> > >
+{};
+
+// ----------------------------------------------------------------------------
+// Metafunction Source
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Should this be Host? or SourceIterator?
 
 template <typename TGaps, typename TSpec>
 struct Source<Iter<TGaps, GapsIterator<TSpec> > >
 {
-	typedef typename Source<TGaps>::Type TSource_;
-	typedef typename Iterator<TSource_, Rooted>::Type Type;
+    typedef typename Source<TGaps>::Type TSource_;
+    typedef typename Iterator<TSource_, Rooted>::Type Type;
 };
+
 template <typename TGaps, typename TSpec>
 struct Source<Iter<TGaps, GapsIterator<TSpec> > const>
 {
-	typedef typename Source<TGaps>::Type TSource_;
-	typedef typename Iterator<TSource_, Rooted>::Type Type;
+    typedef typename Source<TGaps>::Type TSource_;
+    typedef typename Iterator<TSource_, Rooted>::Type Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// Value
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Metafunction Value
+// ----------------------------------------------------------------------------
 
 template <typename TGaps, typename TSpec>
 struct Value<Iter<TGaps, GapsIterator<TSpec> > >
 {
-	typedef typename Source<Iter<TGaps, GapsIterator<TSpec> > >::Type TSource_;
-	typedef typename Value<TSource_>::Type TSourceValue_;
-	typedef typename GappedValueType<TSourceValue_>::Type Type;
-
-};
-template <typename TGaps, typename TSpec>
-struct Value<Iter<TGaps, GapsIterator<TSpec> > const>
-{
-	typedef typename Source<Iter<TGaps, GapsIterator<TSpec> > const>::Type TSource_;
-	typedef typename Value<TSource_>::Type TSourceValue_;
-	typedef typename GappedValueType<TSourceValue_>::Type Type;
-
+    typedef typename Source<Iter<TGaps, GapsIterator<TSpec> > >::Type TSource_;
+    typedef typename Value<TSource_>::Type TSourceValue_;
+    //typedef TSourceValue_ Type;
+    // TODO(holtgrew): We really want gapped values here but there are issues...
+    typedef typename GappedValueType<TSourceValue_>::Type Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// GetValue
-//////////////////////////////////////////////////////////////////////////////
+template <typename TGaps, typename TSpec>
+struct Value<Iter<TGaps, GapsIterator<TSpec> > const> :
+            Value<Iter<TGaps, GapsIterator<TSpec> > > {};
+
+// ----------------------------------------------------------------------------
+// Metafunction GetValue
+// ----------------------------------------------------------------------------
 
 template <typename TGaps, typename TSpec>
-struct GetValue<Iter<TGaps, GapsIterator<TSpec> > >:
-	Value<Iter<TGaps, GapsIterator<TSpec> > > //no reference
-{
-};
-template <typename TGaps, typename TSpec>
-struct GetValue<Iter<TGaps, GapsIterator<TSpec> > const>:
-	Value<Iter<TGaps, GapsIterator<TSpec> > const> //no reference
+struct GetValue<Iter<TGaps, GapsIterator<TSpec> > > :
+    Value<Iter<TGaps, GapsIterator<TSpec> > >
 {
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// Reference
-//////////////////////////////////////////////////////////////////////////////
+template <typename TGaps, typename TSpec>
+struct GetValue<Iter<TGaps, GapsIterator<TSpec> > const> :
+    Value<Iter<TGaps, GapsIterator<TSpec> > const>
+{
+};
+
+// ----------------------------------------------------------------------------
+// Metafunction Reference
+// ----------------------------------------------------------------------------
 
 template <typename TGaps, typename TSpec>
 struct Reference<Iter<TGaps, GapsIterator<TSpec> > >
 {
-	typedef Iter<TGaps, GapsIterator<TSpec> > TIterator_;
-	typedef Proxy<IteratorProxy<TIterator_> > Type;
+    typedef Iter<TGaps, GapsIterator<TSpec> > TIterator_;
+    typedef Proxy<IteratorProxy<TIterator_> > Type;
 };
+
 template <typename TGaps, typename TSpec>
 struct Reference<Iter<TGaps, GapsIterator<TSpec> > const>
 {
-	typedef Iter<TGaps, GapsIterator<TSpec> > TIterator_; //remove const
-	typedef Proxy<IteratorProxy<TIterator_> > Type;
+    typedef Iter<TGaps, GapsIterator<TSpec> const > TIterator_;
+    typedef Proxy<IteratorProxy<TIterator_> > Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-//specialization of basic_proxy.h/CompareType implementation
+// ============================================================================
+// Functions
+// ============================================================================
 
-/*
-template <typename TGaps, typename TSpec, typename T>
-struct CompareType<Proxy<IteratorProxy<Iter<TGaps, GapsIterator<TSpec> > > >, T>
-{
-	typedef T Type;
-};
-*/
+// ----------------------------------------------------------------------------
+// Function operator++
+// ----------------------------------------------------------------------------
 
-//???TODO: Symmetrie von CompareType herstellen
-
-
-//////////////////////////////////////////////////////////////////////////////
-// FUNCTIONS
-//////////////////////////////////////////////////////////////////////////////
+// TODO(holtgrew): Could be general forward
 
 template <typename TGaps, typename TSpec>
-inline Iter<TGaps, GapsIterator<TSpec> > const & 
-operator ++(Iter<TGaps, GapsIterator<TSpec> > const & me)
+inline Iter<TGaps, GapsIterator<TSpec> > &
+operator++(Iter<TGaps, GapsIterator<TSpec> > & it)
 {
-SEQAN_CHECKPOINT
-	goNext(me);
-	return me;
+    goNext(it);
+    return it;
 }
 
 template <typename TGaps, typename TSpec>
-inline Iter<TGaps, GapsIterator<TSpec> > const 
-operator ++(Iter<TGaps, GapsIterator<TSpec> > const & me, int)
+inline Iter<TGaps, GapsIterator<TSpec> >
+operator++(Iter<TGaps, GapsIterator<TSpec> > & it, int)
 {
-SEQAN_CHECKPOINT
-	Iter<TGaps, GapsIterator<TSpec> > ret = me;
-	goNext(me);
-	return ret;
+    Iter<TGaps, GapsIterator<TSpec> > ret = it;
+    goNext(it);
+    return ret;
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function operator--
+// ----------------------------------------------------------------------------
 
 template <typename TGaps, typename TSpec>
-inline Iter<TGaps, GapsIterator<TSpec> > const & 
-operator --(Iter<TGaps, GapsIterator<TSpec> > const & me)
+inline Iter<TGaps, GapsIterator<TSpec> > &
+operator--(Iter<TGaps, GapsIterator<TSpec> > & it)
 {
-SEQAN_CHECKPOINT
-	goPrevious(me);
-	return me;
+    goPrevious(it);
+    return it;
 }
 
 template <typename TGaps, typename TSpec>
-inline Iter<TGaps, GapsIterator<TSpec> > const 
-operator --(Iter<TGaps, GapsIterator<TSpec> > const & me, int)
+inline Iter<TGaps, GapsIterator<TSpec> >
+operator--(Iter<TGaps, GapsIterator<TSpec> > & it, int)
 {
-SEQAN_CHECKPOINT
-	Iter<TGaps, GapsIterator<TSpec> > ret = me;
-	goPrevious(me);
-	return ret;
+    Iter<TGaps, GapsIterator<TSpec> > ret = it;
+    goPrevious(it);
+    return ret;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//todo???: weitere operatoren
+// ----------------------------------------------------------------------------
+// Function insertGap()
+// ----------------------------------------------------------------------------
 
+/*!
+ * @fn GapsIterator#insertGap
+ * @brief Insert gap at the current position.
+ *
+ * @signature void insertGap(it);
+ *
+ * @param[in,out] it The iterator to insert gaps at.
+ */
 
-//////////////////////////////////////////////////////////////////////////////
+// Forward to insertGaps() which has to be implemented by the specific gap
+// iterator.
 
-// insert a single gap at current iterator position
-template <typename TGaps, typename TSpec>
-inline void
-insertGap(Iter<TGaps, GapsIterator<TSpec> > const & me)
-{
-SEQAN_CHECKPOINT
-	insertGaps(me, 1);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-// remove a single gap at current iterator position
 template <typename TGaps, typename TSpec>
 inline void
-removeGap(Iter<TGaps, GapsIterator<TSpec> > const & me)
+insertGap(Iter<TGaps, GapsIterator<TSpec> > & it)
 {
-SEQAN_CHECKPOINT
-	removeGaps(me, 1);
+    insertGaps(it, 1);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function isCharacter()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn GapsIterator#isCharacter
+ * @brief Query an iterator for being at a character
+ *
+ * @signature bool isCharacter(it);
+ *
+ * @param[in] it Iterator to query for pointing at a character.
+ *
+ * @return bool <tt>true</tt> if <tt>it</tt> is at a character and <tt>false</tt> otherwise.
+ */
 
 template <typename TGaps, typename TSpec>
-inline typename Reference< Iter<TGaps, GapsIterator<TSpec> > >::Type
-value(Iter<TGaps, GapsIterator<TSpec> > & me)
+bool isCharacter(Iter<TGaps, GapsIterator<TSpec> > const & it)
 {
-SEQAN_CHECKPOINT
-	typedef typename Reference< Iter<TGaps, GapsIterator<TSpec> > >::Type TReference;
-	return TReference(me);
+    return !isGap(it);
 }
+
+// ----------------------------------------------------------------------------
+// Function countCharacters()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn GapsIterator#countCharacters
+ * @brief Count characters at iterator.
+ *
+ * @signature TSize countCharacters(it[, dir]);
+ *
+ * @param[in] it  Iterator for counting characters at.
+ * @param[in] dir A tag to specify the counting direction. One of @link GapDirectionTags @endlink.
+ *                Defaults to @link GapDirectionTags#RightOfViewPos @endlink.
+ *
+ * @return TSize Number of characters.
+ *
+ * If the the direction tag is @link GapDirectionTags#RightOfViewPos @endlink the current view position will be
+ * included in the count, and excluded when @link GapDirectionTags#LeftOfViewPos @endlink is selected.
+ */
+
 template <typename TGaps, typename TSpec>
-inline typename Reference< Iter<TGaps, GapsIterator<TSpec> > const>::Type
-value(Iter<TGaps, GapsIterator<TSpec> > const & me)
+inline typename Size<TGaps>::Type
+countCharacters(Iter<TGaps, GapsIterator<TSpec> > const & it)
 {
-SEQAN_CHECKPOINT
-	typedef typename Reference< Iter<TGaps, GapsIterator<TSpec> > const>::Type TReference;
-	return TReference(me);
+    return countCharacters(it, RightOfViewPos());
 }
 
+// ----------------------------------------------------------------------------
+// Function isGap()
+// ----------------------------------------------------------------------------
 
-//////////////////////////////////////////////////////////////////////////////
+/*!
+ * @fn GapsIterator#isGap
+ * @brief Query an iterator for being at a gap
+ *
+ * @signature bool isGap(it);
+ *
+ * @param[in] it Iterator to query for pointing at a gap.
+ *
+ * @return bool <tt>true</tt> if <tt>it</tt> is at a gap and <tt>false</tt> otherwise.
+ */
+
+// ----------------------------------------------------------------------------
+// Function countGaps()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn GapsIterator#countGaps
+ * @brief Count gaps at iterator.
+ *
+ * @signature TSize countGaps(it[, dir]);
+ *
+ * @param[in] it Iterator for counting gaps at.
+ * @param[in] dir A tag to specify the counting direction. One of @link GapDirectionTags @endlink.
+ *                Defaults to @link GapDirectionTags#RightOfViewPos @endlink.
+ *
+ * @return TSize Number of gaps.
+ *
+ * If the the direction tag is @link GapDirectionTags#RightOfViewPos @endlink the current view position will be
+ * included in the count, and excluded when @link GapDirectionTags#LeftOfViewPos @endlink is selected.
+ */
+
+template <typename TGaps, typename TSpec>
+inline typename Size<TGaps>::Type
+countGaps(Iter<TGaps, GapsIterator<TSpec> > const & it)
+{
+    return countGaps(it, RightOfViewPos());
+}
+
+// ----------------------------------------------------------------------------
+// Function insertGaps()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn GapsIterator#insertGaps
+ * @brief Insert gaps at the current position.
+ *
+ * @signature void insertGaps(it, num);
+ *
+ * @param[in,out] it  Remove gap at the given position (if any).
+ * @param[in]     num Number of gaps to insert.
+ */
+
+// ----------------------------------------------------------------------------
+// Function removeGap()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn GapsIterator#removeGap
+ * @brief Insert gap at the current position.
+ *
+ * @signature TSize removeGap(it);
+ *
+ * @param[in,out] it Remove gap at the given position (if any).
+ *
+ * @return TSize Number of removed gaps.
+ */
+
+// Forward to removeGaps() which has to be implemented by the specific gap
+// iterator.
+
+template <typename TGaps, typename TSpec>
+inline typename Size<TGaps>::Type
+removeGap(Iter<TGaps, GapsIterator<TSpec> > & it)
+{
+    return removeGaps(it, 1);
+}
+
+// ----------------------------------------------------------------------------
+// Function removeGaps()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn GapsIterator#removeGaps
+ * @brief Remove gaps from the current position.
+ *
+ * @signature TSize removeGaps(it, num);
+ *
+ * @param[in,out] it  Remove gap at the given position (if any).
+ * @param[in]     num Number of gaps to remove.
+ *
+ * @return TSize Number of removed gaps.
+ */
+
+// ----------------------------------------------------------------------------
+// Function assignValue()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Const consistency problems.
 
 template <typename TGaps, typename TSpec, typename TValue>
 inline void
 assignValue(Iter<TGaps, GapsIterator<TSpec> > & me,
-			TValue const & val)
+            TValue const & val)
 {
-SEQAN_CHECKPOINT
-	if (!isGap(me)) 
-	{
-		assignValue(source(me), val);
-	}
-	//else insert??? das waere neu.
+    if (!isGap(me))
+    {
+        assignValue(source(me), val);
+    }
+    // TODO(holtgrew): Else, inserting gaps is problematic...
 }
+
 template <typename TGaps, typename TSpec, typename TValue>
 inline void
 assignValue(Iter<TGaps, GapsIterator<TSpec> > const & me,
-			TValue const & val)
+            TValue const & val)
 {
-SEQAN_CHECKPOINT
-	if (!isGap(me)) 
-	{
-		assignValue(source(me), val);
-	}
-}
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TGaps, typename TSpec, typename TValue>
-inline void
-moveValue(Iter<TGaps, GapsIterator<TSpec> > & me,
-		  TValue const & val)
-{
-SEQAN_CHECKPOINT
-	if (!isGap(me)) 
-	{
-		moveValue(source(me), val);
-	}
-}
-template <typename TGaps, typename TSpec, typename TValue>
-inline void
-moveValue(Iter<TGaps, GapsIterator<TSpec> > const & me,
-		  TValue const & val)
-{
-SEQAN_CHECKPOINT
-	if (!isGap(me)) 
-	{
-		moveValue(source(me), val);
-	}
+    if (!isGap(me))
+    {
+        assignValue(source(me), val);
+    }
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-//____________________________________________________________________________
+// ----------------------------------------------------------------------------
+// Function container()
+// ----------------------------------------------------------------------------
 
 template <typename TGaps, typename TSpec>
 inline TGaps &
 container(Iter<TGaps, GapsIterator<TSpec> > & me)
 {
-SEQAN_CHECKPOINT
-	return *me.data_container;
+    return *me._container;
 }
 
 template <typename TGaps, typename TSpec>
 inline TGaps &
 container(Iter<TGaps, GapsIterator<TSpec> > const & me)
 {
-SEQAN_CHECKPOINT
-	return *me.data_container;
+    return *me._container;
 }
 
-//____________________________________________________________________________
+// ----------------------------------------------------------------------------
+// Function source
+// ----------------------------------------------------------------------------
 
+// Returns host iterator.
+
+// TODO(holtgrew): Non-const version is superfluous.
 template <typename TGaps, typename TSpec>
 inline typename Source<Iter<TGaps, GapsIterator<TSpec> > >::Type /*returns copy*/
-source(Iter<TGaps, GapsIterator<TSpec> > & me)
+source(Iter<TGaps, GapsIterator<TSpec> > & it)
 {
-SEQAN_CHECKPOINT
-	return me.data_source;
+    return iter(container(it), toSourcePosition(container(it), position(it)));
 }
+
 template <typename TGaps, typename TSpec>
 inline typename Source<Iter<TGaps, GapsIterator<TSpec> > const>::Type /*returns copy*/
-source(Iter<TGaps, GapsIterator<TSpec> > const & me)
+source(Iter<TGaps, GapsIterator<TSpec> > const & it)
 {
-SEQAN_CHECKPOINT
-	return me.data_source;
+    return iter(container(source(it)), toSourcePosition(container(it), position(it)));
 }
 
-//todo??? setSource? setContainer?
-//////////////////////////////////////////////////////////////////////////////
+// TODO(holtgrew): setSource? setContainer?
 
-template <typename TGaps, typename TSpec, typename TSize>
+// ----------------------------------------------------------------------------
+// Function operator+=
+// ----------------------------------------------------------------------------
+
+template <typename TGaps, typename TSpec, typename TDiff>
+inline Iter<TGaps, GapsIterator<TSpec> > &
+operator+=(Iter<TGaps, GapsIterator<TSpec> > & it, TDiff diff)
+{
+    goFurther(it, diff);
+    return it;
+}
+
+// ----------------------------------------------------------------------------
+// Function operator-=
+// ----------------------------------------------------------------------------
+
+template <typename TGaps, typename TSpec, typename TDiff>
+inline Iter<TGaps, GapsIterator<TSpec> > &
+operator-=(Iter<TGaps, GapsIterator<TSpec> > & it, TDiff diff)
+{
+    goFurther(it, -(int64_t)(diff));
+    return it;
+}
+
+// ----------------------------------------------------------------------------
+// Function goFurther
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Implementation could be faster.
+template <typename TGaps, typename TSpec, typename TDifference>
 inline void
-goFurther(Iter<TGaps, GapsIterator<TSpec> > & me,
-		  TSize steps)
+goFurther(Iter<TGaps, GapsIterator<TSpec> > & it,
+          TDifference steps)
 {
-SEQAN_CHECKPOINT
-	while (steps)
-	{
-		goNext(me);
-		--steps;
-	}
+    typedef typename MakeSigned<TDifference>::Type TSignedDifference;
+    if (steps > TDifference(0))
+        for (; steps; --steps)
+            goNext(it);
+    else
+        for (; -static_cast<TSignedDifference>(steps); ++steps)
+            goPrevious(it);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function isClipped()
+// ----------------------------------------------------------------------------
 
-}// namespace SEQAN_NAMESPACE_MAIN
+template <typename TGaps, typename TSpec>
+inline bool
+isClipped(Iter<TGaps, GapsIterator<TSpec> > const &)
+{
+    return false;
+}
 
-#endif //#ifndef SEQAN_HEADER_...
+}  // namespace seqan
+
+#endif  // SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_ITERATOR_BASE_H_

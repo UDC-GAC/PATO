@@ -1,7 +1,8 @@
 // ==========================================================================
-//                           metaprogramming_math.h
+//                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
+// Copyright (c) 2013 NVIDIA Corporation
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +35,8 @@
 // Mathematical Metafunctions.
 // ==========================================================================
 
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_METAPROGRAMMING_MATH_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_BASIC_METAPROGRAMMING_MATH_H_
+#ifndef SEQAN_INCLUDE_SEQAN_BASIC_METAPROGRAMMING_MATH_H_
+#define SEQAN_INCLUDE_SEQAN_BASIC_METAPROGRAMMING_MATH_H_
 
 #include <seqan/platform.h>
 
@@ -49,87 +50,133 @@ namespace seqan {
 // Tags, Classes, Enums
 // ============================================================================
 
+template <int VALUE>
+struct ConstInt {};
+
+template <unsigned int VALUE>
+struct ConstUInt {};
+
 // ============================================================================
 // Metafunctions
 // ============================================================================
+
+/*!
+ * @defgroup MetaprogrammingMath Metaprogramming Math
+ * @brief Metafunctions for mathematical computations.
+ */
 
 // ----------------------------------------------------------------------------
 // Metafunction Log2
 // ----------------------------------------------------------------------------
 
-/**
-.Metafunction.Log2
-..cat:Metaprogramming
-..summary:Compute ceiled logarithm to base 2 using metaprogramming.
-..signature:Log2<x>::VALUE
-..param.x:The value to take the logarithm of.
-...type:nolink:$__int64$
-..returns:$ceil(log2(x))$.
-..include:seqan/basic.h
+/*!
+ * @mfn MetaprogrammingMath#Log2
+ * @brief Compute ceiled logarithm to base 2 using metaprogramming.
+ *
+ * @signature uint64_t Log2<NUMERUS>::VALUE;
+ *
+ * @tparam NUMERUS <tt>int64_t</tt> value to use for the numerus.
+ *
+ * @return uint64_t <tt>ceil(log2(NUMERUS))</tt>
+ *
+ * @section Example
+ *
+ * @snippet demos/dox/basic/metaprogramming_math.cpp log2 call
  */
 
-template <__int64 numerus>
-struct Log2
+template <uint64_t numerus, uint64_t base>
+struct LogN
 {
-    static const __uint64 VALUE = Log2<(numerus + 1) / 2>::VALUE + 1; // ceil(log_2(n))
+    static const uint64_t VALUE = LogN<(numerus + 1) / base, base>::VALUE + 1; // ceil(log(numerus) / log(base))
 };
 
+template <uint64_t numerus>
+struct Log2: LogN<numerus, 2> {};
+
 // Base cases.
-template <> struct Log2<1> { static const __uint64 VALUE = 0; };
-template <> struct Log2<0> { static const __uint64 VALUE = 0; };
+template <uint64_t base> struct LogN<1, base> { static const uint64_t VALUE = 0; };
+template <uint64_t base> struct LogN<0, base> { static const uint64_t VALUE = 0; };
 
 // ----------------------------------------------------------------------------
 // Metafunction Log2Floor
 // ----------------------------------------------------------------------------
 
-/**
-.Metafunction.Log2Floor
-..cat:Metaprogramming
-..summary:Compute floored logarithm to base 2 using metaprogramming.
-..signature:Log2<x>::VALUE
-..param.x:The value to take the logarithm of.
-...type:nolink:$__int64$
-..returns:$floor(log2(x))$.
-..include:seqan/basic.h
+/*!
+ * @mfn MetaprogrammingMath#Log2Floor
+ * @brief Compute floored logarithm to base 2 using metaprogramming.
+ *
+ * @signature uint64_t Log2Floor<NUMERUS>::VALUE;
+ *
+ * @tparam NUMERUS <tt>int64_t</tt> value to use for the numerus.
+ *
+ * @return uint64_t <tt>floor(log2(NUMERUS))</tt>
+ *
+ * @section Example
+ *
+ * @snippet demos/dox/basic/metaprogramming_math.cpp log2floor call
  */
 
-template <__int64 numerus>
-struct Log2Floor
+template <uint64_t numerus, uint64_t base>
+struct LogNFloor
 {
-    static const __uint64 VALUE = Log2Floor<numerus / 2>::VALUE + 1;  // floor(log_2(n))
+    static const uint64_t VALUE = LogNFloor<numerus / base, base>::VALUE + 1; // floor(log(numerus) / log(base))
 };
 
+template <uint64_t numerus>
+struct Log2Floor: LogNFloor<numerus, 2> {};
+
 // Base cases.
-template <> struct Log2Floor<1> { static const __uint64 VALUE = 0; };
-template <> struct Log2Floor<0> { static const __uint64 VALUE = 0; };
+template <uint64_t base> struct LogNFloor<1, base> { static const uint64_t VALUE = 0; };
+template <uint64_t base> struct LogNFloor<0, base> { static const uint64_t VALUE = 0; };
 
 // ----------------------------------------------------------------------------
 // Metafunction Power
 // ----------------------------------------------------------------------------
 
-/**
-.Metafunction.Power
-..cat:Metaprogramming
-..summary:Compute power of a number.
-..signature:Power<b, e>::VALUE
-..param.b:The base.
-...type:nolink:$__int64$
-..param.e:The exponent.
-...type:nolink:$__int64$
-..returns:$b^e$
-..include:seqan/basic.h
+/*!
+ * @mfn MetaprogrammingMath#Power
+ * @brief Compute power of a number.
+ *
+ * @signature uint64_t Power<BASE, EXPONENT>::VALUE;
+ *
+ * @tparam BASE     The base of the term (<tt>int64_t</tt>).
+ * @tparam EXPONENT The exponent of the term (<tt>int64_t</tt>).
+ *
+ * @return uint64_t BASE<sup>EXPONENT</sup>
+ *
+ * @snippet demos/dox/basic/metaprogramming_math.cpp power call
  */
 
-template <__int64 base, __int64 exponent>
+template <int64_t base, int64_t exponent>
 struct Power {
-    static const __uint64 VALUE =
+    static const uint64_t VALUE =
             Power<base, exponent / 2>::VALUE *
             Power<base, exponent - (exponent / 2)>::VALUE;
 };
 
 // Base cases.
-template <__int64 base> struct Power<base, 1> { static const __uint64 VALUE = base; };
-template <__int64 base> struct Power<base, 0> { static const __uint64 VALUE = 1; };
+template <int64_t base> struct Power<base, 1> { static const uint64_t VALUE = base; };
+template <int64_t base> struct Power<base, 0> { static const uint64_t VALUE = 1; };
+
+// ----------------------------------------------------------------------------
+// Metafunction Min
+// ----------------------------------------------------------------------------
+
+template <unsigned A, unsigned B>
+struct Min
+{
+    static const unsigned VALUE = (A <= B) ? A : B;
+};
+
+// ----------------------------------------------------------------------------
+// Metafunction Max
+// ----------------------------------------------------------------------------
+
+template <unsigned A, unsigned B>
+struct Max
+{
+    static const unsigned VALUE = (A >= B) ? A : B;
+};
 
 // ============================================================================
 // Functions
@@ -137,4 +184,4 @@ template <__int64 base> struct Power<base, 0> { static const __uint64 VALUE = 1;
 
 }  // namespace seqan
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_METAPROGRAMMING_MATH_H_
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_BASIC_METAPROGRAMMING_MATH_H_

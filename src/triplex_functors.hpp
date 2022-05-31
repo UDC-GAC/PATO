@@ -4,7 +4,7 @@
 #include "seqan.hpp"
 #include "triplex_alphabet.hpp"
 
-namespace SEQAN_NAMESPACE_MAIN
+namespace seqan
 {
 
 //////////////////////////////////////////////////////////////////////////////

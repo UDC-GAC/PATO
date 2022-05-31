@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,13 @@
 // DAMAGE.
 //
 // ==========================================================================
-// Author: Andres Gogol-Döring <andreas.doering@mdc-berlin.de>
+// Author: David Weese <david.weese@fu-berlin.de>
 // ==========================================================================
-// Bit-Compressed Pair specialization.
+// Bit-packed pair specialization.
 // ==========================================================================
 
-// TODO(holtgrew): Should this be called Bit-Packed and the tag be BitPacked{Pair,2}<,>?
-
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_BIT_COMPRESSED_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_BIT_COMPRESSED_H_
+#ifndef SEQAN_INCLUDE_SEQAN_BASIC_PAIR_BIT_PACKED_H_
+#define SEQAN_INCLUDE_SEQAN_BASIC_PAIR_BIT_PACKED_H_
 
 namespace seqan {
 
@@ -49,53 +47,64 @@ namespace seqan {
 // Tags, Classes, Enums
 // ============================================================================
 
-/**
-.Spec.Bit Compressed Pair:
-..cat:Aggregates
-..general:Class.Pair
-..summary:Stores two arbitrary objects. Saves memory by packing bits with bit fields.
-..signature:Pair<T1, T2, BitCompressed<BITSIZE1, BITSIZE2> >
-..param.T1:The type of the first object.
-..param.T2:The type of the second object.
-..param.BITSIZE1:Number of bits to store $T1$.
-..param.BITSIZE2:Number of bits to store $T2$.
-..notes:Useful for external storage.
-..remarks:Memory access could be slower. Direct access to members by pointers is not allowed.
-..remarks:Functions $value()$ is not implemented yet since there it would require using a proxy. Use $getValue()$, $assignValue()$, $moveValue()$, $setValue()$ instead.
-..include:seqan/basic.h
-.Memfunc.Pair#Pair.class:Spec.Bit Compressed Pair
-.Memvar.Pair#i1.class:Spec.Bit Compressed Pair
-.Memvar.Pair#i2.class:Spec.Bit Compressed Pair
-*/
+/*!
+ * @class BitPackedPair
+ * @extends Pair
+ * @headerfile <seqan/basic.h>
+ * @brief Stores two arbitrary objects. Saves memory by packing bits with bit fields.
+ *
+ * @signature template <typename T1, typename T2, unsigned BITSIZE1, unsigned BITSIZE2>
+ *            class Pass;
+ *
+ * @tparam T1       Type of first entry.
+ * @tparam T2       Type of second entry.
+ * @tparam BITSIZE1 Number of bits to store for <tt>T1</tt>.
+ * @tparam BITSIZE2 Number of bits to store for <tt>T2</tt>.
+ *
+ * Useful for external storage.
+ *
+ * @section Remarks
+ *
+ * Memory access could be slower. Direct access to members by pointers is not allowed.
+ *
+ * Functions <tt>value()</tt> is not implemented yet since there it would require using a proxy. Use
+ * <tt>getValue()</tt>, <tt>assignValue()</tt>, <tt>moveValue()</tt>, <tt>setValue()</tt> instead.
+ */
 
-template <typename T1_, typename T2_, unsigned BITSIZE1, unsigned BITSIZE2>
-struct Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> >
+#pragma pack(push,1)
+template <typename T1, typename T2, unsigned BITSIZE1, unsigned BITSIZE2>
+struct Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> >
 {
-    typedef T1_ T1;
-    typedef T2_ T2;
-
     // ------------------------------------------------------------------------
     // Members
     // ------------------------------------------------------------------------
 
-    T1_ i1:BITSIZE1;
-    T2_ i2:BITSIZE2;
+    T1 i1:BITSIZE1;
+    T2 i2:BITSIZE2;
 
     // ------------------------------------------------------------------------
     // Constructors
     // ------------------------------------------------------------------------
 
-    inline Pair() : i1(T1_()), i2(T2_()) {}
+    // bitfield member cannot have an in-class initializer, thus
+    // `inline Pair() = default;` is not possible
+    // https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65132
+    inline Pair() : i1(T1{}), i2(T2{}) {};
+    inline Pair(Pair const &) = default;
+    inline Pair(Pair &&) = default;
+    inline Pair & operator=(Pair const &) = default;
+    inline Pair & operator=(Pair &&) = default;
+    inline ~Pair() = default;
 
-    inline Pair(Pair const & _p) : i1(_p.i1), i2(_p.i2) {}
+    inline Pair(T1 const & _i1, T2 const & _i2) : i1(_i1), i2(_i2) {}
 
-    inline Pair(T1_ const & _i1, T2_ const & _i2) : i1(_i1), i2(_i2) {}
-
-    template <typename T1__, typename T2__, typename TSpec__>
+    template <typename T1_, typename T2_, typename TSpec__>
     // TODO(holtgrew): explicit?
-    inline Pair(Pair<T1__, T2__, TSpec__> const &_p)
-            : i1(getValueI1(_p)), i2(getValueI2(_p)) {}
+    inline Pair(Pair<T1_, T2_, TSpec__> const &_p) :
+        i1(getValueI1(_p)), i2(getValueI2(_p))
+    {}
 };
+#pragma pack(pop)
 
 // ============================================================================
 // Metafunctions
@@ -111,9 +120,9 @@ struct Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> >
 
 // References to members to packed structs do not work.  Always copy.
 
-template <typename T1_, typename T2_, unsigned BITSIZE1, unsigned BITSIZE2>
+template <typename T1, typename T2, unsigned BITSIZE1, unsigned BITSIZE2>
 inline void
-set(Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> > & p1, Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> > & p2)
+set(Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & p1, Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & p2)
 {
     p1 = p2;
 }
@@ -124,9 +133,9 @@ set(Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> > & p1, Pair<T1_, T2_, BitC
 
 // References to members to packed structs do not work.  Always copy.
 
-template <typename T1_, typename T2_, unsigned BITSIZE1, unsigned BITSIZE2>
+template <typename T1, typename T2, unsigned BITSIZE1, unsigned BITSIZE2>
 inline void
-move(Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> > & p1, Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> > & p2)
+move(Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & p1, Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & p2)
 {
     p1 = p2;
 }
@@ -138,13 +147,13 @@ move(Pair<T1_, T2_, BitCompressed<BITSIZE1, BITSIZE2> > & p1, Pair<T1_, T2_, Bit
 // Cannot be setValue with index since T1 can be != T2.
 
 template <typename T1, typename T2, typename T, unsigned BITSIZE1, unsigned BITSIZE2>
-inline void setValueI1(Pair<T1, T2, BitCompressed<BITSIZE1, BITSIZE2> > & pair, T const & _i)
+inline void setValueI1(Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & pair, T const & _i)
 {
     pair.i1 = _i;
 }
 
 template <typename T1, typename T2, typename T, unsigned BITSIZE1, unsigned BITSIZE2>
-inline void setValueI2(Pair<T1, T2, BitCompressed<BITSIZE1, BITSIZE2> > & pair, T const & _i)
+inline void setValueI2(Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & pair, T const & _i)
 {
     pair.i2 = _i;
 }
@@ -156,17 +165,17 @@ inline void setValueI2(Pair<T1, T2, BitCompressed<BITSIZE1, BITSIZE2> > & pair, 
 // Cannot be moveValue with index since T1 can be != T2.
 
 template <typename T1, typename T2, typename T, unsigned BITSIZE1, unsigned BITSIZE2>
-inline void moveValueI1(Pair<T1, T2, BitCompressed<BITSIZE1, BITSIZE2> > & pair, T & _i)
+inline void moveValueI1(Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & pair, T & _i)
 {
     pair.i1 = _i;
 }
 
 template <typename T1, typename T2, typename T, unsigned BITSIZE1, unsigned BITSIZE2>
-inline void moveValueI2(Pair<T1, T2, BitCompressed<BITSIZE1, BITSIZE2> > & pair, T & _i)
+inline void moveValueI2(Pair<T1, T2, BitPacked<BITSIZE1, BITSIZE2> > & pair, T & _i)
 {
     pair.i2 = _i;
 }
 
 }  // namespace seqan
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_BIT_COMPRESSED_H_
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_BASIC_PAIR_BIT_PACKED_H_

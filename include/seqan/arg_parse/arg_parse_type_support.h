@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,8 +34,8 @@
 
 // TODO(aiche): check if parts of the functionality could be merged with lexicalCast in stream module
 
-#ifndef SEQAN_CORE_INCLUDE_ARG_PARSE_ARG_PARSE_TYPE_SUPPRT_H_
-#define SEQAN_CORE_INCLUDE_ARG_PARSE_ARG_PARSE_TYPE_SUPPRT_H_
+#ifndef SEQAN_INCLUDE_ARG_PARSE_ARG_PARSE_TYPE_SUPPRT_H_
+#define SEQAN_INCLUDE_ARG_PARSE_ARG_PARSE_TYPE_SUPPRT_H_
 
 #include <sstream>
 #include <string>
@@ -44,15 +44,27 @@
 
 namespace seqan {
 
-// ----------------------------------------------------------------------------
-// Function toCString()
-// ----------------------------------------------------------------------------
 
-// TODO(aiche): move to stl_adapter
-inline char const * toCString(std::string const & me)
+// ==========================================================================
+// Tags, Classes, Enums
+// ==========================================================================
+
+template <typename TVoidSpec = void>
+struct BooleanArgumentValues_
 {
-    return me.c_str();
-}
+    static constexpr std::array<const char *, 5> LIST_TRUE{{"1", "ON", "TRUE", "T", "YES"}};
+    static constexpr std::array<const char *, 5> LIST_FALSE{{"0", "OFF", "FALSE", "F", "NO"}};
+};
+
+template <typename TVoidSpec>
+constexpr std::array<const char *, 5> BooleanArgumentValues_<TVoidSpec>::LIST_TRUE;
+
+template <typename TVoidSpec>
+constexpr std::array<const char *, 5> BooleanArgumentValues_<TVoidSpec>::LIST_FALSE;
+
+// ==========================================================================
+// Functions
+// ==========================================================================
 
 // ----------------------------------------------------------------------------
 // Function _tryCast()
@@ -65,13 +77,30 @@ inline bool _tryCast(TTarget & dest, TString const source)
     return result;
 }
 
+template <typename TString>
+inline bool _tryCast(bool & dst, TString const & s)
+{
+    // since the validValue check already verifies that the value is one of
+    // BooleanArgumentValues_<>::LIST_TRUE and BooleanArgumentValues_<>::LIST_FALSE,
+    // one only needs to check one equivalent class
+    std::string s_uppercase{s};
+    std::transform(s.begin(), s.end(), s_uppercase.begin(), ::toupper); // allow for lowercase letters
+    dst = (std::find(BooleanArgumentValues_<>::LIST_TRUE.begin(),
+                     BooleanArgumentValues_<>::LIST_TRUE.end(),
+                     s_uppercase)
+           != BooleanArgumentValues_<>::LIST_TRUE.end());
+    return true;
+}
+
 // ----------------------------------------------------------------------------
 // Function _cast()
 // ----------------------------------------------------------------------------
 template <typename TTarget, typename TString>
 inline TTarget _cast(TString const s)
 {
-    TTarget dst;
+    // We are sing additional braces here for "most vexing parse" resolution
+    // when enforcing default initialization also for built-in types.
+    TTarget dst((TTarget()));
     std::istringstream stream(toCString(s));
     bool result = (!(stream >> dst).fail()) && (stream.rdbuf()->in_avail() == 0);
     SEQAN_CHECK(result, "could not cast %s", toCString(s));
@@ -110,19 +139,19 @@ inline bool _isInt(TString const s)
 }
 
 // ----------------------------------------------------------------------------
-// Function _convertOptionValue()
+// Function _convertFlagValue()
 // ----------------------------------------------------------------------------
 
-class ArgParseOption;
-inline bool isBooleanOption(ArgParseOption const & me);
-
-inline bool _convertArgumentValue(bool & dst, ArgParseOption const & opt, std::string const & src)
+inline bool _convertFlagValue(bool & dst, std::string const & src)
 {
-    if (!isBooleanOption(opt))
-        return false;
-
     dst = !empty(src) && (src != "false");
     return true;
+}
+
+template <typename TObject>
+inline bool _convertFlagValue(TObject & /*dst*/, std::string const & /*s*/)
+{
+    return false;
 }
 
 // ----------------------------------------------------------------------------
@@ -131,8 +160,18 @@ inline bool _convertArgumentValue(bool & dst, ArgParseOption const & opt, std::s
 
 class ArgParseArgument;
 inline bool isIntegerArgument(ArgParseArgument const & me);
+inline bool isInt64Argument(ArgParseArgument const & me);
 inline bool isDoubleArgument(ArgParseArgument const & me);
 inline bool isStringArgument(ArgParseArgument const & me);
+inline bool isBooleanArgument(ArgParseArgument const & me);
+
+inline bool _convertArgumentValue(bool & dst, ArgParseArgument const & opt, std::string const & src)
+{
+    if (!isBooleanArgument(opt))
+        return false;
+
+    return _tryCast(dst, src);
+}
 
 inline bool _convertArgumentValue(int & dst, ArgParseArgument const & opt, std::string const & src)
 {
@@ -150,17 +189,17 @@ inline bool _convertArgumentValue(unsigned int & dst, ArgParseArgument const & o
     return _tryCast(dst, src);
 }
 
-inline bool _convertArgumentValue(__int64 & dst, ArgParseArgument const & opt, std::string const & src)
+inline bool _convertArgumentValue(int64_t & dst, ArgParseArgument const & opt, std::string const & src)
 {
-    if (!isIntegerArgument(opt))
+    if (!isIntegerArgument(opt) && !isInt64Argument(opt))
         return false;
 
     return _tryCast(dst, src);
 }
 
-inline bool _convertArgumentValue(__uint64 & dst, ArgParseArgument const & opt, std::string const & src)
+inline bool _convertArgumentValue(uint64_t & dst, ArgParseArgument const & opt, std::string const & src)
 {
-    if (!isIntegerArgument(opt))
+    if (!isIntegerArgument(opt) && !isInt64Argument(opt))
         return false;
 
     return _tryCast(dst, src);
@@ -194,4 +233,4 @@ inline bool _convertArgumentValue(TObject & dst, ArgParseArgument const & opt, s
 
 } // namespace seqan
 
-#endif // SEQAN_CORE_INCLUDE_ARG_PARSE_ARG_PARSE_TYPE_SUPPRT_H_
+#endif // SEQAN_INCLUDE_ARG_PARSE_ARG_PARSE_TYPE_SUPPRT_H_

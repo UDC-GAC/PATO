@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -45,17 +45,6 @@ namespace seqan {
 // Enums, Tags, Classes, Specializations
 // ===========================================================================
 
-/**
-.Adaption.char array:
-..summary:Zero terminated $char[]$ or $wchar_t[]$.
-..remarks:Char arrays only support the Insist @Tag.Overflow Strategy.overflow strategy@.
-*/
-
-/**
-.Adaption.char array.remarks:The default overflow strategy
-(both @Metafunction.DefaultOverflowImplicit@ and @Metafunction.DefaultOverflowExplicit@)
-for all operations on char arrays is @Tag.Overflow Strategy.insist@.
-*/
 
 // ===========================================================================
 // Metafunctions
@@ -112,61 +101,44 @@ struct DefaultOverflowExplicit< TValue const [SIZE] >
     typedef Insist Type;
 };
 
-///.Metafunction.IsContiguous.param.T.type:Adaption.char array
+template <typename TValue>
+struct IsContiguous< TValue * > : public True {};
+
+template <typename TValue, size_t SIZE>
+struct IsContiguous< TValue [SIZE] > : public True {};
+
+template <typename TValue, size_t SIZE>
+struct IsContiguous< TValue const [SIZE] > : public True {};
 
 template <typename TValue>
-struct IsContiguous;
-
-template <typename TValue>
-struct IsContiguous< TValue * >
-{
-    typedef True Type;
-    enum { VALUE = true };
-};
+struct IsSequence< TValue * > : public True {};
 
 template <typename TValue, size_t SIZE>
-struct IsContiguous< TValue [SIZE] >
-{
-    typedef True Type;
-    enum { VALUE = true };
-};
+struct IsSequence< TValue [SIZE] > : public True {};
 
 template <typename TValue, size_t SIZE>
-struct IsContiguous< TValue const [SIZE] >
-{
-    typedef True Type;
-    enum { VALUE = true };
-};
+struct IsSequence< TValue const [SIZE] > : public True {};
 
-/*
-.Metafunction.IsSequence.param.T.type:Adaption.char array
-..include:seqan/sequence.h
-*/
+// ----------------------------------------------------------------------------
+// Concept Sequence
+// ----------------------------------------------------------------------------
 
-template <typename TValue>
-struct IsSequence< TValue * >
-{
-    typedef True Type;
-    enum { VALUE = true };
-};
+// NOTE(h-2): removed because we really don't want this
+// template <typename TValue>
+// SEQAN_CONCEPT_IMPL((TValue *), (ContainerConcept));
+//
+// template <typename TValue>
+// SEQAN_CONCEPT_IMPL((TValue * const), (ContainerConcept));
+
 template <typename TValue, size_t SIZE>
-struct IsSequence< TValue [SIZE] >
-{
-    typedef True Type;
-    enum { VALUE = true };
-};
+SEQAN_CONCEPT_IMPL((TValue [SIZE]), (ContainerConcept));
+
 template <typename TValue, size_t SIZE>
-struct IsSequence< TValue const [SIZE] >
-{
-    typedef True Type;
-    enum { VALUE = true };
-};
+SEQAN_CONCEPT_IMPL((TValue const [SIZE]), (ContainerConcept));
 
 // ----------------------------------------------------------------------------
 // Metafunction Iterator
 // ----------------------------------------------------------------------------
-
-///.Metafunction.Iterator.param.T.type:Adaption.char array
 
 template <typename TValue>
 struct Iterator<TValue *, Standard>
@@ -212,18 +184,14 @@ template <typename T>
 inline typename Iterator<T *, typename DefaultGetIteratorSpec<T>::Type>::Type
 begin(T * me)
 {
-SEQAN_CHECKPOINT
     return begin(me, typename DefaultGetIteratorSpec<T>::Type()) ;
 }
-
-///.Function.begin.param.object.type:Adaption.char array
 
 template <typename TValue>
 inline typename Iterator<TValue *, Standard>::Type
 begin(TValue * me,
       Standard)
 {
-SEQAN_CHECKPOINT
     return me;
 }
 
@@ -234,7 +202,6 @@ inline typename Iterator<TValue const *, Standard>::Type
 begin(TValue const * me,
       Standard)
 {
-SEQAN_CHECKPOINT
     return me;
 }
 
@@ -243,7 +210,6 @@ inline typename Iterator<TValue *, Tag<TSpec> const>::Type
 begin(TValue * me,
       Tag<TSpec> const)
 {
-SEQAN_CHECKPOINT
     typedef typename Iterator<TValue *, Tag<TSpec> const>::Type TIterator;
     return TIterator(me, begin(me, Standard()));
 }
@@ -253,19 +219,15 @@ inline typename Iterator<TValue const *, Tag<TSpec> const>::Type
 begin(TValue const * me,
       Tag<TSpec> const)
 {
-SEQAN_CHECKPOINT
     typedef typename Iterator<TValue const *, Tag<TSpec> const>::Type TIterator;
     return TIterator(me, begin(me, Standard()));
 }
-
-///.Function.end.param.object.type:Adaption.char array
 
 template <typename TValue>
 inline typename Iterator<TValue *, Standard>::Type
 end(TValue * me,
     Standard)
 {
-SEQAN_CHECKPOINT
     return begin(me, Standard()) + length(me);
 }
 
@@ -275,7 +237,6 @@ inline typename Iterator<TValue const *, Standard>::Type
 end(TValue const * me,
     Standard)
 {
-SEQAN_CHECKPOINT
     return begin(me, Standard()) + length(me);
 }
 
@@ -284,7 +245,6 @@ inline typename Iterator<TValue *, Tag<TSpec> const>::Type
 end(TValue * me,
       Tag<TSpec> const tag_)
 {
-SEQAN_CHECKPOINT
     return begin(me, tag_) + length(me);
 }
 
@@ -293,18 +253,14 @@ inline typename Iterator<TValue const *, Tag<TSpec> const>::Type
 end(TValue const * me,
       Tag<TSpec> const tag_)
 {
-SEQAN_CHECKPOINT
     return begin(me, tag_) + length(me);
 }
-
-///.Function.value.param.container.type:Adaption.char array
 
 template <typename TValue, typename TPos>
 inline TValue &
 value(TValue * me,
       TPos pos)
 {
-SEQAN_CHECKPOINT
     return me[pos];
 }
 
@@ -313,11 +269,8 @@ inline TValue const &
 value(TValue const * me,
       TPos pos)
 {
-SEQAN_CHECKPOINT
     return me[pos];
 }
-
-///.Function.assignValue.param.container.type:Adaption.char array
 
 template <typename TValue, typename TPos>
 inline void
@@ -325,11 +278,8 @@ assignValue(TValue * me,
             TPos pos,
             TValue const & _value)
 {
-SEQAN_CHECKPOINT
     assign(value(me, pos), _value);
 }
-
-///.Function.moveValue.param.container.type:Adaption.char array
 
 template <typename TValue, typename TPos>
 inline void
@@ -337,7 +287,6 @@ moveValue(TValue * me,
           TPos pos,
           TValue const & _value)
 {
-SEQAN_CHECKPOINT
     move(value(me, pos), _value);
 }
 
@@ -347,7 +296,6 @@ template <typename TValue>
 inline bool
 atEnd(TValue * pos)
 {
-SEQAN_CHECKPOINT
     return *pos == 0;
 }
 
@@ -356,17 +304,13 @@ inline bool
 atEnd(TValue const * pos,
       TValue const * /*container*/)
 {
-SEQAN_CHECKPOINT
     return *pos == 0;
 }
-
-///.Function.length.param.object.type:Adaption.char array
 
 template <typename TValue>
 inline size_t
 length(TValue * me)
 {
-SEQAN_CHECKPOINT
     if (!me) return 0;
     TValue * it = me;
     TValue zero = TValue(0);
@@ -378,7 +322,6 @@ template <typename TValue>
 inline size_t
 length(TValue const * me)
 {
-SEQAN_CHECKPOINT
     if (!me) return 0;
     TValue const * it = me;
     TValue const zero = TValue();
@@ -389,15 +332,13 @@ SEQAN_CHECKPOINT
 inline size_t
 length(char * me)
 {
-SEQAN_CHECKPOINT
-    return ::std::strlen(me);
+    return std::strlen(me);
 }
 
 inline size_t
 length(char const * me)
 {
-SEQAN_CHECKPOINT
-    return ::std::strlen(me);
+    return std::strlen(me);
 }
 
 template <typename TValue>
@@ -405,29 +346,22 @@ inline void
 _setLength(TValue * me,
            size_t new_length)
 {
-SEQAN_CHECKPOINT
     me[new_length] = 0;
 }
-
-///.Function.clear.param.object.type:Adaption.char array
 
 template <typename TValue>
 inline void
 clear(TValue * me)
 {
-SEQAN_CHECKPOINT
     // TODO(holtgrew): Review this.
     //arrayDestruct(begin(me), length(me)); //??? Die Laengenbestimmung ist meistens nutzlos, braucht man sowieso nur fuer non-pod
     _setLength(me, 0);
 }
 
-///.Function.empty.param.object.type:Adaption.char array
-
 template <typename TValue>
 inline bool
 empty(TValue * me)
 {
-SEQAN_CHECKPOINT
     return !me || (*me == TValue());
 }
 
@@ -435,10 +369,9 @@ template<typename TValue, typename TExpand>
 inline size_t
 _clearSpace(TValue * me,
            size_t size,
-           Tag<TExpand> const)
+           Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    return ClearSpaceStringBase_<Tag<TExpand> const>::_clearSpace_(me, size);
+    return ClearSpaceStringBase_<Tag<TExpand> >::_clearSpace_(me, size);
 }
 
 template<typename TValue, typename TExpand>
@@ -446,10 +379,9 @@ inline size_t
 _clearSpace(TValue * me,
            size_t size,
            size_t limit,
-           Tag<TExpand> const)
+           Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    return ClearSpaceStringBase_<Tag<TExpand> const>::_clearSpace_(me, size, limit);
+    return ClearSpaceStringBase_<Tag<TExpand> >::_clearSpace_(me, size, limit);
 }
 
 template<typename TValue, typename TPosition, typename TExpand>
@@ -458,10 +390,9 @@ _clearSpace(TValue * me,
            size_t size,
            TPosition pos_begin,
            TPosition pos_end,
-           Tag<TExpand> const)
+           Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    return ClearSpaceStringBase_<Tag<TExpand> const>::_clearSpace_(me, size, pos_begin, pos_end);
+    return ClearSpaceStringBase_<Tag<TExpand> >::_clearSpace_(me, size, pos_begin, pos_end);
 }
 
 template<typename TValue, typename TPosition, typename TExpand>
@@ -471,14 +402,10 @@ _clearSpace(TValue * me,
            TPosition pos_begin,
            TPosition pos_end,
            size_t limit,
-           Tag<TExpand> const)
+           Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    return ClearSpaceStringBase_<Tag<TExpand> const>::_clearSpace_(me, size, pos_begin, pos_end, limit);
+    return ClearSpaceStringBase_<Tag<TExpand> >::_clearSpace_(me, size, pos_begin, pos_end, limit);
 }
-
-///.Function.assign.param.target.type:.Adaption.char array
-///.Function.assign.param.source.type:.Adaption.char array
 
 //overload of binary version for strings:
 
@@ -487,7 +414,6 @@ inline typename EnableIf<IsCharType<TTargetValue> >::Type
 assign(TTargetValue * target,
        TSource & source)
 {
-SEQAN_CHECKPOINT
     typedef TTargetValue * TTarget;
     assign(target, source, typename DefaultOverflowImplicit<TTarget>::Type());
 }
@@ -496,7 +422,6 @@ inline typename EnableIf<IsCharType<TTargetValue> >::Type
 assign(TTargetValue * target,
        TSource const & source)
 {
-SEQAN_CHECKPOINT
     typedef TTargetValue * TTarget;
     assign(target, source, typename DefaultOverflowImplicit<TTarget>::Type());
 }
@@ -505,10 +430,9 @@ template<typename TTargetValue, typename TSource, typename TExpand>
 inline void
 assign(TTargetValue * target,
        TSource const & source,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AssignString_<Tag<TExpand> const>::assign_(target, source);
+    AssignString_<Tag<TExpand> >::assign_(target, source);
 }
 
 template<typename TTargetValue, typename TSource, typename TExpand>
@@ -516,10 +440,9 @@ inline void
 assign(TTargetValue * target,
        TSource const & source,
        size_t limit,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AssignString_<Tag<TExpand> const>::assign_(target, source, limit);
+    AssignString_<Tag<TExpand> >::assign_(target, source, limit);
 }
 
 //____________________________________________________________________________
@@ -529,10 +452,9 @@ template<typename TTargetValue, typename TSourceValue, typename TExpand>
 inline void
 assign(TTargetValue * target,
        TSourceValue const * source,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AssignString_<Tag<TExpand> const>::assign_(target, source);
+    AssignString_<Tag<TExpand> >::assign_(target, source);
 }
 
 template<typename TTargetValue, typename TSourceValue, typename TExpand>
@@ -540,13 +462,10 @@ inline void
 assign(TTargetValue * target,
        TSourceValue const * source,
        size_t limit,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AssignString_<Tag<TExpand> const>::assign_(target, source, limit);
+    AssignString_<Tag<TExpand> >::assign_(target, source, limit);
 }
-
-///.Function.move.param.target.type:Adaption.char array
 
 //overload of binary version for strings:
 
@@ -555,7 +474,6 @@ inline void
 move(TTargetValue * & target,
      TSource & source)
 {
-SEQAN_CHECKPOINT
     target = source;
 }
 template<typename TTargetValue, typename TSource>
@@ -563,7 +481,6 @@ inline void
 move(TTargetValue * & target,
      TSource const & source)
 {
-SEQAN_CHECKPOINT
     target = source;
 }
 
@@ -572,17 +489,13 @@ SEQAN_CHECKPOINT
 // append
 //////////////////////////////////////////////////////////////////////////////
 
-///.Function.append.param.target.type:.Adaption.char array
-///.Function.append.param.source.type:.Adaption.char array
-
 template<typename TTargetValue, typename TSource, typename TExpand>
 inline void
 append(TTargetValue * target,
        TSource const & source,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AppendString_<Tag<TExpand> const>::append_(target, source);
+    AppendString_<Tag<TExpand> >::append_(target, source);
 }
 
 template<typename TTargetValue, typename TSource, typename TExpand>
@@ -590,10 +503,9 @@ inline void
 append(TTargetValue * target,
        TSource const & source,
        size_t limit,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AppendString_<Tag<TExpand> const>::append_(target, source, limit);
+    AppendString_<Tag<TExpand> >::append_(target, source, limit);
 }
 
 //____________________________________________________________________________
@@ -603,10 +515,9 @@ template<typename TTargetValue, typename TSourceValue, typename TExpand>
 inline void
 append(TTargetValue * target,
        TSourceValue const * source,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AppendString_<Tag<TExpand> const>::append_(target, source);
+    AppendString_<Tag<TExpand> >::append_(target, source);
 }
 
 template<typename TTargetValue, typename TSourceValue, typename TExpand>
@@ -614,29 +525,24 @@ inline void
 append(TTargetValue * target,
        TSourceValue const * source,
        size_t limit,
-       Tag<TExpand> const)
+       Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    AppendString_<Tag<TExpand> const>::append_(target, source, limit);
+    AppendString_<Tag<TExpand> >::append_(target, source, limit);
 }
 
 //////////////////////////////////////////////////////////////////////////////
 // replace
 //////////////////////////////////////////////////////////////////////////////
 
-///.Function.replace.param.target.type:.Adaption.char array
-///.Function.replace.param.source.type:.Adaption.char array
-
 template<typename TTargetValue, typename TSource, typename TExpand>
 inline void
 replace(TTargetValue * target,
         size_t pos_begin,
         size_t pos_end,
         TSource const & source,
-        Tag<TExpand> const)
+        Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    ReplaceString_<Tag<TExpand> const>::replace_(target, pos_begin, pos_end, source);
+    ReplaceString_<Tag<TExpand> >::replace_(target, pos_begin, pos_end, source);
 }
 
 template<typename TTargetValue, typename TSource, typename TExpand>
@@ -646,10 +552,9 @@ replace(TTargetValue * target,
         size_t pos_end,
         TSource const & source,
         size_t limit,
-        Tag<TExpand> const)
+        Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    ReplaceString_<Tag<TExpand> const>::replace_(target, pos_begin, pos_end, source, limit);
+    ReplaceString_<Tag<TExpand> >::replace_(target, pos_begin, pos_end, source, limit);
 }
 //____________________________________________________________________________
 //this variant is a workaround for the "const array"-bug of VC++
@@ -660,10 +565,9 @@ replace(TTargetValue * target,
         size_t pos_begin,
         size_t pos_end,
         TSourceValue const * source,
-        Tag<TExpand> const)
+        Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    ReplaceString_<Tag<TExpand> const>::replace_(target, pos_begin, pos_end, source);
+    ReplaceString_<Tag<TExpand> >::replace_(target, pos_begin, pos_end, source);
 }
 
 template<typename TTargetValue, typename TSourceValue, typename TExpand>
@@ -673,10 +577,9 @@ replace(TTargetValue * target,
         size_t pos_end,
         TSourceValue const * source,
         size_t limit,
-        Tag<TExpand> const)
+        Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    ReplaceString_<Tag<TExpand> const>::replace_(target, pos_begin, pos_end, source, limit);
+    ReplaceString_<Tag<TExpand> >::replace_(target, pos_begin, pos_end, source, limit);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -688,7 +591,7 @@ replace(TTargetValue * target,
         typename Iterator<TTargetValue *, Rooted>::Type pos_begin,
         typename Iterator<TTargetValue *, Rooted>::Type pos_end,
         TSource const & source,
-        Tag<TExpand> const tag)
+        Tag<TExpand> tag)
 {
     replace(target, position(pos_begin), position(pos_end), source, tag);
 }
@@ -699,23 +602,22 @@ replace(TTargetValue * target,
         typename Iterator<TTargetValue *, Rooted>::Type pos_end,
         TSource const & source,
         size_t limit,
-        Tag<TExpand> const tag)
+        Tag<TExpand> tag)
 {
     replace(target, position(pos_begin), position(pos_end), source, limit, tag);
 }
 */
 //////////////////////////////////////////////////////////////////////////////
-///.Function.resize.param.object.type:Adaption.char array
-
 template <typename TValue, typename TSize, typename TExpand>
 inline size_t
 resize(
     TValue * me,
     TSize new_length,
-    Tag<TExpand> const &)
+    Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    return _Resize_String<Tag<TExpand> const>::resize_(me, new_length);
+    if (static_cast<TSize>(std::strlen(me)) > new_length)
+        me[new_length] = 0;
+    return std::strlen(me);
 }
 
 template <typename TValue, typename TSize, typename TExpand>
@@ -724,10 +626,13 @@ resize(
     TValue * me,
     TSize new_length,
     TValue const & val,
-    Tag<TExpand> const &)
+    Tag<TExpand>)
 {
-SEQAN_CHECKPOINT
-    return _Resize_String<Tag<TExpand> const>::resize_(me, new_length, val);
+    TSize old_length = std::strlen(me);
+    if (old_length < new_length)
+        std::memset(me + old_length, int(val), new_length - old_length);
+    me[new_length] = 0;
+    return std::strlen(me);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -740,7 +645,6 @@ TLeftValue const *
 operator += (TLeftValue * left,
              TRight const & right)
 {
-SEQAN_CHECKPOINT
     append(left, right);
     return left;
 }
@@ -752,7 +656,6 @@ inline bool
 isEqual(TLeftValue * left,
         TRight const & right)
 {
-SEQAN_CHECKPOINT
     typename Comparator<TLeftValue *>::Type _lex(left, right);
     return isEqual(_lex);
 }
@@ -762,7 +665,6 @@ inline bool
 operator == (TLeftValue * left,
             TRight const & right)
 {
-SEQAN_CHECKPOINT
     typename Comparator<TLeftValue *>::Type _lex(left, right);
     return isEqual(_lex);
 }
@@ -774,7 +676,6 @@ inline bool
 isNotEqual(TLeftValue * left,
            TRight const & right)
 {
-SEQAN_CHECKPOINT
     typename Comparator<TLeftValue *>::Type _lex(left, right);
     return isNotEqual(_lex);
 }
@@ -784,7 +685,6 @@ inline bool
 operator != (TLeftValue * left,
              TRight const & right)
 {
-SEQAN_CHECKPOINT
     typename Comparator<TLeftValue *>::Type _lex(left, right);
     return isNotEqual(_lex);
 }
@@ -797,7 +697,6 @@ inline bool
 isLess(TLeftValue * left,
        TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isLess(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 /*
@@ -806,7 +705,6 @@ inline bool
 operator < (TLeftValue * left,
             TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isLess(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 */
@@ -817,7 +715,6 @@ inline bool
 isLessOrEqual(TLeftValue * left,
              TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isLessOrEqual(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 /*
@@ -826,7 +723,6 @@ inline bool
 operator <= (TLeftValue * left,
              TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isLessOrEqual(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 */
@@ -837,7 +733,6 @@ inline bool
 isGreater(TLeftValue * left,
         TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isGreater(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 /*
@@ -846,7 +741,6 @@ inline bool
 operator > (TLeftValue * left,
         TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isGreater(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 */
@@ -857,7 +751,6 @@ inline bool
 isGreaterOrEqual(TLeftValue * left,
         TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isGreaterOrEqual(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 /*
@@ -866,7 +759,6 @@ inline bool
 operator >= (TLeftValue * left,
         TRight const & right)
 {
-SEQAN_CHECKPOINT
     return isGreaterOrEqual(left, right, typename DefaultPrefixOrder<TLeftValue *>::Type());
 }
 */

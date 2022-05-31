@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,12 +37,14 @@
 // prototypes for common metafunctions like Value<>, functions assign() etc.
 // ==========================================================================
 
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_BASIC_FUNDAMENTAL_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_BASIC_BASIC_FUNDAMENTAL_H_
+#ifndef SEQAN_INCLUDE_SEQAN_BASIC_BASIC_FUNDAMENTAL_H_
+#define SEQAN_INCLUDE_SEQAN_BASIC_BASIC_FUNDAMENTAL_H_
 
 // --------------------------------------------------------------------------
 // Prerequisites
 // --------------------------------------------------------------------------
+
+#include <algorithm>
 
 #include <seqan/platform.h>
 #include <seqan/basic/basic_metaprogramming.h>
@@ -50,6 +52,9 @@
 // --------------------------------------------------------------------------
 // Sub Module Headers
 // --------------------------------------------------------------------------
+
+// Macros for deprecating code.
+#include <seqan/basic/macro_deprecated.h>
 
 // Pseudo header with documentation for builtin functions.
 #include <seqan/basic/builtin_functions.h>
@@ -59,6 +64,9 @@
 
 // Basic tag-related code.
 #include <seqan/basic/fundamental_tags.h>
+
+// Functions and metafunctions to use contiguous chunks of memory
+#include <seqan/basic/fundamental_chunking.h>
 
 // Definition of assign(), set(), move().
 #include <seqan/basic/fundamental_transport.h>
@@ -77,4 +85,4 @@
 // Hosted type.
 #include <seqan/basic/hosted_type_interface.h>
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_HOSTED_TYPE_INTERFACE_H_
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_BASIC_HOSTED_TYPE_INTERFACE_H_

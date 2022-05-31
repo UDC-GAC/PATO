@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,15 @@
 // DAMAGE.
 //
 // ==========================================================================
-// Author: Andres Gogol-Döring <andreas.doering@mdc-berlin.de>
+// Author: David Weese <david.weese@fu-berlin.de>
 // ==========================================================================
 // Triple base class.
 // ==========================================================================
 
 // TODO(holtgrew): What about move construction? Useful for pairs of strings and such. Tricky to implement since ints have no move constructor, for example.
 
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_TRIPLE_BASE_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_BASIC_TRIPLE_BASE_H_
+#ifndef SEQAN_INCLUDE_SEQAN_BASIC_TRIPLE_BASE_H_
+#define SEQAN_INCLUDE_SEQAN_BASIC_TRIPLE_BASE_H_
 
 namespace seqan {
 
@@ -49,70 +49,85 @@ namespace seqan {
 // Tags, Classes, Enums
 // ============================================================================
 
-/**
-.Class.Triple:
-..cat:Aggregates
-..concept:Concept.Aggregate
-..summary:Stores three arbitrary objects.
-..signature:Triple<T1[, T2[, T3[, TSpec]]]>
-..param.T1:The type of the first object.
-..param.T2:The type of the second object.
-...default:$T1$
-..param.T3:The type of the third object.
-...default:$T2$
-..param.TSpec:The specializing type.
-...default:$void$, no compression (faster access).
-.Memfunc.Triple#Triple:
-..class:Class.Triple
-..summary:Constructor
-..signature:Triple<T1, T2, T3[, TSpec]> ()
-..signature:Triple<T1, T2, T3[, TSpec]> (triple)
-..signature:Triple<T1, T2, T3[, TSpec]> (i1, i2, i3)
-..param.triple:Other Triple object. (copy constructor)
-..param.i1:T1 object.
-..param.i2:T2 object.
-..param.i3:T3 object.
-.Memvar.Triple#i1:
-..class:Class.Triple
-..summary:T1 object
-.Memvar.Triple#i2:
-..class:Class.Triple
-..summary:T2 object
-.Memvar.Triple#i3:
-..class:Class.Triple
-..summary:T3 object
-..include:seqan/basic.h
-*/
+/*!
+ * @class Triple
+ * @implements ComparableConcept
+ * @implements LessThanComparableConcept
+ * @headerfile <seqan/basic.h>
+ * @brief Store three arbitrary object.
+ *
+ * @signature template <typename T1, typename T3, typename T3[, typename TSpec]>
+ *            class Triple;
+ *
+ * @tparam T1 Type of first object.
+ * @tparam T2 Type of second object.
+ * @tparam T3 Type of third object.
+ * @tparam TSpec Tag for specialization (Default: <tt>void</tt>).
+ */
 
-template <typename T1_, typename T2_ = T1_, typename T3_ = T1_, typename TSpec = void>
+/*!
+ * @fn Triple::Triple
+ * @brief Default and copy construction and construction with three objects.
+ *
+ * @signature Triple::Triple()
+ * @signature Triple::Triple(other)
+ * @signature Triple::Triple(x1, x2, x3)
+ *
+ * @param[in] other Other Triple object to copy from.
+ * @param[in] x1 First object.
+ * @param[in] x2 Second object.
+ * @param[in] x3 Third object.
+ *
+ * <tt>x1</tt> must be convertible to T1, <tt>x2</tt> to T2, <tt>x3</tt> to T3.  For example, a Triple of three
+ * <tt>int</tt> values can be constructed with three <tt>double</tt> values.
+ */
+
+/*!
+ * @var T1 Triple::i1
+ * @brief First value of triple.
+ *
+ * signature T1 Triple::i1;
+ */
+
+/*!
+ * @var T2 Triple::i2
+ * @brief Second value of triple.
+ *
+ * signature T2 Triple::i2;
+ */
+
+/*!
+ * @var T3 Triple::i3
+ * @brief Third value of triple.
+ *
+ * signature T3 Triple::i3;
+ */
+
+template <typename T1, typename T2 = T1, typename T3 = T1, typename TSpec = void>
 struct Triple
 {
-    typedef T1_ T1;
-    typedef T2_ T2;
-    typedef T3_ T3;
-
     // ------------------------------------------------------------------------
     // Members
     // ------------------------------------------------------------------------
 
-    T1_ i1;
-    T2_ i2;
-    T3_ i3;
+    T1 i1;
+    T2 i2;
+    T3 i3;
 
     // ------------------------------------------------------------------------
     // Constructors
     // ------------------------------------------------------------------------
 
-    inline Triple() : i1(T1_()), i2(T2_()), i3(T3_()) {}
-    
+    inline Triple() : i1(T1()), i2(T2()), i3(T3()) {}
+
     inline Triple(Triple const & _p)
             : i1(_p.i1), i2(_p.i2), i3(_p.i3) {}
-    
-    inline Triple(T1_ const & _i1, T2_ const & _i2, T3_ const & _i3)
+
+    inline Triple(T1 const & _i1, T2 const & _i2, T3 const & _i3)
             : i1(_i1), i2(_i2), i3(_i3) {}
-    
-    template <typename T1__, typename T2__, typename T3__, typename TSpec__>
-    inline Triple(Triple<T1__, T2__, T3__, TSpec__> const & _p)
+
+    template <typename T1_, typename T2_, typename T3_, typename TSpec__>
+    inline Triple(Triple<T1_, T2_, T3_, TSpec__> const & _p)
             : i1(getValueI1(_p)), i2(getValueI2(_p)), i3(getValueI3(_p)) {}
 
     // TODO(holtgrew): Move comparison operators to global functions?
@@ -121,7 +136,7 @@ struct Triple
     {
         return i1 == other.i1 && i2 == other.i2 && i3 == other.i3;
     }
-    
+
     inline bool
     operator<(Triple const & other) const
     {
@@ -143,7 +158,16 @@ struct Triple
 // Metafunction LENGTH
 // -----------------------------------------------------------------------
 
-///.Metafunction.LENGTH.param.T.type:Class.Triple
+/*!
+ * @mfn Triple#LENGTH
+ * @brief Return (only type-depending) length of a triple: 3.
+ *
+ * @signature LENGTH<TTriple>::VALUE
+ *
+ * @tparam TTriple The Triple specialization to get the length of.
+ *
+ * @return VALUE Length of the triple (always 3).
+ */
 
 template <typename T1, typename T2, typename T3, typename TSpec>
 struct LENGTH<Triple<T1, T2, T3, TSpec> >
@@ -157,7 +181,15 @@ struct LENGTH<Triple<T1, T2, T3, TSpec> >
 // Metafunction Value
 // -----------------------------------------------------------------------
 
-///.Metafunction.Value.param.T.type:Class.Triple
+/*!
+ * @mfn Triple#Value
+ * @brief Return i<sup>th</sup> type of the triple.
+ *
+ * @signature Value<TTriple, I>::Type;
+ *
+ * @tparam TTriple The Triple to return the <tt>I</tt>-th value of.
+ * @tparam I       The index of the value to return, one of 1, 2, or 3.
+ */
 
 template <typename T1, typename T2, typename T3, typename TSpec>
 struct Value<Triple<T1, T2, T3, TSpec>, 1>
@@ -181,7 +213,16 @@ struct Value<Triple<T1, T2, T3, TSpec>, 3 >
 // Metafunction Spec
 // -----------------------------------------------------------------------
 
-///.Metafunction.Spec.param.T.type:Class.Triple
+/*!
+ * @mfn Triple#Spec
+ * @brief Return specialization tag.
+ *
+ * @signature Spec<TTriple>::Type;
+ *
+ * @tparam TTriple The Triple specialization to query for the specialization tag.
+ *
+ * @return Type The specialization type.
+ */
 
 template <typename T1, typename T2, typename T3, typename TSpec>
 struct Spec<Triple<T1, T2, T3, TSpec> >
@@ -197,16 +238,43 @@ struct Spec<Triple<T1, T2, T3, TSpec> >
 // Function operator<<();  Stream Output.
 // -----------------------------------------------------------------------
 
-template <typename T1_, typename T2_, typename T3_, typename TSpec>
-std::ostream & operator<<(std::ostream & out, Triple<T1_,T2_,T3_,TSpec> const & t)
+template <typename TTarget, typename T1, typename T2, typename T3, typename TSpec>
+inline void
+write(TTarget &target, Triple<T1, T2, T3, TSpec> const & p)
 {
-    out << "< " << getValueI1(t) << " , " << getValueI2(t) << " , " << getValueI3(t) << " >";
-    return out;
+    write(target, "< ");
+    write(target, getValueI1(p));
+    write(target, " , ");
+    write(target, getValueI2(p));
+    write(target, " , ");
+    write(target, getValueI3(p));
+    write(target, " >");
+}
+
+template <typename TStream, typename T1, typename T2, typename T3, typename TSpec>
+inline TStream &
+operator<<(TStream & target,
+           Triple<T1, T2, T3, TSpec> const & source)
+{
+    typename DirectionIterator<TStream, Output>::Type it = directionIterator(target, Output());
+    write(it, source);
+    return target;
 }
 
 // -----------------------------------------------------------------------
 // Function getValueIX()
 // -----------------------------------------------------------------------
+
+/*!
+ * @fn Triple#getValueI1
+ * @brief The get-value of the Triple's first entry.
+ *
+ * @signature T1 getValue(triple);
+ *
+ * @param[in] triple The triple to get entry from.
+ *
+ * @return T1 The first entry of the Triple.
+ */
 
 template <typename T1, typename T2, typename T3, typename TSpec>
 inline T1
@@ -215,12 +283,34 @@ getValueI1(Triple<T1, T2, T3, TSpec> const & triple)
     return triple.i1;
 }
 
+/*!
+ * @fn Triple#getValueI2
+ * @brief The get-value of the Triple's second entry.
+ *
+ * @signature T2 getValue(triple);
+ *
+ * @param[in] triple The triple to get entry from.
+ *
+ * @return T2 The second entry of the Triple.
+ */
+
 template <typename T1, typename T2, typename T3, typename TSpec>
 inline T2
 getValueI2(Triple<T1, T2, T3, TSpec> const & triple)
 {
     return triple.i2;
 }
+
+/*!
+ * @fn Triple#getValueI3
+ * @brief The get-value of the Triple's third entry.
+ *
+ * @signature T3 getValue(triple);
+ *
+ * @param[in] triple The triple to get entry from.
+ *
+ * @return T3 The third entry of the Triple.
+ */
 
 template <typename T1, typename T2, typename T3, typename TSpec>
 inline T3
@@ -233,17 +323,47 @@ getValueI3(Triple<T1, T2, T3, TSpec> const & triple)
 // Function assignValueIX()
 // -----------------------------------------------------------------------
 
+/*!
+ * @fn Triple#assignValueI1
+ * @brief Set first entry of a triple.
+ *
+ * @signature void assignValueI1(triple, val);
+ *
+ * @param[in] triple The triple to get entry from.
+ * @param[in] val    Set the value of the Triple's first entry.
+ */
+
 template <typename T1, typename T2, typename T3, typename TSpec, typename T>
 inline void assignValueI1(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
 {
     triple.i1 = _i;
 }
 
+/*!
+ * @fn Triple#assignValueI2
+ * @brief Set second entry of a triple.
+ *
+ * @signature void assignValueI2(triple, val);
+ *
+ * @param[in] triple The triple to get entry from.
+ * @param[in] val    Set the value of the Triple's second entry.
+ */
+
 template <typename T1, typename T2, typename T3, typename TSpec, typename T>
 inline void assignValueI2(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
 {
     triple.i2 = _i;
 }
+
+/*!
+ * @fn Triple#assignValueI3
+ * @brief Set third entry of a triple.
+ *
+ * @signature void assignValueI3(triple, val);
+ *
+ * @param[in] triple The triple to get entry from.
+ * @param[in] val    Set the value of the Triple's third entry.
+ */
 
 template <typename T1, typename T2, typename T3, typename TSpec, typename T>
 inline void assignValueI3(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
@@ -255,17 +375,47 @@ inline void assignValueI3(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
 // Function setValueIX()
 // -----------------------------------------------------------------------
 
+/*!
+ * @fn Triple#setValueI1
+ * @brief Set first entry of a triple.
+ *
+ * @signature void setValueI1(triple, val);
+ *
+ * @param[in] triple The triple to get entry from.
+ * @param[in] val    Set the value of the Triple's first entry.
+ */
+
 template <typename T1, typename T2, typename T3, typename TSpec, typename T>
 inline void setValueI1(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
 {
     set(triple.i1, _i);
 }
 
+/*!
+ * @fn Triple#setValueI2
+ * @brief Set second entry of a triple.
+ *
+ * @signature void setValueI2(triple, val);
+ *
+ * @param[in] triple The triple to get entry from.
+ * @param[in] val    Set the value of the Triple's second entry.
+ */
+
 template <typename T1, typename T2, typename T3, typename TSpec, typename T>
 inline void setValueI2(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
 {
     set(triple.i2, _i);
 }
+
+/*!
+ * @fn Triple#setValueI3
+ * @brief Set third entry of a triple.
+ *
+ * @signature void setValueI3(triple, val);
+ *
+ * @param[in] triple The triple to get entry from.
+ * @param[in] val    Set the value of the Triple's third entry.
+ */
 
 template <typename T1, typename T2, typename T3, typename TSpec, typename T>
 inline void setValueI3(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
@@ -300,11 +450,11 @@ inline void moveValueI3(Triple<T1, T2, T3, TSpec> & triple, T const & _i)
 // -----------------------------------------------------------------------
 
 template <
-    typename L1, typename L2, typename L3, typename LCompression, 
-    typename R1, typename R2, typename R3, typename RCompression>
+    typename L1, typename L2, typename L3, typename LPack,
+    typename R1, typename R2, typename R3, typename RPack>
 inline bool
-operator<(Triple<L1, L2, L3, LCompression> const & _left,
-          Triple<R1, R2, R3, RCompression> const & _right)
+operator<(Triple<L1, L2, L3, LPack> const & _left,
+          Triple<R1, R2, R3, RPack> const & _right)
 {
     return _left.i1 < _right.i1 || (_left.i1 == _right.i1 && _left.i2 < _right.i2) || (_left.i1 == _right.i1 && _left.i2 == _right.i2 && _left.i3 < _right.i3);
 }
@@ -314,11 +464,11 @@ operator<(Triple<L1, L2, L3, LCompression> const & _left,
 // -----------------------------------------------------------------------
 
 template <
-    typename L1, typename L2, typename L3, typename LCompression, 
-    typename R1, typename R2, typename R3, typename RCompression>
+    typename L1, typename L2, typename L3, typename LPack,
+    typename R1, typename R2, typename R3, typename RPack>
 inline bool
-operator>(Triple<L1, L2, L3, LCompression> const & _left,
-          Triple<R1, R2, R3, RCompression> const & _right)
+operator>(Triple<L1, L2, L3, LPack> const & _left,
+          Triple<R1, R2, R3, RPack> const & _right)
 {
     return _left.i1 > _right.i1 || (_left.i1 == _right.i1 && _left.i2 > _right.i2) || (_left.i1 == _right.i1 && _left.i2 == _right.i2 && _left.i3 > _right.i3);
 }
@@ -328,11 +478,11 @@ operator>(Triple<L1, L2, L3, LCompression> const & _left,
 // -----------------------------------------------------------------------
 
 template <
-    typename L1, typename L2, typename L3, typename LCompression, 
-    typename R1, typename R2, typename R3, typename RCompression>
+    typename L1, typename L2, typename L3, typename LPack,
+    typename R1, typename R2, typename R3, typename RPack>
 inline bool
-operator<=(Triple<L1, L2, L3, LCompression> const & _left,
-           Triple<R1, R2, R3, RCompression> const & _right)
+operator<=(Triple<L1, L2, L3, LPack> const & _left,
+           Triple<R1, R2, R3, RPack> const & _right)
 {
     return !operator>(_left, _right);
 }
@@ -342,11 +492,11 @@ operator<=(Triple<L1, L2, L3, LCompression> const & _left,
 // -----------------------------------------------------------------------
 
 template <
-    typename L1, typename L2, typename L3, typename LCompression, 
-    typename R1, typename R2, typename R3, typename RCompression>
+    typename L1, typename L2, typename L3, typename LPack,
+    typename R1, typename R2, typename R3, typename RPack>
 inline bool
-operator==(Triple<L1, L2, L3, LCompression> const & _left,
-           Triple<R1, R2, R3, RCompression> const & _right)
+operator==(Triple<L1, L2, L3, LPack> const & _left,
+           Triple<R1, R2, R3, RPack> const & _right)
 {
     return _left.i1 == _right.i1 && _left.i2 == _right.i2 && _left.i3 == _right.i3;
 }
@@ -356,11 +506,11 @@ operator==(Triple<L1, L2, L3, LCompression> const & _left,
 // -----------------------------------------------------------------------
 
 template <
-    typename L1, typename L2, typename L3, typename LCompression, 
-    typename R1, typename R2, typename R3, typename RCompression>
+    typename L1, typename L2, typename L3, typename LPack,
+    typename R1, typename R2, typename R3, typename RPack>
 inline bool
-operator>=(Triple<L1, L2, L3, LCompression> const & _left,
-           Triple<R1, R2, R3, RCompression> const & _right)
+operator>=(Triple<L1, L2, L3, LPack> const & _left,
+           Triple<R1, R2, R3, RPack> const & _right)
 {
     return !operator<(_left, _right);
 }
@@ -370,14 +520,14 @@ operator>=(Triple<L1, L2, L3, LCompression> const & _left,
 // -----------------------------------------------------------------------
 
 template <
-    typename L1, typename L2, typename L3, typename LCompression, 
-    typename R1, typename R2, typename R3, typename RCompression>
+    typename L1, typename L2, typename L3, typename LPack,
+    typename R1, typename R2, typename R3, typename RPack>
 inline bool
-operator!=(Triple<L1, L2, L3, LCompression> const & _left,
-           Triple<R1, R2, R3, RCompression> const & _right)
+operator!=(Triple<L1, L2, L3, LPack> const & _left,
+           Triple<R1, R2, R3, RPack> const & _right)
 {
     return !operator==(_left, _right);
 }
 }  // namespace seqan
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_TRIPLE_BASE_H_
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_BASIC_TRIPLE_BASE_H_

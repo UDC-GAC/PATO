@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,8 @@
 
 // TODO(holtgrew): I think the interface is not completely specified here. Also, we could maybe have more generic implementations for operators?
 
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_ITERATOR_BASE_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_BASIC_ITERATOR_BASE_H_
+#ifndef SEQAN_INCLUDE_SEQAN_BASIC_ITERATOR_BASE_H_
+#define SEQAN_INCLUDE_SEQAN_BASIC_ITERATOR_BASE_H_
 
 namespace seqan {
 
@@ -49,18 +49,18 @@ namespace seqan {
 // Tags, Classes, Enums
 // ============================================================================
 
-/**
-.Class.Iter:
-..cat:Basic
-..summary:Iterator that is used to traverse containers.
-..signature:Iter<TContainer, TSpec>
-..param.TContainer:Type of the container that can be iterated by $Iter$.
-...metafunction:Metafunction.Container
-..param.TSpec:The specializing type.
-...metafunction:Metafunction.Spec
-..implements:Concept.IteratorAssociatedTypesConcept
-..include:seqan/basic.h
-*/
+/*!
+ * @class Iter
+ * @implements IteratorAssociatedTypesConcept
+ * @headerfile <seqan/basic.h>
+ * @brief Base class for iterators to traverse containers.
+ *
+ * @signature template <typename TContainer, typename TSpec>
+ *            class Iter;
+ *
+ * @tparam TContainer The type of the container to iterate.
+ * @tparam TSpec      Type to use for specializing the <tt>Iter</tt> class.
+ */
 
 template <typename TContainer, typename TSpec>
 class Iter;
@@ -73,14 +73,17 @@ class Iter;
 // Metafunction IterComplementConst
 // ----------------------------------------------------------------------------
 
-/**
-.Metafunction.IterComplementConst:
-..cat:Basic
-..summary:Complement the "constness" of the container of an iterator.
-..signature:IterComplementConst<TIterator>
-..param.TIterator:The iterator to toggle the constness of its container for.
-..include:seqan/basic.h
-*/
+/*!
+ * @mfn Iter#IterComplementConst
+ * @brief Metafunction that complements the const-ness of the container of an iterator.
+ *
+ * @signature IterComplementConst<TIter>::Type
+ *
+ * @tparam TIter The @link Iter @endlink to complement the container constness of.
+ *
+ * @return Type The type of the iterator that is the same as <tt>TIter</tt> except that the const-ness of the
+ *              container is complemented.
+ */
 
 template <typename TIterator>
 struct IterComplementConst;
@@ -104,14 +107,16 @@ struct IterComplementConst<Iter<TContainer, TSpec> const>
 // Metafunction IterMakeConst
 // ----------------------------------------------------------------------------
 
-/**
-.Metafunction.IterMakeConst:
-..cat:Basic
-..summary:Make the container of an Iter const.
-..signature:IterMakeConst<TIterator>
-..param.TIterator:The iterator make the container const for.
-..include:seqan/basic.h
-*/
+/*!
+ * @mfn Iter#IterMakeConst
+ * @brief Metafunction to make enforce const-ness of the container of an iterator.
+ *
+ * @signature IterMakeConst<TIter>::Type
+ *
+ * @tparam TIter The iterator type to make the container const of.
+ *
+ * @return Type The resulting Iter type with a const container.
+ */
 
 template <typename TIterator>
 struct IterMakeConst;
@@ -130,7 +135,16 @@ struct IterMakeConst<Iter<TContainer, TSpec> const>
 // Metafunction Spec
 // ----------------------------------------------------------------------------
 
-///.Metafunction.Spec.param.T.type:Class.Iter
+/*!
+ * @mfn Iter#Spec
+ * @brief Return specialization tag of the <tt>Iter</tt> specialization.
+ *
+ * @signature Spec<TIter>::Type
+ *
+ * @tparam TIter The <tt>Iter</tt> class to get specialization tag of.
+ *
+ * @return Type The specialization tag used for the <tt>Iter</tt>.
+ */
 
 template <typename TContainer, typename TSpec>
 struct Spec<Iter<TContainer, TSpec> >
@@ -148,8 +162,6 @@ struct Spec<Iter<TContainer, TSpec> const>
 // Metafunction Value
 // ----------------------------------------------------------------------------
 
-///.Metafunction.Value.param.T.type:Class.Iter
-
 template <typename TContainer, typename TSpec>
 struct Value<Iter<TContainer, TSpec> >:
     Value<TContainer>
@@ -165,8 +177,6 @@ struct Value<Iter<TContainer, TSpec> const>:
 // ----------------------------------------------------------------------------
 // Metafunction GetValue
 // ----------------------------------------------------------------------------
-
-///.Metafunction.GetValue.param.T.type:Class.Iter
 
 template <typename TContainer, typename TSpec>
 struct GetValue<Iter<TContainer, TSpec> >:
@@ -184,8 +194,6 @@ struct GetValue<Iter<TContainer, TSpec> const>:
 // Metafunction Reference
 // ----------------------------------------------------------------------------
 
-///.Metafunction.Reference.param.T.type:Class.Iter
-
 template <typename TContainer, typename TSpec>
 struct Reference<Iter<TContainer, TSpec> >:
     Reference<TContainer>
@@ -202,7 +210,16 @@ struct Reference<Iter<TContainer, TSpec> const>:
 // Metafunction Container
 // ----------------------------------------------------------------------------
 
-///.Metafunction.Container.param.T.type:Class.Iter
+/*!
+ * @mfn Iter#Container
+ * @brief The container type of the iterator.
+ *
+ * @signature Container<TIter>::Type
+ *
+ * @tparam TIter The <tt>TIter</tt> class to query for its container type.
+ *
+ * @return Type The container type of <tt>TIter</tt>
+ */
 
 template <typename T> struct Container;
 
@@ -230,7 +247,6 @@ template <typename TContainer, typename TSpec>
 inline typename Reference<Iter<TContainer, TSpec> >::Type
 operator*(Iter<TContainer, TSpec> & me)
 {
-    SEQAN_CHECKPOINT;
     return value(me);
 }
 
@@ -238,7 +254,6 @@ template <typename TContainer, typename TSpec>
 inline typename Reference<Iter<TContainer, TSpec> const>::Type
 operator*(Iter<TContainer, TSpec> const & me)
 {
-    SEQAN_CHECKPOINT;
     return value(me);
 }
 
@@ -250,7 +265,6 @@ template <typename TContainer, typename TSpec>
 inline Iter<TContainer, TSpec> const &
 operator++(Iter<TContainer, TSpec> & me)
 {
-    SEQAN_CHECKPOINT;
     goNext(me);
     return me;
 }
@@ -259,7 +273,6 @@ template <typename TContainer, typename TSpec>
 inline Iter<TContainer, TSpec>
 operator++(Iter<TContainer, TSpec> & me, int)
 {
-    SEQAN_CHECKPOINT;
     Iter<TContainer, TSpec> temp_(me);
     goNext(me);
     return temp_;
@@ -273,7 +286,6 @@ template <typename TContainer, typename TSpec>
 inline Iter<TContainer, TSpec> const &
 operator--(Iter<TContainer, TSpec> & me)
 {
-    SEQAN_CHECKPOINT;
     goPrevious(me);
     return me;
 }
@@ -282,7 +294,6 @@ template <typename TContainer, typename TSpec>
 inline Iter<TContainer, TSpec>
 operator--(Iter<TContainer, TSpec> & me, int)
 {
-    SEQAN_CHECKPOINT;
     Iter<TContainer, TSpec> temp_(me);
     goPrevious(me);
     return temp_;
@@ -296,7 +307,6 @@ template <typename TContainer, typename TSpec, typename TSize>
 inline Iter<TContainer, TSpec>
 operator+(Iter<TContainer, TSpec> const & me, TSize size)
 {
-    SEQAN_CHECKPOINT;
     Iter<TContainer, TSpec> temp_(me);
     goFurther(temp_, size);
     return temp_;
@@ -310,7 +320,6 @@ template <typename TContainer, typename TSpec, typename TSize>
 inline Iter<TContainer, TSpec> const &
 operator+=(Iter<TContainer, TSpec> & me, TSize size)
 {
-    SEQAN_CHECKPOINT;
     goFurther(me, size);
     return me;
 }
@@ -326,7 +335,6 @@ template <typename TContainer, typename TSpec, typename TSize>
 inline Iter<TContainer, TSpec>
 operator - (Iter<TContainer, TSpec> & me, TSize size)
 {
-SEQAN_CHECKPOINT
     Iter<TContainer, TSpec> temp_(me);
     goFurther(temp_, -size);
     return temp_;
@@ -336,7 +344,6 @@ template <typename TContainer, typename TSpec, typename TSize>
 inline Iter<TContainer, TSpec>
 operator - (Iter<TContainer, TSpec> const & me, TSize size)
 {
-SEQAN_CHECKPOINT
     Iter<TContainer, TSpec> temp_(me);
     goFurther(temp_, -size);
     return temp_;
@@ -346,7 +353,6 @@ template <typename TContainer, typename TSpec, typename TSize>
 inline Iter<TContainer, TSpec> const &
 operator -= (Iter<TContainer, TSpec> & me, TSize size)
 {
-SEQAN_CHECKPOINT
     goFurther(me, -size);
     return me;
 }
@@ -361,10 +367,9 @@ inline typename Position<Iter<TContainer, TSpec> const>::Type
 position(Iter<TContainer, TSpec> const & me,
          TContainer2 const &)
 {
-    SEQAN_CHECKPOINT;
     return position(me);
 }
 
 }  // namespace seqan
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_ITERATOR_BASE_H_
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_BASIC_ITERATOR_BASE_H_

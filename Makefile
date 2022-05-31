@@ -3,12 +3,11 @@ BUILD=release
 INCLUDES+=-I include
 
 CXX=g++
-CXXFLAGS+=$(INCLUDES) -std=c++14
+CXXFLAGS+=-std=c++14
 
 cxxflags.release=-O3 -march=native -DNDEBUG
 
-# see: https://github.com/seqan/seqan/blob/master/include/seqan/basic/allocator_interface.h#L207-L214
-CXXFLAGS+=$(cxxflags.$(BUILD)) -Wno-alloc-size-larger-than -Wno-address-of-packed-member
+CXXFLAGS+=$(cxxflags.$(BUILD))
 
 LD=g++
 
@@ -32,7 +31,7 @@ pato.$(BUILD): $(OBJS)
 
 $(OBJSDIR)/$(BUILD)/%.o: $(SRCSDIR)/%.cpp
 	@mkdir -p $(OBJSDIR)/$(BUILD)
-	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
+	$(CXX) $(CXXFLAGS) -MMD -MP $(INCLUDES) -c $< -o $@
 
 clean:
 	rm -rf $(OBJSDIR) $(DESTDIR)

@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -40,14 +40,6 @@
 #include <map>
 
 #include <seqan/sequence.h>
-#include <seqan/misc/misc_random.h>
-
-
-//____________________________________________________________________________
-
-#ifdef SEQAN_SWITCH_USE_FORWARDS
-#include <seqan/map/map_generated_forwards.h>
-#endif
 
 //____________________________________________________________________________
 

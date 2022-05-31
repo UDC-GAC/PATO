@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,13 @@
 // DAMAGE.
 //
 // ==========================================================================
-// Author: Andres Gogol-Döring <andreas.doering@mdc-berlin.de>
+// Author: David Weese <david.weese@fu-berlin.de>
 // ==========================================================================
-// Packed Pair specialization.
+// Packed pair specialization.
 // ==========================================================================
 
-// Should this be called Packed and the tag be Packed?
-
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_PACKED_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_PACKED_H_
+#ifndef SEQAN_INCLUDE_SEQAN_BASIC_PAIR_PACKED_H_
+#define SEQAN_INCLUDE_SEQAN_BASIC_PAIR_PACKED_H_
 
 namespace seqan {
 
@@ -53,65 +51,82 @@ namespace seqan {
 // Specialization Packed Pair
 // ----------------------------------------------------------------------------
 
-/**
-.Spec.Packed Pair:
-..cat:Aggregates
-..general:Class.Pair
-..summary:Stores two arbitrary objects. Saves memory by disabling memory alignment.
-..signature:Pair<T1, T2, Compressed>
-..param.T1:The type of the first object.
-..param.T2:The type of the second object.
-..notes:Useful for external storage.
-..remarks:Memory access could be slower. Direct access to members by pointers is not allowed on all platforms.
-..remarks:Functions $value()$ is not implemented yet since there it would require using a proxy. Use $getValue()$, $assignValue()$, $moveValue()$, $setValue()$ instead.
-..include:seqan/basic.h
-.Memfunc.Pair#Pair.class:Spec.Packed Pair
-.Memvar.Pair#i1.class:Spec.Packed Pair
-.Memvar.Pair#i2.class:Spec.Packed Pair
-*/
+/*!
+ * @class PackedPair
+ * @extends Pair
+ * @headerfile <seqan/basic.h>
+ * @brief Stores two arbitrary objects. Saves memory by disabling memory alignment.
+ *
+ * @signature template <typename T1, typename T2>
+ *            class Pair<T1, T2, Pack>;
+ *
+ * @tparam T1 The type of the first object.
+ * @tparam T2 The type of the second object.
+ *
+ * Useful for external storage.
+ *
+ * Memory access could be slower.  Direct access to members by pointers is not allowed on all platforms.
+ *
+ * Functions <tt>value()</tt> is not implemented yet since there it would require using a proxy.  Use
+ * <tt>getValue()</tt>, <tt>assignValue()</tt>, <tt>moveValue()</tt>, <tt>setValue()</tt> instead.
+ */
 
-#ifdef PLATFORM_WINDOWS
-    #pragma pack(push,1)
-#endif
-template <typename T1_, typename T2_>
-struct Pair<T1_, T2_, Compressed>
+#pragma pack(push,1)
+template <typename T1, typename T2>
+struct Pair<T1, T2, Pack>
 {
-    typedef T1_ T1;
-    typedef T2_ T2;
-
     // ------------------------------------------------------------------------
     // Members
     // ------------------------------------------------------------------------
-
-    T1_ i1;
-    T2_ i2;
+    T1 i1{};
+    T2 i2{};
 
     // ------------------------------------------------------------------------
     // Constructors
     // ------------------------------------------------------------------------
 
-    inline Pair() : i1(T1_()), i2(T2_()) {}
+    // Pair() = default; does not work on gcc4.9, it issues warnings if T1/T2
+    // have no proper default constructor. >=gcc5.0 reports no warnings.
+    // Caused by yara_indexer build, demo_tutorial_indices_base and
+    // demo_tutorial_index_iterators_index_bidirectional_search.
+#if defined(COMPILER_GCC) && (__GNUC__ <= 4)
+    Pair() : i1(T1()), i2(T2()) {};
+#else
+    Pair() = default;
+#endif
 
-    inline Pair(Pair const &_p) : i1(_p.i1), i2(_p.i2) {}
+    // NOTE(marehr) intel compiler bug in 17.x and 18.x: defaulted copy-constructor
+    // in classes with `#pragma pack(push, 1)` seg-faults. This leads to a
+    // seg-fault in yara-mapper (app test case yara).
+#if defined(COMPILER_LINTEL) || defined(COMPILER_WINTEL)
+    Pair(Pair const & p) : i1(p.i1), i2(p.i2) {};
+#else
+    Pair(Pair const &) = default;
+#endif
+    Pair(Pair &&) = default;
+    ~Pair() = default;
+    Pair & operator=(Pair const &) = default;
+    Pair & operator=(Pair &&) = default;
 
-    inline Pair(T1_ const & _i1, T2_ const & _i2) : i1(_i1), i2(_i2) {}
+    Pair(T1 const & _i1, T2 const & _i2) : i1(_i1), i2(_i2) {}
 
-    template <typename T1__, typename T2__, typename TSpec__>
+    template <typename T1_, typename T2_, typename TSpec__>
     // TODO(holtgrew): explicit?
-    inline Pair(Pair<T1__, T2__, TSpec__> const &_p)
-            : i1(getValueI1(_p)), i2(getValueI2(_p)) {}
-}
-#ifndef PLATFORM_WINDOWS
-    __attribute__((packed))
-#endif
-    ;
-#ifdef PLATFORM_WINDOWS
-      #pragma pack(pop)
-#endif
+    Pair(Pair<T1_, T2_, TSpec__> const &_p) :
+        i1(getValueI1(_p)), i2(getValueI2(_p))
+    {}
+};
+#pragma pack(pop)
 
 // ============================================================================
 // Metafunctions
 // ============================================================================
+
+template <typename T1, typename T2>
+struct MakePacked< Pair<T1, T2> >
+{
+    typedef Pair<T1, T2, Pack> Type;
+};
 
 // ============================================================================
 // Functions
@@ -123,9 +138,9 @@ struct Pair<T1_, T2_, Compressed>
 
 // References to members to packed structs do not work.  Always copy.
 
-template <typename T1_, typename T2_>
+template <typename T1, typename T2>
 inline void
-set(Pair<T1_, T2_, Compressed> & p1, Pair<T1_, T2_, Compressed> & p2)
+set(Pair<T1, T2, Pack> & p1, Pair<T1, T2, Pack> & p2)
 {
     p1 = p2;
 }
@@ -136,9 +151,9 @@ set(Pair<T1_, T2_, Compressed> & p1, Pair<T1_, T2_, Compressed> & p2)
 
 // References to members to packed structs do not work.  Always copy.
 
-template <typename T1_, typename T2_>
+template <typename T1, typename T2>
 inline void
-move(Pair<T1_, T2_, Compressed> & p1, Pair<T1_, T2_, Compressed> & p2)
+move(Pair<T1, T2, Pack> & p1, Pair<T1, T2, Pack> & p2)
 {
     p1 = p2;
 }
@@ -150,13 +165,13 @@ move(Pair<T1_, T2_, Compressed> & p1, Pair<T1_, T2_, Compressed> & p2)
 // References to members to packed structs do not work.  Always copy.
 
 template <typename T1, typename T2, typename T>
-inline void setValueI1(Pair<T1, T2, Compressed> & pair, T const & _i)
+inline void setValueI1(Pair<T1, T2, Pack> & pair, T const & _i)
 {
     pair.i1 = _i;
 }
 
 template <typename T1, typename T2, typename T>
-inline void setValueI2(Pair<T1, T2, Compressed> & pair, T const & _i)
+inline void setValueI2(Pair<T1, T2, Pack> & pair, T const & _i)
 {
     pair.i2 = _i;
 }
@@ -168,17 +183,17 @@ inline void setValueI2(Pair<T1, T2, Compressed> & pair, T const & _i)
 // References to members to packed structs do not work.  Always copy.
 
 template <typename T1, typename T2, typename T>
-inline void moveValueI1(Pair<T1, T2, Compressed> & pair, T & _i)
+inline void moveValueI1(Pair<T1, T2, Pack> & pair, T & _i)
 {
     pair.i1 = _i;
 }
 
 template <typename T1, typename T2, typename T>
-inline void moveValueI2(Pair<T1, T2, Compressed> & pair, T & _i)
+inline void moveValueI2(Pair<T1, T2, Pack> & pair, T & _i)
 {
     pair.i2 = _i;
 }
 
 }  // namespace seqan
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_PACKED_H_
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_BASIC_PAIR_PACKED_H_

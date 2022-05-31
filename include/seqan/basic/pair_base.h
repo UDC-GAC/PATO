@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,15 +29,15 @@
 // DAMAGE.
 //
 // ==========================================================================
-// Author: Andres Gogol-Döring <andreas.doering@mdc-berlin.de>
+// Author: David Weese <david.weese@fu-berlin.de>
 // ==========================================================================
 // Pair base class.
 // ==========================================================================
 
 // TODO(holtgrew): What about move construction? Useful for pairs of strings and such. Tricky to implement since ints have no move constructor, for example.
 
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_BASE_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_BASE_H_
+#ifndef SEQAN_INCLUDE_SEQAN_BASIC_PAIR_BASE_H_
+#define SEQAN_INCLUDE_SEQAN_BASIC_PAIR_BASE_H_
 
 namespace seqan {
 
@@ -45,72 +45,85 @@ namespace seqan {
 // Forwards
 // ============================================================================
 
+template <typename TObject, typename TDirection>
+struct DirectionIterator;
+
+struct Output_;
+typedef Tag<Output_> Output;
+
 // ============================================================================
 // Tags, Classes, Enums
 // ============================================================================
 
-/**
-.Class.Pair:
-..cat:Aggregates
-..concept:Concept.Aggregate
-..summary:Stores two arbitrary objects.
-..signature:Pair<T1[, T2[, TSpec]]>
-..param.T1:The type of the first object.
-..param.T2:The type of the second object.
-...default:$T1$
-..param.TSpec:The specializing type.
-...default:$void$, no compression (faster access).
-.Memfunc.Pair#Pair:
-..class:Class.Pair
-..summary:Constructor
-..signature:Pair<T1, T2[, TSpec]> ()    
-..signature:Pair<T1, T2[, TSpec]> (pair)
-..signature:Pair<T1, T2[, TSpec]> (i1, i2)
-..param.pair:Other Pair object. (copy constructor)
-..param.i1:T1 object.
-..param.i2:T2 object.
-.Memvar.Pair#i1:
-..class:Class.Pair
-..summary:T1 object
-.Memvar.Pair#i2:
-..class:Class.Pair
-..summary:T2 object
-..include:seqan/basic.h
-*/
+/*!
+ * @class Pair
+ * @implements ComparableConcept
+ * @headerfile <seqan/basic.h>
+ * @brief Store two arbitrary objects.
+ *
+ * @signature template <typename T1, typename T2, typename TSpec>
+ *            class Pair;
+ *
+ * @tparam T1    The type of the first member.
+ * @tparam T2    The type of the second member.
+ * @tparam TSpec Tag used for the specialization.
+ */
+
+/*!
+ * @fn Pair#Pair
+ * @brief Default and copy construction and construction for two values.
+ *
+ * @signature Pair::Pair();
+ * @signature Pair::Pair(other);
+ * @signature Pair::Pair(x1, x2);
+ *
+ * @param[in] other The other Pair object to copy from.
+ * @param[in] x1    Copied to first member.
+ * @param[in] x2    Copied to second member
+ */
+
+/*!
+ * @var T1 Pair::i1
+ * @brief First member
+ */
+
+/*!
+ * @var T2 Pair::i2
+ * @brief Second member
+ */
 
 // TODO(holtgrew): Should default specs be specialized with void or Default?
 // TODO(holtgrew): Move construction, will be a bit tricky, either with enable_if or with 4 base classes and all constructors are forwarded there.
 
-template <typename T1_, typename T2_ = T1_, typename TSpec = void>
+template <typename T1, typename T2 = T1, typename TSpec = void>
 struct Pair
 {
-    // TODO(holtgrew): T1 and T2 should not be public but have underscore postfix?
-    typedef T1_ T1;
-    typedef T2_ T2;
-
     // ------------------------------------------------------------------------
     // Members
     // ------------------------------------------------------------------------
 
-    T1_ i1;
-    T2_ i2;
+    T1 i1;
+    T2 i2;
 
     // ------------------------------------------------------------------------
     // Constructors
     // ------------------------------------------------------------------------
 
-    Pair() : i1(T1_()), i2(T2_()) {}
+   
+    Pair() : i1(T1()), i2(T2()) {}
 
-    template <typename T3_, typename T4_>
-    Pair(Pair<T3_, T4_> const & _p) : i1(_p.i1), i2(_p.i2) {}
+    template <typename T1_, typename T2_>
+   
+    Pair(Pair<T1_, T2_> const & _p) : i1(_p.i1), i2(_p.i2) {}
 
-    inline
-    Pair(T1_ const & _i1, T2_ const & _i2) : i1(_i1), i2(_i2) {}
+   
+    Pair(T1 const & _i1, T2 const & _i2) : i1(_i1), i2(_i2) {}
 
-    template <typename T1__, typename T2__, typename TSpec__>
+    template <typename T1_, typename T2_, typename TSpec__>
     // TODO(holtgrew): explicit?
-    inline Pair(Pair<T1__, T2__, TSpec__> const &_p)
-            : i1(getValueI1(_p)), i2(getValueI2(_p))
+   
+    Pair(Pair<T1_, T2_, TSpec__> const &_p) :
+        i1(getValueI1(_p)), i2(getValueI2(_p))
     {}
 };
 
@@ -122,7 +135,16 @@ struct Pair
 // Metafunction LENGTH
 // -----------------------------------------------------------------------
 
-///.Metafunction.LENGTH.param.T.type:Class.Triple
+/*!
+ * @mfn Pair#LENGTH
+ * @brief Return number of members in a Pair (2).
+ *
+ * @signature LENGTH<TPair>::VALUE;
+ *
+ * @tparam TPair The Pair specialization.
+ *
+ * @return VALUE The number of element in a Pair (2).
+ */
 
 template <typename T1, typename T2, typename TSpec>
 struct LENGTH<Pair<T1, T2, TSpec> >
@@ -136,15 +158,16 @@ struct LENGTH<Pair<T1, T2, TSpec> >
 // Metafunction Value
 // ----------------------------------------------------------------------------
 
-/**
-.Metafunction.Value
-..signature:Value<TTuple, POSITION>::Type
-..param.TTuple:@Class.Pair@, @Class.Triple@, or @Class.Tuple@ to return value from.
-...type:Class.Pair
-...type:Class.Triple
-...type:Class.Tuple
-..param.POSITION:Position of the type to query.
-...type:nolink:$int$
+/*!
+ * @mfn Pair#Value
+ * @brief Return type of the i-th value.
+ *
+ * @signature Value<TTuple, I>::Type;
+ *
+ * @tparam TTuple Tuple specialization to get the type of.
+ * @tparam I      The index of the member to get (1 or 2).
+ *
+ * @return Type Result type.
  */
 
 template <typename T1, typename T2, typename TSpec>
@@ -163,7 +186,16 @@ struct Value<Pair<T1, T2, TSpec>, 2>
 // Metafunction Spec
 // ----------------------------------------------------------------------------
 
-///.Metafunction.Spec.param.T.type:Class.Pair
+/*!
+ * @mfn Pair#Spec
+ * @brief Return specialization tag.
+ *
+ * @signature Spec<TPair>::Type;
+ *
+ * @tparam TPair The Pair specialization.
+ *
+ * @return Type The resulting type.
+ */
 
 template <typename T1, typename T2, typename TSpec>
 struct Spec<Pair<T1, T2, TSpec> >
@@ -179,9 +211,9 @@ struct Spec<Pair<T1, T2, TSpec> >
 // Function set().
 // ----------------------------------------------------------------------------
 
-template <typename T1_, typename T2_, typename TSpec>
+template <typename T1, typename T2, typename TSpec>
 inline void
-set(Pair<T1_, T2_, TSpec> & p1, Pair<T1_, T2_, TSpec> & p2)
+set(Pair<T1, T2, TSpec> & p1, Pair<T1, T2, TSpec> & p2)
 {
     set(p1.i1, p2.i1);
     set(p1.i2, p2.i2);
@@ -191,9 +223,9 @@ set(Pair<T1_, T2_, TSpec> & p1, Pair<T1_, T2_, TSpec> & p2)
 // Function move().
 // ----------------------------------------------------------------------------
 
-template <typename T1_, typename T2_, typename TSpec>
+template <typename T1, typename T2, typename TSpec>
 inline void
-move(Pair<T1_, T2_, TSpec> & p1, Pair<T1_, T2_, TSpec> & p2)
+move(Pair<T1, T2, TSpec> & p1, Pair<T1, T2, TSpec> & p2)
 {
     move(p1.i1, p2.i1);
     move(p1.i2, p2.i2);
@@ -203,29 +235,65 @@ move(Pair<T1_, T2_, TSpec> & p1, Pair<T1_, T2_, TSpec> & p2)
 // Function operator<<();  Stream Output.
 // ----------------------------------------------------------------------------
 
-template <typename T1_, typename T2_, typename TSpec>
-inline
-std::ostream & operator<<(std::ostream & out, Pair<T1_, T2_, TSpec> const & p)
+template <typename TTarget, typename T1, typename T2, typename TSpec>
+inline void
+write(TTarget &target, Pair<T1, T2, TSpec> const & p)
 {
-    // TODO(holtgrew): Incorporate this into new stream concept? Adapt from stream module?
-    out << "< " << getValueI1(p) << " , " << getValueI2(p) << " >";
-    return out;
+    write(target, "< ");
+    write(target, getValueI1(p));
+    write(target, " , ");
+    write(target, getValueI2(p));
+    write(target, " >");
+}
+
+template <typename TStream, typename T1, typename T2, typename TSpec>
+inline TStream &
+operator<<(TStream & target,
+           Pair<T1, T2, TSpec> const & source)
+{
+    typename DirectionIterator<TStream, Output>::Type it = directionIterator(target, Output());
+    write(it, source);
+    return target;
 }
 
 // -----------------------------------------------------------------------
 // Function getValueIX()
 // -----------------------------------------------------------------------
 
+/*!
+ * @fn Pair#getValueI1
+ * @brief The get-value of the Pair's first entry.
+ *
+ * @signature T1 getValueI1(pair);
+ *
+ * @param[in] pair The pair to get entry from.
+ *
+ * @return T1 The first entry of the Pair.
+ */
+
 // There can be no getValue with index since T1 can be != T2.
 
 template <typename T1, typename T2, typename TSpec>
-inline T1 getValueI1(Pair<T1, T2, TSpec> const & pair)
+inline
+T1 getValueI1(Pair<T1, T2, TSpec> const & pair)
 {
     return pair.i1;
 }
 
+/*!
+ * @fn Pair#getValueI2
+ * @brief The get-value of the Pair's second entry.
+ *
+ * @signature T2 getValueI2(pair);
+ *
+ * @param[in] pair The pair to get entry from.
+ *
+ * @return T2 The second entry of the Pair.
+ */
+
 template <typename T1, typename T2, typename TSpec>
-inline T2 getValueI2(Pair<T1, T2, TSpec> const & pair)
+inline
+T2 getValueI2(Pair<T1, T2, TSpec> const & pair)
 {
     return pair.i2;
 }
@@ -234,6 +302,16 @@ inline T2 getValueI2(Pair<T1, T2, TSpec> const & pair)
 // Function assignValueIX()
 // -----------------------------------------------------------------------
 
+/*!
+ * @fn Pair#assignValueI1
+ * @brief Set first entry of a pair.
+ *
+ * @signature void assignValueI1(pair, val);
+ *
+ * @param[in] pair The pair to get entry from.
+ * @param[in] val  Set the value of the Pair's first entry.
+ */
+
 // Cannot be assignValue with index since T1 can be != T2.
 
 template <typename T1, typename T2, typename TSpec, typename T>
@@ -241,6 +319,16 @@ inline void assignValueI1(Pair<T1, T2, TSpec> & pair, T const & _i)
 {
     pair.i1 = _i;
 }
+
+/*!
+ * @fn Pair#assignValueI2
+ * @brief Set second entry of a pair.
+ *
+ * @signature void assignValueI2(pair, val);
+ *
+ * @param[in] pair The pair to get entry from.
+ * @param[in] val  Set the value of the Pair's second entry.
+ */
 
 template <typename T1, typename T2, typename TSpec, typename T>
 inline void assignValueI2(Pair<T1, T2, TSpec> & pair, T const & _i)
@@ -252,6 +340,16 @@ inline void assignValueI2(Pair<T1, T2, TSpec> & pair, T const & _i)
 // Function setValueIX()
 // -----------------------------------------------------------------------
 
+/*!
+ * @fn Pair#setValueI1
+ * @brief Set first entry of a pair.
+ *
+ * @signature void setValueI1(pair, val);
+ *
+ * @param[in] pair The pair to get entry from.
+ * @param[in] val  Set the value of the Pair's first entry.
+ */
+
 // Cannot be setValue with index since T1 can be != T2.
 
 template <typename T1, typename T2, typename TSpec, typename T>
@@ -259,6 +357,16 @@ inline void setValueI1(Pair<T1, T2, TSpec> & pair, T const & _i)
 {
     set(pair.i1, _i);
 }
+
+/*!
+ * @fn Pair#setValueI2
+ * @brief Set second entry of a pair.
+ *
+ * @signature void setValueI2(pair, val);
+ *
+ * @param[in] pair The pair to get entry from.
+ * @param[in] val  Set the value of the Pair's second entry.
+ */
 
 template <typename T1, typename T2, typename TSpec, typename T>
 inline void setValueI2(Pair<T1, T2, TSpec> & pair, T const & _i)
@@ -288,10 +396,10 @@ inline void moveValueI2(Pair<T1, T2, TSpec> & pair, T & _i)
 // Function operator<()
 // -----------------------------------------------------------------------
 
-template <typename L1, typename L2, typename LCompression, typename R1, typename R2, typename RCompression>
+template <typename L1, typename L2, typename LPack, typename R1, typename R2, typename RPack>
 inline bool
-operator<(Pair<L1, L2, LCompression> const & _left,
-          Pair<R1, R2, RCompression> const & _right)
+operator<(Pair<L1, L2, LPack> const & _left,
+          Pair<R1, R2, RPack> const & _right)
 {
     return (_left.i1 < _right.i1) || (_left.i1 == _right.i1 && _left.i2 < _right.i2);
 }
@@ -300,10 +408,10 @@ operator<(Pair<L1, L2, LCompression> const & _left,
 // Function operator>()
 // -----------------------------------------------------------------------
 
-template <typename L1, typename L2, typename LCompression, typename R1, typename R2, typename RCompression>
+template <typename L1, typename L2, typename LPack, typename R1, typename R2, typename RPack>
 inline bool
-operator>(Pair<L1, L2, LCompression> const & _left,
-          Pair<R1, R2, RCompression> const & _right)
+operator>(Pair<L1, L2, LPack> const & _left,
+          Pair<R1, R2, RPack> const & _right)
 {
     return (_left.i1 > _right.i1) || (_left.i1 == _right.i1 && _left.i2 > _right.i2);
 }
@@ -312,10 +420,10 @@ operator>(Pair<L1, L2, LCompression> const & _left,
 // Function operator==()
 // -----------------------------------------------------------------------
 
-template <typename L1, typename L2, typename LCompression, typename R1, typename R2, typename RCompression>
+template <typename L1, typename L2, typename LPack, typename R1, typename R2, typename RPack>
 inline bool
-operator==(Pair<L1, L2, LCompression> const & _left,
-           Pair<R1, R2, RCompression> const & _right)
+operator==(Pair<L1, L2, LPack> const & _left,
+           Pair<R1, R2, RPack> const & _right)
 {
     return _left.i1 == _right.i1 && _left.i2 == _right.i2;
 }
@@ -324,10 +432,10 @@ operator==(Pair<L1, L2, LCompression> const & _left,
 // Function operator<=()
 // -----------------------------------------------------------------------
 
-template <typename L1, typename L2, typename LCompression, typename R1, typename R2, typename RCompression>
+template <typename L1, typename L2, typename LPack, typename R1, typename R2, typename RPack>
 inline bool
-operator<=(Pair<L1, L2, LCompression> const & _left,
-           Pair<R1, R2, RCompression> const & _right)
+operator<=(Pair<L1, L2, LPack> const & _left,
+           Pair<R1, R2, RPack> const & _right)
 {
     return !operator>(_left, _right);
 }
@@ -336,10 +444,10 @@ operator<=(Pair<L1, L2, LCompression> const & _left,
 // Function operator>=()
 // -----------------------------------------------------------------------
 
-template <typename L1, typename L2, typename LCompression, typename R1, typename R2, typename RCompression>
+template <typename L1, typename L2, typename LPack, typename R1, typename R2, typename RPack>
 inline bool
-operator>=(Pair<L1, L2, LCompression> const & _left,
-           Pair<R1, R2, RCompression> const & _right)
+operator>=(Pair<L1, L2, LPack> const & _left,
+           Pair<R1, R2, RPack> const & _right)
 {
     return !operator<(_left, _right);
 }
@@ -348,14 +456,27 @@ operator>=(Pair<L1, L2, LCompression> const & _left,
 // Function operator!=()
 // -----------------------------------------------------------------------
 
-template <typename L1, typename L2, typename LCompression, typename R1, typename R2, typename RCompression>
+template <typename L1, typename L2, typename LPack, typename R1, typename R2, typename RPack>
 inline bool
-operator!=(Pair<L1, L2, LCompression> const & _left,
-           Pair<R1, R2, RCompression> const & _right)
+operator!=(Pair<L1, L2, LPack> const & _left,
+           Pair<R1, R2, RPack> const & _right)
 {
     return !operator==(_left, _right);
 }
 
+// ----------------------------------------------------------------------------
+// Function std::swap()
+// ----------------------------------------------------------------------------
+
+template <typename L1, typename L2, typename LPack, typename R1, typename R2, typename RPack>
+inline void
+swap(Pair<L1, L2, LPack> const & a,
+     Pair<R1, R2, RPack> const & b)
+{
+    swap(a.i1, b.i1);
+    swap(a.i2, b.i2);
+}
+
 }  // namespace seqan
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_SEQAN_BASIC_PAIR_BASE_H_
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_BASIC_PAIR_BASE_H_

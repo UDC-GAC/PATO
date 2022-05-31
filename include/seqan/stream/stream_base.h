@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,13 +29,13 @@
 // DAMAGE.
 //
 // ==========================================================================
-// Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
+// Author: David Weese <david.weese@fu-berlin.de>
 // ==========================================================================
-// Base class for streams.
+// Basic definitions for the stream module
 // ==========================================================================
 
-#ifndef SEQAN_STREAM_STREAM_BASE_H_
-#define SEQAN_STREAM_STREAM_BASE_H_
+#ifndef SEQAN_STREAM_STREAM_BASE_
+#define SEQAN_STREAM_STREAM_BASE_
 
 namespace seqan {
 
@@ -44,118 +44,189 @@ namespace seqan {
 // ============================================================================
 
 // ============================================================================
-// Tags, Classes, Enums
+// Tags, Enums
 // ============================================================================
 
-/**
-.Class.Stream
-..cat:Input/Output
-..signature:Stream<TSpec>
-..summary:Abstract base class to fulfill the @Concept.Stream@ concept.
-..concept:Concept.Stream
-..include:seqan/stream.h
+// --------------------------------------------------------------------------
+// Compression Type Tags
+// --------------------------------------------------------------------------
+
+/*!
+ * @defgroup FileCompressionTags File Compression Tags
+ * @brief Tags for describing file compression formats.
  */
 
-template <typename TPointer = char *>
-struct CharArray;
+/*!
+ * @tag FileCompressionTags#GZFile
+ * @headerfile <seqan/stream.h>
+ * @brief File compression using the popular <a href="http://www.gzip.org">gzip</a> format.
+ * @signature typedef Tag<GZFile_> GZFile;
+ */
 
-#if SEQAN_HAS_ZLIB  // Enable Stream<GZFile> if available.
 struct GZFile_;
 typedef Tag<GZFile_> GZFile;
-#endif  // #if SEQAN_HAS_ZLIB
 
-#if SEQAN_HAS_BZIP2  // Enable Stream<BZ2File> if available.
+/*!
+ * @tag FileCompressionTags#BgzFile
+ * @headerfile <seqan/stream.h>
+ * @signature typedef Tag<BgzfFile_> BgzfFile;
+ * @brief File compression using the BGZF (Block GZip Format).
+ *
+ * The file format is described in the <a href="http://samtools.github.io/hts-specs/SAMv1.pdf">SAM file format
+ * description</a>.
+ */
+
+struct BgzfFile_;
+typedef Tag<BgzfFile_> BgzfFile;
+
+/*!
+ * @tag FileCompressionTags#BZ2File
+ * @headerfile <seqan/stream.h>
+ *
+ * @brief File compression using the popular <a href="http://bzip.org">bzip2</a> format.
+ *
+ * @signature typedef Tag<BZ2File_> BZ2File;
+ */
+
 struct BZ2File_;
 typedef Tag<BZ2File_> BZ2File;
-#endif  // #if SEQAN_HAS_ZLIB
 
-template <typename TSpec>
-class Stream;
+// --------------------------------------------------------------------------
+// MagicHeader
+// --------------------------------------------------------------------------
 
-// ============================================================================
-// Metafunctions
-// ============================================================================
+template <typename T>
+struct MagicHeader<GZFile, T>
+{
+    static char const VALUE[3];
+};
+
+template <typename T>
+char const MagicHeader<GZFile, T>::VALUE[3] = { 0x1f, '\x8b', 0x08 };  // gzip's magic number
+
+
+template <typename T>
+struct MagicHeader<BZ2File, T>
+{
+    static char const VALUE[3];
+};
+
+template <typename T>
+char const MagicHeader<BZ2File, T>::VALUE[3] = { 0x42, 0x5a, 0x68 };  // bzip2's magic number
+
+// --------------------------------------------------------------------------
+// FileExtensions
+// --------------------------------------------------------------------------
+
+template <typename T>
+struct FileExtensions<GZFile, T>
+{
+    static char const * VALUE[1];
+};
+
+template <typename T>
+char const * FileExtensions<GZFile, T>::VALUE[1] =
+{
+    ".gz"      // default output extension
+};
+
+
+template <typename T>
+struct FileExtensions<BgzfFile, T>
+{
+    static char const * VALUE[5];
+};
+
+template <typename T>
+char const * FileExtensions<BgzfFile, T>::VALUE[5] =
+{
+    ".bgzf",      // default output extension
+    ".bam",       // BAM files are bgzf compressed
+    ".vcf.gz",    // Compressed and indexed VCF files are bgzf compressed
+    ".bed.gz",    // Compressed and indexed BED files are bgzf compressed
+    ".tbi"        // Tabix index files are bgzf compressed
+};
+
+
+template <typename T>
+struct FileExtensions<BZ2File, T>
+{
+    static char const * VALUE[1];
+};
+
+template <typename T>
+char const * FileExtensions<BZ2File, T>::VALUE[1] =
+{
+    ".bz2"      // default output extension
+};
 
 // ============================================================================
 // Functions
 // ============================================================================
 
-// ----------------------------------------------------------------------------
-// Function atEnd()
-// ----------------------------------------------------------------------------
+// --------------------------------------------------------------------------
+// Function _isPipe()
+// --------------------------------------------------------------------------
 
-///.Function.atEnd.iterator.type:Class.Stream
-
-template <typename TSpec>
 inline bool
-atEnd(Stream<TSpec> & stream)
+_isPipe(const char * fileName)
 {
-    return streamEof(stream);
+#ifdef STDLIB_VS
+    struct _stat buf;
+    if (_stat(fileName, &buf) == 0)
+        if ((buf.st_mode & _S_IFMT) == _S_IFCHR)
+            return true;
+#else
+    struct stat buf;
+    if (stat(fileName, &buf) == 0)
+        if ((buf.st_mode & S_IFMT) == S_IFIFO ||
+            (buf.st_mode & S_IFMT) == S_IFCHR)
+            return true;
+#endif
+    return false;
 }
 
-template <typename TSpec>
+// --------------------------------------------------------------------------
+// Function guessFormat()
+// --------------------------------------------------------------------------
+
+// read first bytes of a file/stream and compare with file format's magic header
+template <typename TStream, typename TFormat_>
 inline bool
-atEnd(Stream<TSpec> const & stream)
+guessFormatFromStream(TStream &istream, Tag<TFormat_>)
 {
-    return streamEof(stream);
+    typedef Tag<TFormat_> TFormat;
+
+    SEQAN_ASSERT(istream.good());
+
+    if ((char *)MagicHeader<TFormat>::VALUE == NULL)
+        return true;
+
+    bool match = true;
+
+    // check magic header
+    unsigned i;
+    for (i = 0; i != sizeof(MagicHeader<TFormat>::VALUE) / sizeof(char); ++i)
+    {
+        int c = (int)istream.get();
+        if (c != (unsigned char)MagicHeader<TFormat>::VALUE[i])
+        {
+            match = false;
+            if (c != EOF)
+                ++i;
+            break;
+        }
+    }
+
+    // unget all read characters
+    for (; i > 0; --i)
+        istream.unget();
+
+    SEQAN_ASSERT(istream.good());
+
+    return match;
 }
 
-// ----------------------------------------------------------------------------
-// Function streamPut()
-// ----------------------------------------------------------------------------
+}  // namespace seqan
 
-// this is generic for all specializations of Stream<> right now
-
-template <typename TStream>
-inline int
-streamPut(Stream<TStream> & stream, char const c)
-{
-    return streamWriteChar(stream, c);
-}
-
-template <typename TStream>
-inline int
-streamPut(Stream<TStream> & stream, char const * source)
-{
-    return (streamWriteBlock(stream, source, strlen(source))
-                == strlen(source) )  ?   0 : 1;
-}
-
-template <typename TStream, typename TSpec>
-inline int
-streamPut(Stream<TStream> & stream, String<char, TSpec> const & source)
-{
-    return (streamWriteBlock(stream, toCString(source), length(source))
-                == length(source))  ?   0 : 1;
-}
-
-template <typename TStream, typename TSource>
-inline int
-streamPut(Stream<TStream> & stream, TSource const & source)
-{
-    char buffer[1024] = "";
-    ::std::stringstream s;
-
-    s << source;
-    if (s.fail())
-        return s.fail();
-
-    s >> buffer;
-    if (s.fail())
-        return s.fail();
-
-    buffer[1023] = 0;
-
-//TODO(h4nn3s): we should be able to use the following and then s.str() directly
-// so we wouldnt need an extra buffer at all. but it doesnt work
-//     s << source << std::ends;
-//     if (s.fail())
-//         return s.fail();
-
-    return (streamWriteBlock(stream, buffer, strlen(buffer))
-                == strlen(buffer) )  ?   0 : 1;
-}
-
-}  // namespace seqean
-
-#endif  // #ifndef SEQAN_STREAM_STREAM_BASE_H_
+#endif  // #ifndef SEQAN_STREAM_STREAM_BASE_

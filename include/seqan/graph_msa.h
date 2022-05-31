@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -37,23 +37,18 @@
 #include <seqan/score.h>
 #include <seqan/graph_types.h>
 #include <seqan/graph_algorithms.h>
-#include <seqan/refinement.h>
 #include <seqan/graph_align.h>
-
-#ifdef SEQAN_SWITCH_USE_FORWARDS
-#include <seqan/graph_msa/graph_msa_generated_forwards.h>
-#endif
-
+#include <seqan/align.h>
 
 //MSA
 #include <seqan/graph_msa/graph_align_tcoffee_base.h>
-#include <seqan/graph_msa/graph_align_tcoffee_msa.h>
+#include <seqan/graph_msa/graph_align_tcoffee_library.h>
 #include <seqan/graph_msa/graph_align_tcoffee_kmer.h>
 #include <seqan/graph_msa/graph_align_tcoffee_distance.h>
 #include <seqan/graph_msa/graph_align_tcoffee_guidetree.h>
 #include <seqan/graph_msa/graph_align_tcoffee_io.h>
-#include <seqan/graph_msa/graph_align_tcoffee_library.h>
 #include <seqan/graph_msa/graph_align_tcoffee_progressive.h>
 #include <seqan/graph_msa/graph_align_tcoffee_refinement.h>
+#include <seqan/graph_msa/graph_align_tcoffee_msa.h>
 
 #endif //#ifndef SEQAN_HEADER_...

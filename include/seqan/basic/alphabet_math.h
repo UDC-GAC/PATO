@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -63,18 +63,19 @@ namespace seqan {
 
 template <typename T>
 struct MaximumValueUnsigned_ { static const T VALUE; };
+
+template <typename T>
+const T MaximumValueUnsigned_<T>::VALUE = ~(T)0;
+
 template <typename T>
 struct MaximumValueSigned_ { static const T VALUE; };
-
 template <typename T = void>
 struct MaximumValueFloat_ { static const float VALUE; };
 template <typename T = void>
 struct MaximumValueDouble_ { static const double VALUE; };
 
 template <typename T>
-const T MaximumValueUnsigned_<T>::VALUE = ~(T)0;
-template <typename T>
-const T MaximumValueSigned_<T>::VALUE = ( (((T)1 <<(BitsPerValue<T>::VALUE - 2)) - 1) <<1) + 1;
+const T MaximumValueSigned_<T>::VALUE = ((((T)1 << (BitsPerValue<T>::VALUE - 2)) - 1) << 1) + 1;
 template <typename T>
 const float MaximumValueFloat_<T>::VALUE = FLT_MAX;
 template <typename T>
@@ -100,7 +101,7 @@ template <
       IsSameType<float, T>::VALUE,
       MaximumValueFloat_<>,
       typename IfC<
-        IsSameType< typename MakeSigned_<T>::Type, T >::VALUE,
+        IsSameType<typename MakeSigned_<T>::Type, T>::VALUE,
         MaximumValueSigned_<T>,
         MaximumValueUnsigned_<T>
         >::Type
@@ -158,7 +159,7 @@ template <
       IsSameType<float, T>::VALUE,
       MinimumValueFloat_<>,
       typename IfC<
-        IsSameType< typename MakeSigned_<T>::Type, T >::VALUE,
+        IsSameType<typename MakeSigned_<T>::Type, T>::VALUE,
         MinimumValueSigned_<T>,
         MinimumValueUnsigned_<T>
         >::Type
@@ -177,11 +178,40 @@ struct MinValue : MinValue_<T> {};
 // Functions
 // ============================================================================
 
+// --------------------------------------------------------------------------
+// Function toUpperValue()
+// --------------------------------------------------------------------------
+
+template <typename TValue>
+inline
+TValue toUpperValue(TValue c)
+{
+    return c;
+}
+
+inline
+char toUpperValue(char c)
+{
+    return c >= 'a' && c <= 'z' ? c + 'A' - 'a' : c;
+}
+
+inline
+signed char toUpperValue(signed char c)
+{
+    return toUpperValue(static_cast<char>(c));
+}
+
+inline
+unsigned char toUpperValue(unsigned char c)
+{
+    return toUpperValue(static_cast<char>(c));
+}
+
 // ----------------------------------------------------------------------------
 // Function supremumValueImpl
 // ----------------------------------------------------------------------------
 
-template <typename T> inline T const & supremumValueImpl(T *);
+template <typename T> [[deprecated("Use std::numeric_limits<T>::max() instead.")]] inline T const & supremumValueImpl(T *);
 
 // ----------------------------------------------------------------------------
 // Function maxValue
@@ -190,28 +220,26 @@ template <typename T> inline T const & supremumValueImpl(T *);
 // Forward to supremumValueImpl() only.
 
 template <typename T>
-inline T const &
+[[deprecated("Use std::numeric_limits<T>::max() instead.")]]
+inline T
 maxValue()
 {
-    SEQAN_CHECKPOINT;
-    T * _tag = 0;
-    return supremumValueImpl(_tag);
+    return std::numeric_limits<T>::max();
 }
 
 template <typename T>
-inline T const &
+[[deprecated("Use std::numeric_limits<T>::max() instead.")]]
+inline T
 maxValue(T /*tag*/)
 {
-    SEQAN_CHECKPOINT;
-    T * _tag = 0;
-    return supremumValueImpl(_tag);
+    return std::numeric_limits<T>::max();
 }
 
 // ----------------------------------------------------------------------------
 // Function infimumValueImpl
 // ----------------------------------------------------------------------------
 
-template <typename T> inline T const & infimumValueImpl(T *);
+template <typename T> [[deprecated("Use std::numeric_limits<T>::min() instead.")]] inline T const & infimumValueImpl(T *);
 
 // ----------------------------------------------------------------------------
 // Function minValue
@@ -220,21 +248,45 @@ template <typename T> inline T const & infimumValueImpl(T *);
 // Forward to infimumValueImpl() only.
 
 template <typename T>
-inline T const &
+[[deprecated("Use std::numeric_limits<T>::min() instead.")]]
+inline T
 minValue()
 {
-    SEQAN_CHECKPOINT;
-    T * _tag = 0;
-    return infimumValueImpl(_tag);
+    return std::numeric_limits<T>::min();
 }
 
 template <typename T>
-inline T const &
+[[deprecated("Use std::numeric_limits<T>::min() instead.")]]
+inline T
 minValue(T /*tag*/)
 {
-    SEQAN_CHECKPOINT;
-    T * _tag = 0;
-    return infimumValueImpl(_tag);
+    return std::numeric_limits<T>::min();
+}
+
+// ----------------------------------------------------------------------------
+// Function isNegative()
+// ----------------------------------------------------------------------------
+
+// to remove '... < 0 is always false' warning
+template <typename T>
+inline bool
+isNegative(T, False)
+{
+    return false;
+}
+
+template <typename T>
+inline bool
+isNegative(T t, True)
+{
+    return t < 0;
+}
+
+template <typename T>
+inline bool
+isNegative(T t)
+{
+    return isNegative(t, typename IsSameType<T, typename MakeSigned_<T>::Type>::Type());
 }
 
 }  // namespace seqan

@@ -3,8 +3,11 @@
 
 #include "seqan.hpp"
 
-namespace SEQAN_NAMESPACE_MAIN
+namespace seqan
 {
+
+typedef char Ascii;
+typedef wchar_t Unicode;
 
 template <typename T = void>
 struct TranslateTableTriplex2Ascii_
@@ -440,11 +443,11 @@ struct Triplex_ {};
 typedef SimpleType<unsigned char, Triplex_> Triplex;
 
 template <> struct ValueSize< Triplex > { 
-	typedef __uint8 Type;
+	typedef uint8_t Type;
 	static const Type VALUE = 9;
 };
 template <> struct BitsPerValue< Triplex > { 
-	typedef __uint8 Type;
+	typedef uint8_t Type;
     static const Type VALUE = 4;
 };
 
@@ -470,11 +473,11 @@ struct DnaRY_ {};
 typedef SimpleType<unsigned char, DnaRY_> DnaRY;
 
 template <> struct ValueSize< DnaRY > { 
-	typedef __uint8 Type;
+	typedef uint8_t Type;
 	static const Type VALUE = 3;
 };
 template <> struct BitsPerValue< DnaRY > { 
-	typedef __uint8 Type;
+	typedef uint8_t Type;
     static const Type VALUE = 2;
 };
 
@@ -501,11 +504,11 @@ struct DnaKM_ {};
 typedef SimpleType<unsigned char, DnaKM_> DnaKM;
 
 template <> struct ValueSize< DnaKM > { 
-	typedef __uint8 Type;
+	typedef uint8_t Type;
 	static const Type VALUE = 3;
 };
 template <> struct BitsPerValue< DnaKM > { 
-	typedef __uint8 Type;
+	typedef uint8_t Type;
     static const Type VALUE = 2;
 };
 
@@ -535,8 +538,8 @@ inline void assign(Ascii & c_target,
 //Triplex (3 letters)
 
 template <>
-struct CompareType<Triplex, __uint8> { typedef Triplex Type; };
-inline void assign(Triplex & target, __uint8 c_source)
+struct CompareType<Triplex, uint8_t> { typedef Triplex Type; };
+inline void assign(Triplex & target, uint8_t c_source)
 {
 	target.value = TranslateTableByte2Triplex_<>::VALUE[c_source];
 }
@@ -585,8 +588,8 @@ inline void assign(Triplex & target, Iupac const & source)
 //DnaRY (3 letters)
 
 template <>
-struct CompareType<DnaRY, __uint8> { typedef DnaRY Type; };
-inline void assign(DnaRY & target, __uint8 c_source)
+struct CompareType<DnaRY, uint8_t> { typedef DnaRY Type; };
+inline void assign(DnaRY & target, uint8_t c_source)
 {
 	target.value = TranslateTableByte2DnaRY_<>::VALUE[c_source];
 }
@@ -635,8 +638,8 @@ inline void assign(DnaRY & target, Iupac const & source)
 //DnaKM (3 letters)
 
 template <>
-struct CompareType<DnaKM, __uint8> { typedef DnaKM Type; };
-inline void assign(DnaKM & target, __uint8 c_source)
+struct CompareType<DnaKM, uint8_t> { typedef DnaKM Type; };
+inline void assign(DnaKM & target, uint8_t c_source)
 {
 	target.value = TranslateTableByte2DnaKM_<>::VALUE[c_source];
 }

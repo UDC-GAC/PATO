@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,1314 +29,1212 @@
 // DAMAGE.
 //
 // ==========================================================================
-//  Author: Andreas Gogol-Doering <andreas.doering@mdc-berlin.de>
+// Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
 // ==========================================================================
 
-#ifndef SEQAN_HEADER_GAPS_BASE_H
-#define SEQAN_HEADER_GAPS_BASE_H
+// TODO(holtgrew): Switch to Host interface.
 
-namespace SEQAN_NAMESPACE_MAIN
-{
+#ifndef SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_BASE_H_
+#define SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_BASE_H_
 
-//////////////////////////////////////////////////////////////////////////////
+namespace seqan {
 
-/**
-.Metafunction.GappedValueType:
-..cat:Alignments
-..summary:Returns a value type that contains a blank value '-'.
-..signature:GappedValueType<T>::Type
-..param.T:The value type that should be expanded (if needed) by '-'.
-..returns.param.Type:A value type that can be used to store store values in $T$ and the value '-'.
-..include:seqan/align.h
-*/
-
-template <typename T>
-struct GappedValueType
-{
-	typedef T Type;
-};
-
-template <typename TValue, typename TSpec>
-struct GappedValueType< SimpleType<TValue, TSpec> >
-{
-	typedef SimpleType<TValue, TSpec> THost_;
-	typedef ModifiedAlphabet<THost_, ModExpand<'-'> > Type;
-};
-
-//////////////////////////////////////////////////////////////////////////////
-
-
-template <typename THost, typename TSpec>
-inline ModifiedAlphabet<THost, ModExpand<'-', TSpec> >
-gapValueImpl(ModifiedAlphabet<THost, ModExpand<'-', TSpec> > *)
-{
-SEQAN_CHECKPOINT
-	static ModifiedAlphabet<THost, ModExpand<'-', TSpec> > const _gap = '-';
-	return _gap;
-}
-
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// Tags
-
-struct ArrayGaps;
-
+// ============================================================================
+// Forwards
+// ============================================================================
 
 template <typename TSpec>
 struct GapsIterator;
 
+/*!
+ * @defgroup GapsSpecTag Gaps Specialization Tags
+ * @brief Tags for specializing the Gaps class.
+ */
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// Gaps
-//////////////////////////////////////////////////////////////////////////////
-// an instance of the Gaps class is a strictly increasing function
-// between N_0 and N_0
+/*!
+ * @tag GapsSpecTag#ArrayGaps
+ * @headerfile <seqan/align.h>
+ * @brief Tag for the Array Gaps specialization.
+ *
+ * @signature struct ArrayGaps_;
+ * @signature typedef Tag<ArrayGaps_> ArrayGaps;
+ */
 
-/**
-.Class.Gaps:
-..cat:Alignments
-..cat:Sequences
-..summary:Stores the gaps in a gapped sequences.
-..signature:Gaps<TSource, TSpec>
-..param.TSource:Type of the ungapped sequence.
-...metafunction:Metafunction.Source
-..param.TSpec:The specializing type.
-...metafunction:Metafunction.Spec
-..remarks:The gaps are stored separately from the sequence.
-The ungapped sequence is called the @Function.source@ of the gaps object.
-$Gaps$ either stores the source (then it is the owner of the source), or refers to an external source (then it is @Function.dependent@).
-..include:seqan/align.h
-*/
+struct ArrayGaps_;
+typedef Tag<ArrayGaps_> ArrayGaps;
 
-template <typename TSource, typename TSpec/* = ArrayGaps*/>
+// ============================================================================
+// Tags, Classes, Enums
+// ============================================================================
+
+/*!
+ * @defgroup GapDirectionTags Gap Direction Tags
+ * @brief Tags to select the direction to which side of a view position an operation should be projected.
+ */
+
+/*!
+ * @tag GapDirectionTags#LeftOfViewPos
+ * @headerfile <seqan/align.h>
+ * @brief Projects to the left side of the current view position.
+ *
+ * @signature struct LeftOfViewPos_;
+ *            typedef Tag<LeftOfViewPos_> LeftOfViewPos;
+ */
+
+struct LeftOfViewPos_;
+typedef Tag<LeftOfViewPos_> LeftOfViewPos;
+
+/*!
+ * @tag GapDirectionTags#RightOfViewPos
+ * @headerfile <seqan/align.h>
+ * @brief Projects to the right side of the current view position.
+ *
+ * @signature struct RightOfViewPos_;
+ *            typedef Tag<RightOfViewPos_> RightOfViewPos;
+ */
+
+struct RightOfViewPos_;
+typedef Tag<RightOfViewPos_> RightOfViewPos;
+
+// ----------------------------------------------------------------------------
+// Class Gaps
+// ----------------------------------------------------------------------------
+
+/*!
+ * @class Gaps
+ * @implements ContainerConcept
+ * @headerfile <seqan/align.h>
+ * @brief Store the gapped version of a sequence.
+ *
+ * @signature template <typename TSequence, typename TSpec>
+ *            class Gaps;
+ *
+ * @tparam TSequence The type of the underlying sequence.
+ * @tparam TSpec     Tag for specialization.
+ *
+ * Gaps wrap a @link ContainerConcept Sequence @endlink and allows one to (1) insert gaps into the sequence and (2) select
+ * an infix of the gapped sequence (clipping).  The gaps are not inserted into the underlying sequence (source) but
+ * stored separately.  Using the clipping is optional and meant for selecting parts of the alignment as a part of the
+ * result of a local alignment algorithm.
+ *
+ * <img src="gaps_illustration.png" title="Illustration of Gaps object and positions with clipping." />
+ *
+ * In the figure above, the source sequence has seven characters, the gapped sequence has four gaps and thus consists
+ * of eleven characters.  The gapped sequence is clipped to start at position 0 in the gapped sequence and to end at
+ * position 8 in the gapped sequence (the positions given as half-open intervals <tt>[begin, end)</tt>).
+ *
+ * The figure shows the three coordinate systems that are used with Gaps objects.  The source position is the position
+ * in the underlying sequence.  The unclipped view position is the position in the gapped sequence without gaps.  The
+ * view position is the position in the gapped sequence but including the clipping: All (clipped) view positions have
+ * the clipping begin position subtracted from them.
+ *
+ * @section Examples
+ *
+ * The following example shows the construction of the gaps object from the image above together with some calls to
+ * <tt>toViewPosition</tt> and <tt>toSourcePosition</tt>.
+ *
+ * @include demos/dox/align/gaps_example.cpp
+ *
+ * The output is as follows:
+ *
+ * @include demos/dox/align/gaps_example.cpp.stdout
+ */
+
+template <typename TSequence, typename TSpec = ArrayGaps>
 class Gaps;
 
+template <typename TSequence, typename TSpec>
+SEQAN_CONCEPT_IMPL((Gaps<TSequence, TSpec>), (AlignedSequenceConcept));
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// Size
-//////////////////////////////////////////////////////////////////////////////
+template <typename TSequence, typename TSpec>
+SEQAN_CONCEPT_IMPL((Gaps<TSequence, TSpec> const), (AlignedSequenceConcept));
 
-template <typename TSource, typename TSpec>
-struct Size<Gaps<TSource, TSpec> >
+// ============================================================================
+// Metafunctions
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// Metafunction Value
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TSpec>
+struct Value<Gaps<TSequence, TSpec> >
 {
-	typedef typename Size<TSource>::Type Type;
-};
-template <typename TSource, typename TSpec>
-struct Size<Gaps<TSource, TSpec> const>
-{
-	typedef typename Size<TSource const>::Type Type;
-};
-
-//////////////////////////////////////////////////////////////////////////////
-// Position
-//////////////////////////////////////////////////////////////////////////////
-
-///.Metafunction.Position.param.T.type:Class.Gaps
-
-template <typename TSource, typename TSpec>
-struct Position<Gaps<TSource, TSpec> >:
-	Position<TSource>
-{
-};
-template <typename TSource, typename TSpec>
-struct Position<Gaps<TSource, TSpec> const>:
-	Position<TSource>
-{
+    typedef typename Value<TSequence>::Type           TAlphabet;
+    typedef typename GappedValueType<TAlphabet>::Type Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// Source
-//////////////////////////////////////////////////////////////////////////////
+template <typename TSequence, typename TSpec>
+struct Value<Gaps<TSequence, TSpec> const> : Value<Gaps<TSequence, TSpec> >
+{};
 
-/**
-.Metafunction.Source:
-..cat:Alignments
-..summary:The underlying sequence for alignments or gaps data structures.
-..signature:Source<T>::Type
-..param.T:Type for which the source type is determined.
-...type:Class.Gaps
-..returns.param.Type:Source type of $T$.
-..include:seqan/align.h
-*/
+// ----------------------------------------------------------------------------
+// Metafunction Iterator
+// ----------------------------------------------------------------------------
 
-template <typename TSource, typename TSpec>
-struct Source<Gaps<TSource, TSpec> >
+template <typename TSequence, typename TSpec, typename TIteratorSpec>
+struct Iterator<Gaps<TSequence, TSpec>, TIteratorSpec>
 {
-	typedef TSource Type;
+    typedef Iter<Gaps<TSequence, TSpec>, GapsIterator<TSpec> > Type;
 };
 
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Metafunction.GetSource:
-..cat:Alignments
-..summary:The type returned by the @Function.source@ function.
-..signature:GetSource<T>::Type
-..param.T:Type for which the source is retrieved by @Function.source@.
-...type:Class.Gaps
-..returns.param.Type:The type returned by the @Function.source@ function.
-...remarks:This type is a reference to @Metafunction.Source@.
-..include:seqan/align.h
-*/
-template <typename T>
-struct GetSource
+template <typename TSequence, typename TSpec, typename TIteratorSpec>
+struct Iterator<Gaps<TSequence, TSpec> const, TIteratorSpec>
 {
-	typedef typename Source<T>::Type & Type;
+    typedef Iter<Gaps<TSequence, TSpec> const, GapsIterator<TSpec> > Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// Iterator
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Metafunction GetValue
+// ----------------------------------------------------------------------------
 
-///.Metafunction.Iterator.param.T.type:Class.Gaps
+template <typename TSequence, typename TSpec>
+struct GetValue<Gaps<TSequence, TSpec> > : Value<Gaps<TSequence, TSpec> >
+{};
 
-template <typename TSource, typename TSpec, typename TIteratorSpec>
-struct Iterator<Gaps<TSource, TSpec>, TIteratorSpec>
+template <typename TSequence, typename TSpec>
+struct GetValue<Gaps<TSequence, TSpec> const> : GetValue<Gaps<TSequence, TSpec> >
+{};
+
+// ----------------------------------------------------------------------------
+// Metafunction Position
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TSpec>
+struct Position<Gaps<TSequence, TSpec> >
 {
-	typedef Iter<Gaps<TSource, TSpec>, GapsIterator<TSpec> > Type;
-};
-template <typename TSource, typename TSpec, typename TIteratorSpec>
-struct Iterator<Gaps<TSource, TSpec> const, TIteratorSpec>
-{
-	typedef Iter<Gaps<TSource, TSpec> const, GapsIterator<TSpec> > Type;
-};
-
-//////////////////////////////////////////////////////////////////////////////
-
-///.Metafunction.Spec.param.T.type:Class.Gaps
-
-template <typename TSource, typename TSpec>
-struct Spec<Gaps<TSource, TSpec> >
-{
-	typedef TSpec Type;
-};
-template <typename TSource, typename TSpec>
-struct Spec<Gaps<TSource, TSpec> const>
-{
-	typedef TSpec Type;
+    typedef typename Position<TSequence>::Type TSeqPos_;
+    typedef typename MakeSigned<TSeqPos_>::Type Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// Value
-//////////////////////////////////////////////////////////////////////////////
+template <typename TSequence, typename TSpec>
+struct Position<Gaps<TSequence, TSpec> const> : Position<Gaps<TSequence, TSpec> >
+{};
 
-///.Metafunction.Value.param.T.type:Class.Gaps
+// ----------------------------------------------------------------------------
+// Metafunction Reference
+// ----------------------------------------------------------------------------
 
-template <typename TSource, typename TSpec>
-struct Value<Gaps<TSource, TSpec> >:
-	Value<TSource>
+template <typename TSequence, typename TSpec>
+struct Reference<Gaps<TSequence, TSpec> >
 {
-};
-template <typename TSource, typename TSpec>
-struct Value<Gaps<TSource, TSpec> const>:
-	Value<TSource const>
-{
+    typedef typename Iterator<Gaps<TSequence, TSpec>, Standard>::Type TIterator_;
+    typedef Proxy<IteratorProxy<TIterator_> > Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-// GetValue
-//////////////////////////////////////////////////////////////////////////////
-
-///.Metafunction.GetValue.param.T.type:Class.Gaps
-
-template <typename TSource, typename TSpec>
-struct GetValue<Gaps<TSource, TSpec> >:
-	Value<TSource> //no reference
+template <typename TSequence, typename TSpec>
+struct Reference<Gaps<TSequence, TSpec> const>
 {
-};
-template <typename TSource, typename TSpec>
-struct GetValue<Gaps<TSource, TSpec> const>:
-	Value<TSource const> //no reference
-{
+    typedef typename Iterator<Gaps<TSequence, TSpec> const, Standard>::Type TIterator_;
+    typedef Proxy<IteratorProxy<TIterator_> > Type;
 };
 
+// ----------------------------------------------------------------------------
+// Metafunction Size
+// ----------------------------------------------------------------------------
 
-//////////////////////////////////////////////////////////////////////////////
-// Reference
-//////////////////////////////////////////////////////////////////////////////
-
-///.Metafunction.Reference.param.T.type:Class.Gaps
-
-template <typename TSource, typename TSpec>
-struct Reference<Gaps<TSource, TSpec> >
+template <typename TSequence, typename TSpec>
+struct Size<Gaps<TSequence, TSpec> >
 {
-	typedef typename Iterator<Gaps<TSource, TSpec>, Standard>::Type TIterator_;
-	typedef Proxy<IteratorProxy<TIterator_> > Type;
+    typedef typename Size<TSequence>::Type Type;
 };
 
-template <typename TSource, typename TSpec>
-struct Reference<Gaps<TSource, TSpec> const>
+template <typename TSequence, typename TSpec>
+struct Size<Gaps<TSequence, TSpec> const> : Size<Gaps<TSequence, TSpec> >
+{};
+
+// ----------------------------------------------------------------------------
+// Metafunction Source
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Switch to Hosted Type interface
+
+template <typename TSequence, typename TSpec>
+struct Source<Gaps<TSequence, TSpec> >
 {
-	typedef typename Iterator<Gaps<TSource, TSpec> const, Standard>::Type TIterator_;
-	typedef Proxy<IteratorProxy<TIterator_> > Type;
+    typedef TSequence Type;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+template <typename TSequence, typename TSpec>
+struct Source<Gaps<TSequence, TSpec> const> : Source<Gaps<TSequence, TSpec> >
+{};
+
+// TODO(holtgrew): Also prefix/suffix/infix? Should work!
+
+// ----------------------------------------------------------------------------
+// Metafunction IsSequence
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TSpec>
+struct IsSequence<Gaps<TSequence, TSpec> >
+{
+    typedef True Type;
+    static const bool VALUE = true;
+};
+
+template <typename TSequence, typename TSpec>
+struct IsSequence<Gaps<TSequence, TSpec> const> : IsSequence<Gaps<TSequence, TSpec> >
+{};
+
+
+// ============================================================================
 // Functions
-//////////////////////////////////////////////////////////////////////////////
+// ============================================================================
 
-///.Function.getObjectId.param.object.type:Class.Gaps
+// ----------------------------------------------------------------------------
+// Function value()
+// ----------------------------------------------------------------------------
 
-template <typename TSource, typename TSpec>
-inline void const *
-getObjectId(Gaps<TSource, TSpec> & me)
+template <typename TSequence, typename TSpec,
+          typename TPosition>
+inline typename Reference<Gaps<TSequence, TSpec> >::Type
+value(Gaps<TSequence, TSpec> & gaps,
+      TPosition const clippedViewPos)
 {
-SEQAN_CHECKPOINT
-	return getObjectId(source(me));
-}
-template <typename TSource, typename TSpec>
-inline void const *
-getObjectId(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	return getObjectId(source(me));
+    return typename Reference<Gaps<TSequence, TSpec> >::Type(begin(gaps, Standard()) + clippedViewPos);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-///.Function.begin.param.object.type:Class.Gaps
-
-// returns iterator to left border
-template <typename TSource, typename TSpec, typename TTag>
-inline typename Iterator<Gaps<TSource, TSpec>, Tag<TTag> const>::Type 
-begin(Gaps<TSource, TSpec> & me,
-	  Tag<TTag> const tag_)
+template <typename TSequence, typename TSpec,
+          typename TPosition>
+inline typename Reference<Gaps<TSequence, TSpec> const>::Type
+value(Gaps<TSequence, TSpec> const & gaps,
+      TPosition const clippedViewPos)
 {
-SEQAN_CHECKPOINT
-	return iter(me, beginPosition(me), tag_);
-}
-template <typename TSource, typename TSpec, typename TTag>
-inline typename Iterator<Gaps<TSource, TSpec> const, Tag<TTag> const>::Type 
-begin(Gaps<TSource, TSpec> const & me,
-	  Tag<TTag> const tag_)
-{
-SEQAN_CHECKPOINT
-	return iter(me, beginPosition(me), tag_);
-}
-//////////////////////////////////////////////////////////////////////////////
-
-///.Function.end.param.object.type:Class.Gaps
-
-// returns iterator to right border
-template <typename TSource, typename TSpec, typename TTag>
-inline typename Iterator<Gaps<TSource, TSpec>, Tag<TTag> const>::Type 
-end(Gaps<TSource, TSpec> & me,
-	Tag<TTag> const tag_)
-{
-SEQAN_CHECKPOINT
-	return iter(me, endPosition(me), tag_);
-}
-template <typename TSource, typename TSpec, typename TTag>
-inline typename Iterator<Gaps<TSource, TSpec> const, Tag<TTag> const>::Type 
-end(Gaps<TSource, TSpec> const & me,
-	Tag<TTag> const tag_)
-{
-SEQAN_CHECKPOINT
-	return iter(me, endPosition(me), tag_);
+    return typename Reference<Gaps<TSequence, TSpec> const>::Type(begin(gaps, Standard()) + clippedViewPos);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function iter()
+// ----------------------------------------------------------------------------
 
-///.Function.length.param.object.type:Class.Gaps
+// From ContainerConcept, only overwriting documentation here.
 
-template <typename TSource, typename TSpec>
-inline typename Size<Gaps<TSource, TSpec> >::Type
-length(Gaps<TSource, TSpec> const & me)
+/*!
+ * @fn Gaps#iter
+ * @brief Return an iterator to a specific position in the current clipping.
+ *
+ * @signature TIterator iter(gaps, viewPos[, tag]);
+ *
+ * @param[in] gaps    The Gaps object to get an iterator into.
+ * @param[in] viewPos View position to get an iterator to (Metafunction: @link ContainerConcept#Position @endlink).
+ * @param[in] tag     An optional tag for selecting the iterator type.
+ *
+ * @return TIterator The resulting iterator.  The type is <tt>Iterator<TGaps, TTag>::Type</tt> where <tt>TTag</tt> is
+ *                   the type of <tt>tag</tt>.
+ */
+
+// TODO(holtgrew): Adding links to implemented sequence. This should be cleaned up once we have better documentation with concepts.
+// ----------------------------------------------------------------------------
+// Function setSource()
+// ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// Function createSource()
+// ----------------------------------------------------------------------------
+
+// ----------------------------------------------------------------------------
+// Function clearClipping()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#clearClipping
+ * @brief Clear clipping from Gaps objects.
+ *
+ * @signature void clearClipping(gaps);
+ *
+ * @param[in,out] gaps Object to clear clipping from.
+ */
+
+// ----------------------------------------------------------------------------
+// Function clearGaps()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#clearGaps
+ * @brief Clear gaps from Gaps objects.
+ *
+ * @signature void clearGaps(gaps);
+ *
+ * @param[in,out] gaps Object to clear gaps from.
+ */
+
+// ----------------------------------------------------------------------------
+// Function length()
+// ----------------------------------------------------------------------------
+
+// From ContainerConcept, only overwriting documentation here.
+
+/*!
+ * @fn Gaps#length
+ * @brief Return number of gap and characters between the beginning and the end of the clipping.
+ *
+ * @signature TSize length(gaps);
+ *
+ * @param[in] gaps The @link Gaps @endlink object to query for its length.
+ *
+ * @return TSize The number of gaps and characters between the beginning and the end of the clipping (Metafunction:
+ *               @link ContainerConcept#Size @endlink).
+ */
+
+// ----------------------------------------------------------------------------
+// Function unclippedLength()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#unclippedLength
+ * @brief Return length of the gapped sequence without clipping.
+ *
+ * @signature TSize unclippedLength(gaps);
+ *
+ * @param[in] gaps The Gaps object to query.
+ *
+ * @return TSize The result (Metafunction: @link ContainerConcept#Size @endlink).
+ */
+
+// ----------------------------------------------------------------------------
+// Function toViewPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#toViewPosition
+ * @brief Conversion from source (without gaps or clipping) to view position (including gaps and clipping).
+ *
+ * @signature TPos toViewPosition(gaps, sourcePos);
+ *
+ * @param[in] gaps      The gaps object to use for translation.
+ * @param[in] sourcePos The source position (in the underlying sequence) to translate.
+ *
+ * @return TPos The resulting position in the view (Metafunction: @link ContainerConcept#Position @endlink).
+ */
+
+// ----------------------------------------------------------------------------
+// Function toSourcePosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#toSourcePosition
+ * @brief Conversion from view position (including gaps and clipping) to source (without gaps or clipping).
+ *
+ * @signature TPos toSourcePosition(gaps, viewPos);
+ *
+ * @param[in] gaps      The gaps object to use for translation.
+ * @param[in] sourcePos The view position (including gaps and clipping) to translate.
+ *
+ * @return TPos The resulting position in the underlying sequence (Metafunction: @link ContainerConcept#Position
+ *              @endlink).
+ */
+
+template <typename TSequence, typename TSpec, typename TPosition>
+inline typename Position<TSequence>::Type
+toSourcePosition(Gaps<TSequence, TSpec> const & gaps, TPosition const clippedViewPos)
 {
-SEQAN_CHECKPOINT
-	return endPosition(me) - beginPosition(me);
+    return toSourcePosition(gaps, clippedViewPos, RightOfViewPos());
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function isGap()
+// ----------------------------------------------------------------------------
 
-/**
-.Function.sourceBegin:
-..summary:Begin of the source segment. 
-..cat:Alignments
-..signature:sourceBegin(object)
-..param.object:An object that has a source
-...type:Class.Gaps
-..returns:An iterator that points to the first item in @Function.source.source(object)@ that is used in object.
-..see:Function.begin
-..see:Function.source
-..include:seqan/align.h
-*/
+/*!
+ * @fn Gaps#isGap
+ * @brief Query positions in a Gaps object for being a gap.
+ *
+ * @signature bool isGap(gaps, viewPos);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ * @param[in] viewPos The view position (including clipping and gaps).
+ *
+ * @return bool The query result.
+ */
 
-template <typename TSource, typename TSpec, typename TTag>
-inline typename Iterator<TSource, Tag<TTag> const>::Type 
-sourceBegin(Gaps<TSource, TSpec> const & me,
-			Tag<TTag> const tag_)
+template <typename TSequence, typename TSpec, typename TPos>
+bool isGap(Gaps<TSequence, TSpec> const & gaps, TPos clippedViewPos)
 {
-SEQAN_CHECKPOINT
-	return iter(source(me), clippedBeginPosition(me), tag_);
-}
-template <typename TSource, typename TSpec>
-inline typename Iterator<TSource, typename DefaultGetIteratorSpec<TSource>::Type>::Type 
-sourceBegin(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	typedef typename DefaultGetIteratorSpec<TSource>::Type TDefaultGetIteratorSpec;
-	return iter(source(me), clippedBeginPosition(me), TDefaultGetIteratorSpec());
+    return isGap(iter(gaps, clippedViewPos, Standard()));
 }
 
+// ----------------------------------------------------------------------------
+// Function isCharacter()
+// ----------------------------------------------------------------------------
 
-//////////////////////////////////////////////////////////////////////////////
+/*!
+ * @fn Gaps#isCharacer
+ * @brief Query positions in a Gaps object for being a character.
+ *
+ * @signature bool isCharacter(gaps, viewPos);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ * @param[in] viewPos The view position (including clipping and gaps).
+ *
+ * @return bool The query result.
+ */
 
-
-/**
-.Function.sourceEnd:
-..summary:End of the source segment. 
-..cat:Alignments
-..signature:sourceEnd(object)
-..param.object:An object that has a source
-...type:Class.Gaps
-..returns:An iterator that points behind the last item in @Function.source.source(object)@ that is used in object.
-..see:Function.end
-..see:Function.source
-..see:Function.sourceBegin
-..include:seqan/align.h
-*/
-
-template <typename TSource, typename TSpec, typename TTag>
-inline typename Iterator<TSource, Tag<TTag> const>::Type 
-sourceEnd(Gaps<TSource, TSpec> const & me,
-		  Tag<TTag> const tag_)
+template <typename TSequence, typename TSpec, typename TPos>
+bool isCharacter(Gaps<TSequence, TSpec> const & gaps, TPos clippedViewPos)
 {
-SEQAN_CHECKPOINT
-	return iter(source(me), clippedEndPosition(me), tag_);
-}
-template <typename TSource, typename TSpec>
-inline typename Iterator<TSource, typename DefaultGetIteratorSpec<TSource>::Type>::Type 
-sourceEnd(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	typedef typename DefaultGetIteratorSpec<TSource>::Type TDefaultGetIteratorSpec;
-	return iter(source(me), clippedEndPosition(me), TDefaultGetIteratorSpec());
+    return isCharacter(iter(gaps, clippedViewPos, Standard()));
 }
 
+// ----------------------------------------------------------------------------
+// Function insertGaps()
+// ----------------------------------------------------------------------------
 
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
+/*!
+ * @fn Gaps#insertGaps
+ * @brief Insert gap characters.
+ *
+ * @signature void insertGaps(gaps, viewPos, count);
+ *
+ * @param[in,out] gaps    The Gaps object to insert gaps into.
+ * @param[in]     viewPos The view position (including clipping and gaps) to insert gaps at.
+ * @param[in]     count   The number of gaps to insert.
+ */
 
-/**
-.Function.insertGap:
-..cat:Alignments
-..summary:Insert one blank into a gapped sequence. 
-..signature:insertGap(gapped_sequence, view_position)
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_position:The view position at which the blank is inserted.
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec, typename TPosition>
+// ----------------------------------------------------------------------------
+// Function insertGap()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#insertGap
+ * @brief Insert one gap character.
+ *
+ * @signature void insertGap(gaps, viewPos);
+ *
+ * @param[in,out] gaps    The Gaps object to insert gap into.
+ * @param[in]     viewPos The view position (including clipping and gaps) to insert the gap at.
+ */
+
+// Forward to removeGaps() which has to be implemented in each subclass.
+
+template <typename TSequence, typename TSpec, typename TPosition>
 inline void
-insertGap(Gaps<TSource, TSpec> & me,
-		  TPosition _view_pos)
+insertGap(Gaps<TSequence, TSpec> & gaps, TPosition clippedViewPos)
 {
-SEQAN_CHECKPOINT
-	insertGap(iter(me, _view_pos));
+    insertGaps(gaps, clippedViewPos, 1u);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function removeGaps()
+// ----------------------------------------------------------------------------
 
-/**
-.Function.insertGaps:
-..cat:Alignments
-..summary:Insert blanks into a gapped sequence. 
-..signature:insertGaps(gapped_sequence, view_position, count)
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_position:The view position at which $count$ blanks are inserted.
-..param.count:Number of blanks to insert.
-..see:Function.insertGap
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec, typename TPosition, typename TSize>
+/*!
+ * @fn Gaps#removeGaps
+ * @brief Remove gaps from a Gaps object.
+ *
+ * @signature TSize removeGaps(gaps, viewPos, count);
+ *
+ * @param[in,out] gaps    The gaps object to remove gap characters from.
+ * @param[in]     viewPos The view positions to remove gap characters from.
+ * @param[in]     count   The number of gap characters to remove.
+ *
+ * @return TSize The number of gap characters removed (Metafunction: @link ContainerConcept#Size @endlink).
+ */
+
+// ----------------------------------------------------------------------------
+// Function removeGap()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#removeGap
+ * @brief Remove one gap from a Gaps object.
+ *
+ * @signature TSize removeGap(gaps, viewPos);
+ *
+ * @param[in,out] gaps    The gaps object to remove one gap character from.
+ * @param[in]     viewPos The view positions to remove one gap character from.
+ *
+ * @return TSize The number of gap characters removed (Metafunction: @link ContainerConcept#Size @endlink).
+ */
+
+// Forward to removeGaps() which has to be implemented in each subclass.
+
+template <typename TSequence, typename TSpec, typename TPosition>
+inline typename Size<Gaps<TSequence, TSpec> >::Type
+removeGap(Gaps<TSequence, TSpec> & gaps, TPosition clippedViewPos)
+{
+    return removeGaps(gaps, clippedViewPos, 1u);
+}
+
+// ----------------------------------------------------------------------------
+// Function countGaps()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#countGaps
+ * @brief The number of gaps following a position.
+ *
+ * @signature TSize countGaps(gaps, viewPos[, dir]);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ * @param[in] viewPos View position (including clipping and gaps) to query at.
+ * @param[in] dir     A tag to specify the counting direction. One of @link GapDirectionTags @endlink.
+ *                    Defaults to @link GapDirectionTags#RightOfViewPos @endlink.
+ *
+ * @return TSize The number of gap characters at <tt>viewPos</tt>  (Metafunction: @link ContainerConcept#Size
+ *               @endlink).
+ *
+ * If the the direction tag is @link GapDirectionTags#RightOfViewPos @endlink the current view position will be 
+ * included in the count, and excluded when @link GapDirectionTags#LeftOfViewPos @endlink is selected.
+ */
+
+template <typename TSequence, typename TSpec,
+          typename TPos,
+          typename TDirSpec>
+typename Size<Gaps<TSequence, TSpec> >::Type
+countGaps(Gaps<TSequence, TSpec> const & gaps, TPos const clippedViewPos, TDirSpec const & /*tag*/)
+{
+    return countGaps(iter(gaps, clippedViewPos, Standard()), TDirSpec());
+}
+
+template <typename TSequence, typename TSpec, typename TPos>
+typename Size<Gaps<TSequence, TSpec> >::Type
+countGaps(Gaps<TSequence, TSpec> const & gaps, TPos const clippedViewPos)
+{
+    return countGaps(gaps, clippedViewPos, RightOfViewPos());
+}
+
+// ----------------------------------------------------------------------------
+// Function countLeadingGaps()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#countLeadingGaps
+ * @brief The number of leading gaps.
+ *
+ * @signature TSize countLeadingGaps(gaps);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ *
+ * @return TSize The number of leading gap characters  (Metafunction: @link ContainerConcept#Size @endlink).
+ */
+
+template <typename TGaps>
+inline typename Size<TGaps>::Type
+countLeadingGaps(TGaps const & gaps)
+{
+    return toViewPosition(gaps, 0);
+}
+
+// ----------------------------------------------------------------------------
+// Function countTrailingGaps()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#countTrailingGaps
+ * @brief The number of trailing gaps.
+ *
+ * @signature TSize countTrailingGaps(gaps);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ *
+ * @return TSize The number of trailing gap characters  (Metafunction: @link ContainerConcept#Size @endlink).
+ */
+
+template <typename TGaps>
+inline typename Size<TGaps>::Type
+countTrailingGaps(TGaps const & gaps)
+{
+    return length(gaps) - toViewPosition(gaps, length(source(gaps)) - 1) - 1;
+}
+
+// ----------------------------------------------------------------------------
+// Function countGapOpens()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#countGapOpens
+ * @brief The number of gap openings.
+ *
+ * @signature TSize countGapOpens(gaps);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ *
+ * @return TSize The total number of gap openings (Metafunction: @link ContainerConcept#Size @endlink).
+ */
+
+template <typename TGaps>
+inline typename Size<TGaps>::Type
+countGapOpens(TGaps const & gaps)
+{
+    typedef typename Iterator<TGaps const, Standard>::Type   TIter;
+    typedef typename Size<TGaps const>::Type                 TCount;
+
+    TCount count = 0;
+
+    TIter it = begin(gaps, Standard());
+    TIter itEnd = end(gaps, Standard());
+
+    while (it != itEnd)
+    {
+        count += isGap(it);
+        it += std::max(countGaps(it), (TCount)1);
+    }
+
+    SEQAN_ASSERT(it == itEnd);
+
+    return count;
+}
+
+// ----------------------------------------------------------------------------
+// Function countGapExtensions()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#countGapExtensions
+ * @brief The number of gap extensions.
+ *
+ * @signature TSize countGapExtensions(gaps);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ *
+ * @return TSize The total number of gap extensions (Metafunction: @link ContainerConcept#Size @endlink).
+ */
+
+template <typename TGaps>
+inline typename Size<TGaps>::Type
+countGapExtensions(TGaps const & gaps)
+{
+    typedef typename Iterator<TGaps const, Standard>::Type   TIter;
+    typedef typename Size<TGaps const>::Type                 TCount;
+
+    TCount count = 0;
+
+    TIter it = begin(gaps, Standard());
+    TIter itEnd = end(gaps, Standard());
+
+    while (it != itEnd)
+    {
+        count += countGaps(it);
+        it += std::max(countGaps(it), (TCount)1);
+    }
+
+    SEQAN_ASSERT(it == itEnd);
+
+    return count;
+}
+
+// ----------------------------------------------------------------------------
+// Function countCharacters()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#countCharacters
+ * @brief The number of characters following a position.
+ *
+ * @signature TSize countCharacters(gaps, viewPos[, dir]);
+ *
+ * @param[in] gaps    The Gaps object to query.
+ * @param[in] viewPos View position (including clipping and gaps) to query at.
+ * @param[in] dir     A tag to specify the counting direction. One of @link GapDirectionTags @endlink.
+ *                    Defaults to @link GapDirectionTags#RightOfViewPos @endlink.
+ *
+ * @return TSize The number of non-gaps characters characters at <tt>viewPos</tt> (Metafunction: @link
+ *               ContainerConcept#Size @endlink).
+ *
+ * If the the direction tag is @link GapDirectionTags#RightOfViewPos @endlink the current view position will be
+ * included in the count, and excluded when @link GapDirectionTags#LeftOfViewPos @endlink is selected.
+ */
+
+template <typename TSequence, typename TSpec,
+          typename TPos,
+          typename TDirSpec>
+typename Size<Gaps<TSequence, TSpec> >::Type
+countCharacters(Gaps<TSequence, TSpec> const & gaps,
+                TPos const clippedViewPos,
+                TDirSpec const & /*dir*/)
+{
+    return countCharacters(iter(gaps, clippedViewPos, Standard()), TDirSpec());
+}
+
+template <typename TSequence, typename TSpec, typename TPos>
+typename Size<Gaps<TSequence, TSpec> >::Type
+countCharacters(Gaps<TSequence, TSpec> const & gaps, TPos const clippedViewPos)
+{
+    return countCharacters(gaps, clippedViewPos, RightOfViewPos());
+}
+
+// ----------------------------------------------------------------------------
+// Function setClippedBeginPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#setClippedBeginPosition
+ * @brief Set the begin position of the clipping.
+ *
+ * @signature void setClippedBeginPosition(gaps, unclippedViewPos);
+ *
+ * @param[in,out] gaps             The Gaps object to set the clipping begin position of.
+ * @param[in]     unclippedViewPos View position (including gaps but excluding clipping) to set the clipping begin to.
+ */
+
+// ----------------------------------------------------------------------------
+// Function setClippedEndPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#setClippedEndPosition
+ * @brief Set the end position of the clipping.
+ *
+ * @signature void setClippedEndPosition(gaps, unclippedViewPos);
+ *
+ * @param[in,out] gaps             The Gaps object to set the clipping end position of.
+ * @param[in]     unclippedViewPos View position (including gaps but excluding clipping) to set the clipping end to.
+ */
+
+// ----------------------------------------------------------------------------
+// Function clippedBeginPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#clippedBeginPosition
+ * @brief Return begin position of the clipping.
+ *
+ * @signature TPos clippedBeginPosition(gaps);
+ *
+ * @param[in] gaps             The Gaps object to query.
+ *
+ * @return TPos The begin position of the unclipped view  (Metafunction: @link ContainerConcept#Position @endlink).
+ *
+ * @section Example
+ *
+ * In the following gaps configuration, the result of <tt>clippedBeginPosition(gaps)</tt> is 1.
+ *
+ * @code{.txt}
+ * clipping                   [     )
+ *   (half-open interval)
+ *
+ * gapped sequence:          X--XXX-XX-
+ *
+ * source position:          0111234456
+ * unclipped view position:  0123456789
+ * clipped view position:     0123456
+ * @endcode
+ */
+
+// ----------------------------------------------------------------------------
+// Function clippedEndPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#clippedEndPosition
+ * @brief Return end position of the clipping.
+ *
+ * @signature TPos clippedEndPosition(gaps);
+ *
+ * @param[in] gaps             The Gaps object to query.
+ *
+ * @return TPos The end position of the unclipped view  (Metafunction: @link ContainerConcept#Position @endlink).
+ *
+ * @section Example
+ *
+ * In the following gaps configuration, the result of <tt>clippedEndPosition(gaps)</tt> is 7.
+ *
+ * @code{.txt}
+ * clipping                   [     )
+ *   (half-open interval)
+ *
+ * gapped sequence:          X--XXX-XX-
+ *
+ * source position:          0111234456
+ * unclipped view position:  0123456789
+ * clipped view position:     0123456
+ * @endcode
+ */
+
+// ----------------------------------------------------------------------------
+// Function setBeginPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#setBeginPosition
+ * @brief Set the begin position of the clipped gapped sequence, given a source position.
+ *
+ * @signature void setBeginPosition(gaps, sourcePos);
+ *
+ * @param[in,out] gaps      The Gaps object to set the begin position in.
+ * @param[in]     sourcePos Position in the underlying sequence to set clipping to.
+ */
+
+// ----------------------------------------------------------------------------
+// Function setEndPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#setEndPosition
+ * @brief Set the end position of the clipped gapped sequence, given a source position.
+ *
+ * @signature void setEndPosition(gaps, sourcePos);
+ *
+ * @param[in,out] gaps      The Gaps object to set the end position in.
+ * @param[in]     sourcePos Position in the underlying sequence to set clipping to.
+ */
+
+// ----------------------------------------------------------------------------
+// Function beginPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#beginPosition
+ * @brief Return the clipping begin position as a source position.
+ *
+ * @signature TPos beginPosition(gaps);
+ *
+ * @param[in] gaps The Gaps object to query.
+ *
+ * @return TPos The clipping begin position in the source (Metafunction: @link ContainerConcept#Position @endlink).
+ *
+ * @section Example
+ *
+ * In the following gaps configuration, the result of <tt>beginPosition(gaps)</tt> is $1$.  The clipping starts in a
+ * gap and the source position of the first non-gap character right of the clipping begin has source position 1.
+ *
+ * @code{.txt}
+ * clipping                   [     )
+ *   (half-open interval)
+ *
+ * gapped sequence:          X--XXX-XX-
+ *
+ * source position:          0111234456
+ * unclipped view position:  0123456789
+ * clipped view position:     0123456
+ * @endcode
+ */
+
+// ----------------------------------------------------------------------------
+// Function endPosition()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#endPosition
+ * @brief Return the clipping end position as a source position.
+ *
+ * @signature TPos endPosition(gaps);
+ *
+ * @param[in] gaps The Gaps object to query for the end position as a source position.
+ *
+ * @return TPos The end position as a source position (Metafunction: @link ContainerConcept#Position @endlink).
+ *
+ * @section Example
+ *
+ * In the following gaps configuration, the result of <tt>endPositioN(gaps)</tt> is 4.
+ *
+ * @code{.txt}
+ * clipping                   [     )
+ *   (half-open interval)
+ *
+ * gapped sequence:          X--XXX-XX-
+ *
+ * source position:          0111234456
+ * unclipped view position:  0123456789
+ * clipped view position:     0123456
+ * @endcode
+ */
+
+// ----------------------------------------------------------------------------
+// Function write()
+// ----------------------------------------------------------------------------
+
+template <typename TTarget, typename TSource, typename TSpec>
 inline void
-insertGaps(Gaps<TSource, TSpec> & me,
-		   TPosition _view_pos,
-		   TSize _size)
+write(TTarget & target,
+      Gaps<TSource, TSpec> const & source)
 {
-SEQAN_CHECKPOINT
-	insertGaps(iter(me, _view_pos), _size);
+    // Print gaps row
+    typedef typename Iterator<Gaps<TSource, TSpec> const>::Type TIter;
+    TIter begin_ = begin(source);
+    TIter end_ = end(source);
+    for (; begin_ != end_; ++begin_) {
+        if (isGap(begin_))
+            writeValue(target, gapValue<char>());
+        else
+            writeValue(target, convert<char>(getValue(begin_)));
+    }
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function operator<<()                                      [stream operator]
+// ----------------------------------------------------------------------------
 
-/**
-.Function.removeGap:
-..cat:Alignments
-..summary:Removes one blank from a gapped sequence. 
-..signature:removeGap(gapped_sequence, view_position)
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_position:The view position at which the blank is removed.
-..remarks:If there is no gap at position $view_position$ in $gapped_sequence$, then nothing happens.
-..see:Function.insertGap
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec, typename TPosition>
+// TODO(holtgrew): Document appropriately.
+
+template <typename TTarget, typename TSource, typename TSpec>
+inline TTarget &
+operator<<(TTarget & target, Gaps<TSource, TSpec> const & gaps)
+{
+    typename DirectionIterator<TTarget, Output>::Type it = directionIterator(target, Output());
+    write(it, gaps);
+    return target;
+}
+
+// ----------------------------------------------------------------------------
+// Function _pumpTraceToGaps()
+// ----------------------------------------------------------------------------
+
+// Internal function for converting AlignTrace<> objects into alignments in two Gaps objects.  Note that the traceback
+// in the trace is stored in reverse, from back to front.  We insert the gaps in descending order of their position.
+// The reason is that Gaps<> objects store the gaps in ascending order of coordinates in String<> objects and inserting
+// at the end is in O(1) while inserting in the front is O(n).
+
+template <typename TSequenceH, typename TGapsSpecH, typename TSequenceV, typename TGapsSpecV, typename TSize>
+void _pumpTraceToGaps(Gaps<TSequenceH, TGapsSpecH> & gapsH,
+                      Gaps<TSequenceV, TGapsSpecV> & gapsV,
+                      AlignTraceback<TSize> const & trace)
+{
+    typedef Gaps<TSequenceH, TGapsSpecH> TGapsH;
+    typedef typename Iterator<TGapsH, Standard>::Type TGapsHIter;
+
+    typedef Gaps<TSequenceV, TGapsSpecV> TGapsV;
+    typedef typename Iterator<TGapsV, Standard>::Type TGapsVIter;
+
+    // TODO(holtgrew): I don't understand the following.  Originally, this function used Align objects, but I did not understand it there either.
+    // TODO(rausch): Pump trace into align_ (note: this is relatively slow code here. it could be improved if specialized to the Align Specs).
+    clearGaps(gapsH);
+    clearClipping(gapsH);
+    clearGaps(gapsV);
+    clearClipping(gapsV);
+
+    TSize i = length(trace.sizes);  // Scan trace backwards.
+    TGapsHIter itH = begin(gapsH);
+    TGapsVIter itV = begin(gapsV);
+    while (i > 0)
+    {
+        --i;
+        TSize size = trace.sizes[i];
+        switch ((int) trace.tvs[i])
+        {
+        case 1:  // Go horizontal.
+            insertGaps(itV, size);
+            break;
+
+        case 2:  // Go vertical.
+            insertGaps(itH, size);
+            break;
+        }
+        goFurther(itH, size);
+        goFurther(itV, size);
+    }
+}
+
+// ----------------------------------------------------------------------------
+// Function source()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Document TSource via metafunctio.
+
+/*!
+ * @fn Gaps#source
+ * @brief Return underlying object.
+ *
+ * @signature TSource source(gaps);
+ *
+ * @param[in] gaps The Gaps object to return the underling sequence for.
+ *
+ * @return TSource Reference to the source of the Gaps.
+ */
+
+// ----------------------------------------------------------------------------
+// Function sourceSegment()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Rename/remove?
+
+// We need some forwards for function sourceSegment().
+
+template <typename TSequence, typename TSpec>
+inline typename Position<Gaps<TSequence, TSpec> >::Type clippedBeginPosition(Gaps<TSequence, TSpec> const & gaps);
+template <typename TSequence, typename TSpec>
+inline typename Position<Gaps<TSequence, TSpec> >::Type clippedEndPosition(Gaps<TSequence, TSpec> const & gaps);
+template <typename TSequence, typename TSpec, typename TPosition>
+inline typename Position<TSequence>::Type
+toSourcePosition(Gaps<TSequence, TSpec> const & gaps, TPosition clippedViewPos);
+
+template <typename TSequence, typename TSpec>
+inline typename Infix<TSequence>::Type
+sourceSegment(Gaps<TSequence, TSpec> const & gaps)
+{
+    return infix(source(gaps), toSourcePosition(gaps, clippedBeginPosition(gaps)), toSourcePosition(gaps, clippedEndPosition(gaps)));
+}
+
+template <typename TSequence, typename TSpec>
+inline typename Infix<TSequence>::Type
+sourceSegment(Gaps<TSequence, TSpec> & gaps)
+{
+    return infix(source(gaps), toSourcePosition(gaps, clippedBeginPosition(gaps)), toSourcePosition(gaps, clippedEndPosition(gaps)));
+}
+
+// ----------------------------------------------------------------------------
+// Function assignSource()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn Gaps#assignSource
+ * @brief Assign the source of a gaps object, copying data.
+ *
+ * @signature void assignSource(gaps, seq);
+ *
+ * @param[in,out] gaps The Gaps object to assign the source of.
+ * @param[in]     seq  The @link ContainerConcept sequence @endlink to assign to the underlying string.
+ */
+
+// TOOD(holtgrew): Switch to Hosted Type?
+
+template <typename TSequence, typename TSpec, typename TValue>
 inline void
-removeGap(Gaps<TSource, TSpec> & me,
-		  TPosition _view_pos)
+assignSource(Gaps<TSequence, TSpec> & gaps, TValue const & value)
 {
-SEQAN_CHECKPOINT
-	removeGap(iter(me, _view_pos));
+    assign(source(gaps), value);
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function setSource()
+// ----------------------------------------------------------------------------
 
-/**
-.Function.removeGaps:
-..cat:Alignments
-..summary:Removes blanks from a gapped sequence. 
-..signature:removeGaps(gapped_sequence, view_position, count)
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_position:The view position at which up to $count$ blanks are removed.
-..param.count:Number of blanks 
-..remarks:This funcion removes up to $count$ blanks. 
-If there is no gap at position $view_position$ in $gapped_sequence$, nothing happens.
-If there are only $x < count$ consecutive blanks starting at position $view_position$ in $gappend_sequence$, then only $x$ blanks are removed.
-..see:Function.insertGaps
-..see:Function.removeGap
-..include:seqan/align.h
-*/
+// ----------------------------------------------------------------------------
+// Function copyGaps()
+// ----------------------------------------------------------------------------
 
-template <typename TSource, typename TSpec, typename TPosition, typename TSize>
-inline void
-removeGaps(Gaps<TSource, TSpec> & me,
-		   TPosition _view_pos,
-		   TSize _size)
+/*!
+ * @fn Gaps#copyGaps
+ * @brief Copy gaps from one Gaps object to another (in the clipped view of both arguments).
+ *
+ * The user is responsible for ensuring that the gaps are over sequences of same length and appropriate clipping.
+ *
+ * @signature void copyGaps(dest, source);
+ *
+ * @param[in,out] dest   The destination Gaps object (appropriate clipping, no gaps).
+ * @param[in]     source The source Gaps object.
+ */
+
+template <typename TDestSource, typename TDestSpec, typename TSourceSource, typename TSourceSpec>
+void copyGaps(Gaps<TDestSource, TDestSpec> & dest, Gaps<TSourceSource, TSourceSpec> const & source)
 {
-SEQAN_CHECKPOINT
-	removeGaps(iter(me, _view_pos), _size);
+    typedef Gaps<TDestSource, TDestSpec> TLhs;
+    typedef typename Iterator<TLhs, Standard>::Type TLhsIter;
+    typedef Gaps<TSourceSource, TSourceSpec> const TRhs;
+    typedef typename Iterator<TRhs, Standard>::Type TRhsIter;
+
+    TLhsIter lhsIt = begin(dest, Standard());
+    //TLhsIter lhsItEnd = end(dest, Standard());
+    TRhsIter rhsIt = begin(source, Standard());
+    TRhsIter rhsItEnd = end(source, Standard());
+
+    for (unsigned num = 0; rhsIt != rhsItEnd; lhsIt += num, rhsIt += num)
+    {
+        if (isGap(rhsIt))
+        {
+            num = countGaps(rhsIt);
+            insertGaps(lhsIt, num);
+        }
+        else
+        {
+            num = countCharacters(rhsIt);
+        }
+
+        SEQAN_ASSERT_NOT((lhsIt == end(dest, Standard())) && num > 0);
+    }
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function copyClipping()
+// ----------------------------------------------------------------------------
 
-/**
-.Function.isGap:
-..cat:Alignments
-..summary:Test a gapped sequence for gaps at a specific position. 
-..signature:bool isGap(gapped_sequence, view_position)
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_position:The view position at which $gapped_sequence$ is tested.
-..returns:$true$, if there is a gap at position $view_position$ in $gapped_sequence$, $false$ otherwise.
-..include:seqan/align.h
-*/
+/*!
+ * @fn Gaps#copyClipping
+ * @brief Copy clipping information from one Gaps object to another.
+ *
+ * @signature void copyClipping(dest, source);
+ *
+ * @param[in,out] dest   The destination Gaps object.
+ * @param[in]     source The source Gaps object.
+ */
 
-template <typename TSource, typename TSpec, typename TPosition>
-inline bool 
-isGap(Gaps<TSource, TSpec> & me,
-	  TPosition view_pos)
+template <typename TDestSource, typename TDestSpec, typename TSourceSource, typename TSourceSpec>
+void copyClipping(Gaps<TDestSource, TDestSpec> & dest, Gaps<TSourceSource, TSourceSpec> const & source)
 {
-SEQAN_CHECKPOINT
-	return isGap(iter(me, view_pos));
-}
-template <typename TSource, typename TSpec, typename TPosition>
-inline bool 
-isGap(Gaps<TSource, TSpec> const & me,
-	  TPosition view_pos)
-{
-SEQAN_CHECKPOINT
-	return isGap(iter(me, view_pos));
+    setClippedBeginPosition(dest, clippedBeginPosition(source));
+    setClippedEndPosition(dest, clippedEndPosition(source));
 }
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function clipSemiGlobal()
+// ----------------------------------------------------------------------------
 
-/**
-.Function.countGaps:
-..cat:Alignments
-..summary:Count blanks at a specific position in a gapped sequence. 
-..signature:Size countGaps(gapped_sequence, view_position)
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_position:The view position at which $gapped_sequence$ is tested.
-..returns:Number of consecutive gaps in $gapped_sequence$ starting at position $view_position$.
-...metafunction:Metafunction.Size
-..remarks:If there is no gap at position $view_position$, the function returns $0$.
-...text:If $view_position \geq $@Function.endPosition@$(gapped_sequence)$, the function returns $0$.
-..include:seqan/align.h
-*/
+/*!
+ * @fn Gaps#clipSemiGlobal
+ * @brief Clip the Gaps objects to reflect a semi-global alignment.
+ *
+ * Leading and trailing gaps are clipped in the local Gaps object. The global Gaps object is updated accordingly.
+ *
+ * @signature void clipSemiGlobal(global, local);
+ *
+ * @param[in,out] global The global Gaps object.
+ * @param[in,out] local  The local Gaps object.
+ */
 
-// count gaps beginning at given view position
-// counting trailing gaps returns either the intended trailing gaps or 0
-
-template <typename TSource, typename TSpec, typename TPosition>
-inline typename Size<Gaps<TSource, TSpec> >::Type
-countGaps(Gaps<TSource, TSpec> & me,
-		  TPosition view_pos)
+template <typename TGlobalGaps, typename TLocalGaps>
+inline void clipSemiGlobal(TGlobalGaps & global, TLocalGaps & local)
 {
-SEQAN_CHECKPOINT
-	return countGaps(iter(me, view_pos));
-}
-template <typename TSource, typename TSpec, typename TPosition>
-inline typename Size<Gaps<TSource, TSpec> >::Type
-countGaps(Gaps<TSource, TSpec> const & me,
-		  TPosition view_pos)
-{
-SEQAN_CHECKPOINT
-	return countGaps(iter(me, view_pos));
+    typedef typename Size<TLocalGaps>::Type  TGapsSize;
+
+    TGapsSize leadingGaps = countLeadingGaps(local);
+    TGapsSize trailingGaps = countTrailingGaps(local);
+    TGapsSize globalLenght = length(global);
+    TGapsSize localLength = length(local);
+
+    setClippedBeginPosition(global, leadingGaps);
+    setClippedBeginPosition(local, leadingGaps);
+    setClippedEndPosition(global, globalLenght - trailingGaps);
+    setClippedEndPosition(local, localLength - trailingGaps);
 }
 
-/**
-.Function.countCharacters:
-..cat:Alignments
-..summary:Count characters at a specific position in a gapped sequence.
-..signature:Size countCharacters(gapped_sequence, view_position)
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_position:The view position at which $gapped_sequence$ is tested.
-..returns:Number of consecutive characters in $gapped_sequence$ starting at position $view_position$.
-...metafunction:Metafunction.Size
-..remarks:If there is no character at position $view_position$, the function returns $0$.
-...text:If $view_position \geq $@Function.endPosition@$(gapped_sequence)$, the function returns $0$.
-..include:seqan/align.h
-*/
+// ----------------------------------------------------------------------------
+// Function clear()
+// ----------------------------------------------------------------------------
 
-// count characters beginning at given view position
+template <typename TSequence, typename TSpec>
+inline void clearGaps(Gaps<TSequence, TSpec> & gaps);
+template <typename TSequence, typename TSpec>
+inline void clearClipping(Gaps<TSequence, TSpec> & gaps);
 
-template <typename TSource, typename TSpec, typename TPosition>
-inline typename Size<Gaps<TSource, TSpec> >::Type
-countCharacters(Gaps<TSource, TSpec> const & me,
-				TPosition view_pos)
+template <typename TSequence, typename TSpec>
+inline void clear(Gaps<TSequence, TSpec> & gaps)
 {
-SEQAN_CHECKPOINT
-	return countCharacters(iter(me, view_pos));
+    clearGaps(gaps);
+    clearClipping(gaps);
 }
 
-template <typename TSource, typename TSpec, typename TPoistion>
-inline typename Size<Gaps<TSource, TSpec> >::Type
-countCharacters(Gaps<TSource, TSpec> & me,
-				TPoistion view_pos)
+// ----------------------------------------------------------------------------
+// Function operator==()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TSpec>
+inline bool operator==(Gaps<TSequence, TSpec> const & lhs,
+                       Gaps<TSequence, TSpec> const & rhs)
 {
-SEQAN_CHECKPOINT
-	return countCharacters(iter(me, view_pos));
+    typename Comparator<Gaps<TSequence, TSpec> >::Type lex(lhs, rhs);
+    return isEqual(lex);
 }
 
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.clearGaps:
-..cat:Alignments
-..summary:Remove blanks from a gapped sequence. 
-..signature:clearGaps(gapped_sequence [, view_begin_pos, view_end_pos])
-..param.gapped_sequence:A gapped sequence.
-...type:Class.Gaps
-..param.view_begin_pos:First view position that is scanned for blanks. (optional)
-..param.view_end_pos:View Position behind the last item that is scanned for blanks. (optional)
-..remarks:All blanks after $view_begin_pos$ and before $view_end_pos$ are removed.
-...text:If no $view_begin_pos$ and $view_end_pos$ are specified, all gaps are removed from $gapped_sequence$.
-..include:seqan/align.h
-*/
-
-template <typename TSource, typename TSpec, typename TPosition1, typename TPosition2>
-inline void
-clearGaps(Gaps<TSource, TSpec> & me,
-		  TPosition1 view_pos_begin,
-		  TPosition2 view_pos_end)
+template <typename TSequence, typename TSpec, typename TRightHandSide>
+inline bool operator==(Gaps<TSequence, TSpec> const & lhs,
+                       TRightHandSide const & rhs)
 {
-SEQAN_CHECKPOINT
-
-	TPosition1 pos_left = view_pos_end - view_pos_begin;
-	while (pos_left > 0)
-	{
-		if (isGap(me, view_pos_begin))
-		{
-			TPosition1 gap_count = countGaps(me, view_pos_begin);
-			if (!gap_count)
-			{//trailing gaps reached: stop function
-				break;
-			}
-			if (gap_count > pos_left)
-			{
-				gap_count = pos_left;
-			}
-			removeGaps(me, view_pos_begin, gap_count);
-			pos_left -= gap_count;
-		}
-		else
-		{
-			++view_pos_begin;
-			--pos_left;
-		}
-	}
+    typename Comparator<Gaps<TSequence, TSpec> >::Type lex(lhs, rhs);
+    return isEqual(lex);
 }
 
-//____________________________________________________________________________
+// ----------------------------------------------------------------------------
+// Function operator!=()
+// ----------------------------------------------------------------------------
 
-template <typename TSource, typename TSpec>
-inline void
-clearGaps(Gaps<TSource, TSpec> & me)
+template <typename TSequence, typename TSpec>
+inline bool operator!=(Gaps<TSequence, TSpec> const & lhs,
+                       Gaps<TSequence, TSpec> const & rhs)
 {
-SEQAN_CHECKPOINT
-	clearGaps(me, 0, endPosition(me));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-// copy gaps-information from one Gaps-object range into another object
-//??? TODO: not tested, not documented
-
-template <typename TSource, typename TSpec, typename TPosition1, typename TSourceGaps, typename TPosition2, typename TPosition3>
-inline void
-copyGaps(Gaps<TSource, TSpec> & target_gaps,
-		 TPosition1 target_view_pos_begin,
-		 TSourceGaps const & source_gaps,
-		 TPosition2 source_view_pos_begin,
-		 TPosition3 source_view_pos_end)
-{
-SEQAN_CHECKPOINT
-	TPosition1 target_view_pos_end = target_view_pos_begin + source_view_pos_end - source_view_pos_begin;
-	clearGaps(target_gaps, target_view_pos_begin, target_view_pos_end);
-	
-	for (TPosition3 i = source_view_pos_end - source_view_pos_begin; i > 0; --i)
-	{
-		if (isGap(source_gaps, source_view_pos_begin))
-		{
-			insertGap(target_gaps, target_view_pos_begin);
-		}
-
-		++target_view_pos_begin;
-		++source_view_pos_begin;
-	}
+    return !(lhs == rhs);
 }
 
 
-//////////////////////////////////////////////////////////////////////////////
+}  // namespace seqan
 
-///.Function.getValue.param.container.type:Class.Gaps
-
-template <typename TSource, typename TSpec, typename TPosition>
-inline typename GetValue<Gaps<TSource, TSpec> >::Type
-getValue(Gaps<TSource, TSpec> & me,
-		 TPosition view_pos)
-{
-SEQAN_CHECKPOINT
-	typedef typename Value<TSource>::Type TValue;
-	if (isGap(me, view_pos)) return gapValue<TValue>();
-	else return value(source(me), toSourcePosition(me, view_pos));
-}
-template <typename TSource, typename TSpec, typename TPosition>
-inline typename GetValue<Gaps<TSource, TSpec> >::Type
-getValue(Gaps<TSource, TSpec> const & me,
-		 TPosition view_pos)
-{
-SEQAN_CHECKPOINT
-	typedef typename Value<TSource>::Type TValue;
-	if (isGap(me, view_pos)) return gapValue<TValue>();
-	else return value(source(me), toSourcePosition(me, view_pos));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-///.Function.value.param.container.type:Class.Gaps
-
-template <typename TSource, typename TSpec, typename TPosition>
-inline typename Reference<Gaps<TSource, TSpec> >::Type
-value(Gaps<TSource, TSpec> & me,
-	  TPosition view_pos)
-{
-SEQAN_CHECKPOINT
-	typedef typename Reference<Gaps<TSource, TSpec> >::Type TReference;
-	return TReference(iter(me, view_pos));
-}
-template <typename TSource, typename TSpec, typename TPosition>
-inline typename Reference<Gaps<TSource, TSpec> const>::Type
-value(Gaps<TSource, TSpec> const & me,
-	  TPosition view_pos)
-{
-SEQAN_CHECKPOINT
-	typedef typename Reference<Gaps<TSource, TSpec> const>::Type TReference;
-	return TReference(iter(me, view_pos));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.emptySource:
-..summary:Test if there is a source. 
-..cat:Alignments
-..signature:bool emptySource(object)
-..param.object:An object that could habe a source.
-...type:Class.Gaps
-..returns:$true$ if $object$ has a @Function.source@, $false$ otherwise.
-..see:Function.source
-..see:Metafunction.Source
-..include:seqan/align.h
-*/
-
-template <typename TSource, typename TSpec>
-inline bool
-emptySource(Gaps<TSource, TSpec> & me)
-{
-SEQAN_CHECKPOINT
-	bool ret = empty(_dataSource(me));
-	return ret;
-}
-template <typename TSource, typename TSpec>
-inline bool
-emptySource(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	bool ret = empty(_dataSource(me));
-	return ret;
-}
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.dependentSource:
-..summary:Test if object depends from it's source. 
-..cat:Alignments
-..signature:bool dependentSource(object)
-..param.object:An object that has a source.
-...type:Class.Gaps
-..returns:$true$ if the source of $object$ is a stand alone object that is
-not managed by $object$. $false$ otherwise.
-..remarks:This function returns $false$, if the @Function.source@ is @Function.emptySource.empty@.
-..remarks.text:If both @Function.emptySource@ and @Function.dependentSource@ are false, $object$ is the owner of the source.
-..see:Function.source
-..see:Metafunction.Source
-..see:Function.emptySource
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec>
-inline bool
-dependentSource(Gaps<TSource, TSpec> & me)
-{
-SEQAN_CHECKPOINT
-	return dependent(_dataSource(me));
-}
-template <typename TSource, typename TSpec>
-inline bool
-dependentSource(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	return dependent(_dataSource(me));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.setSource:
-..summary:Let an external object be the source.
-..cat:Alignments
-..signature:setSource(object, source)
-..signature:setSource(object, source [, begin_pos, end_pos])
-..param.object:An object that will get a new source.
-...type:Class.Gaps
-..param.source:The new source.
-...remarks:The source type can be determined by @Metafunction.Source@.
-..param.begin_pos:Position of the first item in $source$ that is used in $object$. (optional)
-..param.end_pos:Position behind the last item in $source$ that is used in $object$. (optional)
-..remarks:After this function, $object$ @Function.dependentSource.depends@ from $source$,
-and $source$ is the new source of $object$.
-...text:If no $begin_pos$ and $end_pos$ are specified, the whole $source$ will be used.
-..see:Function.source
-..see:Function.dependentSource
-..see:Metafunction.Source
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec, typename TPosition1, typename TPosition2>
-inline void
-setSource(Gaps<TSource, TSpec> & me,
-		  TSource & source_,
-		  TPosition1 clipped_begin_pos,
-		  TPosition2 clipped_end_pos)
-{
-SEQAN_CHECKPOINT
-	setValue(_dataSource(me), source_);
-	_setClippedBeginPosition(me, clipped_begin_pos);
-	_setClippedEndPosition(me, clipped_end_pos);
-	clearGaps(me);
-}
-
-//____________________________________________________________________________
-
-template <typename TSource, typename TSpec>
-inline void
-setSource(Gaps<TSource, TSpec> & me,
-		  TSource & source_)
-{
-SEQAN_CHECKPOINT
-	setSource(me, source_, 0, length(source_));
-}
-
-//??? Variante mit zusaetzlich source_begin und source_end
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.createSource:
-..summary:Creates a new source.
-..cat:Alignments
-..signature:createSource(object)
-..param.object:An object that will get a new source.
-...type:Class.Gaps
-..remarks:
-If $object$ has no @Function.source@, a new one is created.
-If $object$ is already the owner of the source, nothing happens.
-If $object$ has an external source, this source is copied. 
-$object$ is thereupon the owner of the source.
-..see:Function.source
-..see:Function.dependentSource
-..see:Metafunction.Source
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec>
-inline void
-createSource(Gaps<TSource, TSpec> & me)
-{
-SEQAN_CHECKPOINT
-	create(_dataSource(me));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.detach:
-..cat:Alignments
-..param.object.type:Class.Gaps
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec>
-inline void
-detach(Gaps<TSource, TSpec> & me)
-{
-SEQAN_CHECKPOINT
-	createSource(me);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.source:
-..summary:The source of an object. 
-..cat:Alignments
-..signature:source(object)
-..param.object:An object.
-...type:Class.Gaps
-..returns:The source of $object$.
-...type:Metafunction.Source
-..remarks:The source of a @Class.Gaps@ instance is the underlying sequence without gaps.
-..see:Metafunction.Source
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec>
-inline TSource &
-source(Gaps<TSource, TSpec> & me)
-{
-SEQAN_CHECKPOINT
-	return value(_dataSource(me));
-}
-template <typename TSource, typename TSpec>
-inline TSource &
-source(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	return value(_dataSource(me));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.sourceSegment:
-..summary:The used part of the source. 
-..cat:Alignments
-..signature:sourceSegment(object)
-..param.object:An object.
-...type:Class.Gaps
-..returns:The part of the @Function.source@ that is actually used by $object$.
-...type:Class.Segment
-..remarks:The source of a @Class.Gaps@ instance is the underlying sequence without gaps. 
-$sourceSegment$ is useful since @Class.Gaps@ can be limited to work on a subsequence of the source.
-..see:Metafunction.Source
-..see:Function.source
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec>
-inline typename Infix<TSource>::Type
-sourceSegment(Gaps<TSource, TSpec> & me)
-{
-SEQAN_CHECKPOINT
-	return infix(source(me), clippedBeginPosition(me), clippedEndPosition(me));
-}
-
-template <typename TSource, typename TSpec>
-inline typename Infix<TSource>::Type
-sourceSegment(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	return infix(source(me), clippedBeginPosition(me), clippedEndPosition(me));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.sourceLength:
-..summary:Length of the source. 
-..cat:Alignments
-..signature:Size sourceLength(gaps)
-..param.gaps:A gaps object.
-...type:Class.Gaps
-..returns:Length of the used part of the source.
-...metafunction:Metafunction.Size
-..remarks:This function is equivalent to $clippedEndPosition(gaps) - clippedBeginPosition(gaps)$.
-..include:seqan/align.h
-*/
-//..see:Function.clippedEndPosition
-//..see:Function.clippedBeginPosition
-template <typename TSource, typename TSpec>
-inline typename Size<TSource>::Type
-sourceLength(Gaps<TSource, TSpec> & me)
-{
-SEQAN_CHECKPOINT
-	return clippedEndPosition(me) - clippedBeginPosition(me);
-}
-template <typename TSource, typename TSpec>
-inline typename Size<TSource>::Type
-sourceLength(Gaps<TSource, TSpec> const & me)
-{
-SEQAN_CHECKPOINT
-	return clippedEndPosition(me) - clippedBeginPosition(me);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.assignSource:
-..summary:Assigns the source to a new value. 
-..cat:Alignments
-..signature:assignSource(object, source_in)
-..param.object:An object.
-...type:Class.Gaps
-..param.source_in:An object that is assigned to the source of $object$.
-..remarks:
-...note:$source_in$ is not the new @Function.source@ of $object$, but $source_in$ is assigned (copied) to @Function.source.source(object)@.
-That means that the current source of $object$ is modified by this function. 
-If you want $object$ to drop its current source and take another object as source, use @Function.setSource@ instead.
-...text:If no $begin_pos$ and $end_pos$ are specified, the whole source will be used.
-...text:This function does not change whether $object$ is @Function.dependentSource.dependent@ or not.
-...text:The source of $object$ must not be @Function.emptySource.empty@ for executing this function.
-..see:Metafunction.Source
-..see:Function.source
-..see:Function.setSource
-..see:Function.emptySource
-..see:Function.dependentSource
-..see:Function.assign
-..include:seqan/align.h
-*/
-
-//____________________________________________________________________________
-
-template <typename TSource, typename TSpec, typename TSource2>
-inline void
-assignSource(Gaps<TSource, TSpec> & me,
-			 TSource2 const & source_)
-{
-SEQAN_CHECKPOINT
-	assignValue(me.data_source, source_);
-	_setClippedBeginPosition(me, 0);
-	_setClippedEndPosition(me, length(source_));
-	clearGaps(me);
-}
-
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.moveSource:
-..summary:Moves the source to a new value. 
-..cat:Alignments
-..signature:moveSource(object, source_in [, begin_pos, end_pos])
-..param.object:An object.
-...type:Class.Gaps
-..param.source_in:An object that is moved to the source of $object$.
-..param.begin_pos:Position of the first item in the source that is used in $object$. (optional)
-..param.end_pos:Position behind the last item in the source that is used in $object$. (optional)
-..remarks:
-...note:$source_in$ is not the new @Function.source@ of $object$, but $source_in$ is moved into @Function.source.source(object)@.
-"Moved" means that $source_in$ is assigned to $source(object)$ with the possibility that $source_in$ looses its content.
-That means that the current source of $object$ is modified by this function. 
-If you want $object$ to drop its current source and take another object as source, use @Function.setSource@ instead.
-If you want $source_in$ not to become empty, use @Function.assignSource@ instead.
-...text:If no $begin_pos$ and $end_pos$ are specified, the whole source will be used.
-...text:This function does not change whether $object$ is @Function.dependentSource.dependent@ or not.
-...text:The source of $object$ must not be @Function.emptySource.empty@ for executing this function.
-..see:Metafunction.Source
-..see:Function.source
-..see:Function.setSource
-..see:Function.emptySource
-..see:Function.dependentSource
-..see:Function.move
-..see:Function.assignSource
-..include:seqan/align.h
-*/
-template <typename TSource, typename TSpec, typename TSource2, typename TPosition1, typename TPosition2>
-inline void
-moveSource(Gaps<TSource, TSpec> & me,
-		   TSource2 const & source_,
-		   TPosition1 clipped_begin_pos,
-		   TPosition2 clipped_end_pos)
-{
-SEQAN_CHECKPOINT
-	moveValue(_dataSource(me), source_);
-	_setClippedBeginPosition(me, clipped_begin_pos);
-	_setClippedEndPosition(me, clipped_end_pos);
-	clearGaps(me);
-}
-
-//____________________________________________________________________________
-
-template <typename TSource, typename TSpec, typename TSource2>
-inline void
-moveSource(Gaps<TSource, TSpec> & me,
-		   TSource2 const & source_)
-{
-SEQAN_CHECKPOINT
-	moveSource(me, source_, 0, length(source_));
-}
-
-
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TFile, typename TSource, typename TIDString, typename TSpec>
-inline void
-write(TFile & target,
-	  Gaps<TSource, TSpec> const & source, 
-	  TIDString const &,
-	  Raw)
-{
-//IOREV _nodoc_ specialization not documented
-SEQAN_CHECKPOINT
-//	_streamWriteRange(target, begin(source), end(source));
-
-	// Print gaps row
-	typedef typename Iterator<Gaps<TSource, TSpec> const>::Type TIter;
-	TIter begin_ = begin(source);
-	TIter end_ = end(source);
-	for (; begin_ != end_; ++begin_) {
-		if (isGap(begin_))
-			_streamPut(target, gapValue<char>());
-		else 
-			_streamPut(target, *begin_);
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////
-// stream operators
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TStream, typename TSource, typename TSpec>
-inline TStream &
-operator << (TStream & target, 
-			 Gaps<TSource, TSpec> const & source)
-{
-//IOREV _nodoc_ specialization not documented
-SEQAN_CHECKPOINT
-	write(target, source);
-	return target;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-/*
-template <typename TStream, typename TSource, typename TSpec>
-inline TStream &
-operator >> (TStream & source, 
-			 Gaps<TSource, TSpec> & target)
-{
-SEQAN_CHECKPOINT
-	read(source, target);
-	return source;
-}
-*/
-//////////////////////////////////////////////////////////////////////////////
-// Comparison Operators
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TLeftSource, typename TLeftSpec, typename TRightSource, typename TRightSpec >
-inline bool
-operator == (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isEqual(_lex);
-}
-template <typename TLeftSource, typename TLeftSpec, typename TRight >
-inline bool
-operator == (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 TRight const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isEqual(_lex);
-}
-template <typename TLeft, typename TRightSource, typename TRightSpec >
-inline bool
-operator == (TLeft const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TRightSource, TRightSpec> >::Type _lex(left, right);
-    return isEqual(_lex);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TLeftSource, typename TLeftSpec, typename TRightSource, typename TRightSpec >
-inline bool
-operator != (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isNotEqual(_lex);
-}
-template <typename TLeftSource, typename TLeftSpec, typename TRight >
-inline bool
-operator !=(Gaps<TLeftSource, TLeftSpec> const & left, 
-			TRight const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isNotEqual(_lex);
-}
-template <typename TLeft, typename TRightSource, typename TRightSpec >
-inline bool
-operator != (TLeft const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TRightSource, TRightSpec> >::Type _lex(left, right);
-    return isNotEqual(_lex);
-}
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TLeftSource, typename TLeftSpec, typename TRightSource, typename TRightSpec >
-inline bool
-operator < (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isLess(_lex);
-}
-template <typename TLeftSource, typename TLeftSpec, typename TRight>
-inline bool
-operator < (Gaps<TLeftSource, TLeftSpec> const & left, 
-			TRight const & right)
-{
-SEQAN_CHECKPOINT
-	return isLess(left, right, typename DefaultPrefixOrder<Gaps<TLeftSource, TLeftSpec> >::Type());
-}
-template <typename TLeft, typename TRightSource, typename TRightSpec >
-inline bool
-operator < (TLeft const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TRightSource, TRightSpec> >::Type _lex(left, right);
-    return isLess(_lex);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TLeftSource, typename TLeftSpec, typename TRightSource, typename TRightSpec >
-inline bool
-operator <= (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isLessOrEqual(_lex);
-}
-template <typename TLeftSource, typename TLeftSpec, typename TRight>
-inline bool
-operator <= (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 TRight const & right)
-{
-SEQAN_CHECKPOINT
-	return isLessOrEqual(left, right, typename DefaultPrefixOrder<Gaps<TLeftSource, TLeftSpec> >::Type());
-}
-template <typename TLeft, typename TRightSource, typename TRightSpec >
-inline bool
-operator <= (TLeft const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TRightSource, TRightSpec> >::Type _lex(left, right);
-    return isLessOrEqual(_lex);
-}
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TLeftSource, typename TLeftSpec, typename TRightSource, typename TRightSpec >
-inline bool
-operator > (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isGreater(_lex);
-}
-template <typename TLeftSource, typename TLeftSpec, typename TRight>
-inline bool
-operator > (Gaps<TLeftSource, TLeftSpec> const & left, 
-		TRight const & right)
-{
-SEQAN_CHECKPOINT
-	return isGreater(left, right, typename DefaultPrefixOrder<Gaps<TLeftSource, TLeftSpec> >::Type());
-}
-template <typename TLeft, typename TRightSource, typename TRightSpec >
-inline bool
-operator > (TLeft const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TRightSource, TRightSpec> >::Type _lex(left, right);
-    return isGreater(_lex);
-}
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TLeftSource, typename TLeftSpec, typename TRightSource, typename TRightSpec >
-inline bool
-operator >= (Gaps<TLeftSource, TLeftSpec> const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TLeftSource, TLeftSpec> >::Type _lex(left, right);
-    return isGreaterOrEqual(_lex);
-}
-template <typename TLeftSource, typename TLeftSpec, typename TRight>
-inline bool
-operator >= (Gaps<TLeftSource, TLeftSpec> const & left, 
-		TRight const & right)
-{
-SEQAN_CHECKPOINT
-	return isGreaterOrEqual(left, right, typename DefaultPrefixOrder<Gaps<TLeftSource, TLeftSpec> >::Type());
-}
-template <typename TLeft, typename TRightSource, typename TRightSpec >
-inline bool
-operator >= (TLeft const & left, 
-			 Gaps<TRightSource, TRightSpec> const & right)
-{
-SEQAN_CHECKPOINT
-	typename Comparator<Gaps<TRightSource, TRightSpec> >::Type _lex(left, right);
-    return isGreaterOrEqual(_lex);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-}// namespace SEQAN_NAMESPACE_MAIN
-
-#endif //#ifndef SEQAN_HEADER_...
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_BASE_H_

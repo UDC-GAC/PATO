@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,8 +36,9 @@
 //____________________________________________________________________________
 // prerequisites
 
-#include <seqan/file.h>
 #include <seqan/basic.h>
+#include <seqan/parallel.h>
+#include <seqan/file.h>
 
 #include <cstdio>
 #include <cassert>
@@ -51,10 +52,6 @@
 // pipes
 
 #define SEQAN_NAMESPACE_PIPELINING pipe
-
-#ifdef SEQAN_SWITCH_USE_FORWARDS
-#include <seqan/pipe/pipe_generated_forwards.h>
-#endif
 
 #include <seqan/pipe/pipe_base.h>
 #include <seqan/pipe/pipe_iterator.h>

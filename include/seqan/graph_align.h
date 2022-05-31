@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,31 +29,41 @@
 // DAMAGE.
 //
 // ==========================================================================
+// Author: Tobias Rausch <rausch@embl.de>
+// Author: Anne-Katrin Emde <anne-katrin.emde@fu-berlin.de>
+// ==========================================================================
+// Umbrella header for the moduel graph_align.
+// ==========================================================================
 
-#ifndef SEQAN_HEADER_GRAPH_ALIGN_H
-#define SEQAN_HEADER_GRAPH_ALIGN_H
+#ifndef SEQAN_INCLUDE_SEQAN_GRAPH_ALIGN_H_
+#define SEQAN_INCLUDE_SEQAN_GRAPH_ALIGN_H_
+
+// External STL
+#include <map>
 
 // Seqan
+#include <seqan/score.h>
+#include <seqan/align/fragment.h>
 #include <seqan/graph_types.h>
 #include <seqan/graph_algorithms.h>
-#include <seqan/refinement.h>
-
-#ifdef SEQAN_SWITCH_USE_FORWARDS
-#include <seqan/graph_align/graph_align_generated_forwards.h>
-#endif
-
-// Alignment
-#include <seqan/graph_align/graph_align_base.h>
-#include <seqan/graph_align/graph_align_config.h>
-#include <seqan/graph_align/graph_align_interface.h>
-#include <seqan/graph_align/graph_align_needleman_wunsch.h>
-#include <seqan/graph_align/graph_align_banded_needleman_wunsch.h>
-#include <seqan/graph_align/graph_align_gotoh.h>
-#include <seqan/graph_align/graph_align_banded_gotoh.h>
-#include <seqan/graph_align/graph_align_hirschberg.h>
-#include <seqan/graph_align/graph_align_smith_waterman.h>
-#include <seqan/graph_align/graph_align_smith_waterman_clump.h>
-#include <seqan/graph_align/graph_align_banded_smith_waterman_clump.h>
 
 
-#endif //#ifndef SEQAN_HEADER_...
+// Alignment graph
+#include <seqan/graph_align/graph_impl_align.h>
+#include <seqan/graph_align/graph_impl_align_adapt.h>
+
+// Interval trees
+#include <seqan/misc/interval_tree.h>
+
+// Refinement
+//#include <seqan/graph_align/graph_algorithm_refine.h>
+#include <seqan/graph_align/graph_algorithm_refine_scoring.h>
+#include <seqan/graph_align/graph_algorithm_refine_fragment.h>
+#include <seqan/graph_align/graph_algorithm_refine_aligngraph.h>
+#include <seqan/graph_align/graph_algorithm_refine_align.h>
+//#include <seqan/graph_align/graph_algorithm_refine_exact.h>
+#include <seqan/graph_align/graph_algorithm_refine_exact_iterative.h>
+#include <seqan/graph_align/graph_algorithm_refine_inexact.h>
+#include <seqan/graph_align/graph_algorithm_refine_annotation.h>
+
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_GRAPH_ALIGN_H_
