@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2012, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -34,22 +34,35 @@
 // Facade header for module arg_parse.
 // ==========================================================================
 
-#ifndef SEQAN_CORE_INCLUDE_SEQAN_ARG_PARSE_H_
-#define SEQAN_CORE_INCLUDE_SEQAN_ARG_PARSE_H_
+#ifndef SEQAN_INCLUDE_SEQAN_ARG_PARSE_H_
+#define SEQAN_INCLUDE_SEQAN_ARG_PARSE_H_
 
 // ===========================================================================
 // Prerequisites.
 // ===========================================================================
 
 #include <seqan/basic.h>
-#include <seqan/file.h>
+//#include <seqan/file.h>
+#include <seqan/stream.h>
 #include <seqan/sequence.h>
+
+#include <sys/types.h>
+#include <sys/stat.h>
+#ifndef STDLIB_VS
+#include <unistd.h>
+#endif
+
+#include <regex>
+#include <vector>
+#include <algorithm>
 
 // ===========================================================================
 // The ArgParse Headers.
 // ===========================================================================
 
 #include <seqan/arg_parse/arg_parse_type_support.h>
+#include <seqan/arg_parse/xml_support.h>
+#include <seqan/arg_parse/tool_doc.h>
 #include <seqan/arg_parse/arg_parse_exceptions.h>
 
 #include <seqan/arg_parse/arg_parse_argument.h>
@@ -61,5 +74,6 @@
 #include <seqan/arg_parse/arg_parse_ctd_support.h>
 #include <seqan/arg_parse/arg_parse_parse.h>
 
+#include <seqan/arg_parse/arg_parse_version_check.h>
 
-#endif  // SEQAN_CORE_INCLUDE_SEQAN_ARG_PARSE_H_
+#endif  // SEQAN_INCLUDE_SEQAN_ARG_PARSE_H_

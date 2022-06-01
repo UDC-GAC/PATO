@@ -26,8 +26,6 @@ struct options
     unsigned int max_interruptions;
     unsigned int detect_duplicates;
 
-    bool forward;
-    bool reverse;
     bool tc_motif;
     bool ga_motif;
     bool gt_p_motif;

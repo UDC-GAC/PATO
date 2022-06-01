@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -38,8 +38,8 @@
 // TODO(holtgrew): It would be nice if the maximal distance would be given as a run time parameter.
 // TODO(holtgrew): Document iterator?
 
-#ifndef SEQAN_CORE_INCLUDE_MISC_EDIT_ENVIRONMENT_H_
-#define SEQAN_CORE_INCLUDE_MISC_EDIT_ENVIRONMENT_H_
+#ifndef SEQAN_INCLUDE_MISC_EDIT_ENVIRONMENT_H_
+#define SEQAN_INCLUDE_MISC_EDIT_ENVIRONMENT_H_
 
 namespace seqan {
 
@@ -58,57 +58,72 @@ struct EditEnvironment;
 // Class StringEnumerator
 // --------------------------------------------------------------------------
 
-/**
-.Class.StringEnumerator
-..cat:Miscalleneous
-..summary:Class to enumerate all strings within a given edit/Hamming distance.
-..signature:StringEnumerator<TString, TSpec>
-..param.TString:Type of the string to enumerate the environment of.
-..param.TSpec:Specialization.
-..example.text:
-..include:seqan/misc/edit_environment.h
+/*!
+ * @class StringEnumerator
+ * @headerfile <seqan/misc/edit_environment.h>
+ * @brief Class to enumerate all strings within a given edit/Hamming distance.
+ *
+ * @signature template <typename TString, typename TSpec>
+ *            class StringEnumerator<TString, TSpec>;
+ *
+ * @tparam TString Type of the string to enumerate the environment of.
+ * @tparam TSpec   Specialization tag.
+ *
+ *
+ * @fn StringEnumerator::StringEnumerator
+ * @brief Constructor
+ *
+ * @signature StringEnumerator::StringEnumerator(string[, minDist]);
+ *
+ * @param[in] string  The string to use as the center. Types: <tt>TString</tt>.
+ * @param[in] minDist The smallest distance to generate strings with.  Type: <tt>unsigned</tt>.   Default: 0
+ *
+ *
+ * @var bool StringEnumerator::trim
+ * @brief Indicate whether to ignore substitutions in first or last character of string in Levenshtein mode
+ *        (optimization for approximate search).
+ *
+ * This is useful when searching for such enumerated strings in large texts.  Patterns with substitutions in the first
+ * base would also be found.
+ *
+ * @section Examples
+ *
+ * @include demos/dox/misc/enumerate_strings.cpp
+ *
+ * @include demos/dox/misc/enumerate_strings.cpp.stdout
+ */
 
-.Memfunc.StringEnumerator#StringEnumerator
-..class:Class.StringEnumerator
-..summary:Constructor
-..signature:StringEnumerator(string[, minDist])
-..param.string:The string to use as the center.
-...type:nolink:$TString$
-..param.minDist:The smallest distance to generate strings with.
-...type:nolink:$unsigned$
-...default:0
+/*!
+ * @class HammingStringEnumerator
+ * @extends StringEnumerator
+ * @headerfile <seqan/misc/edit_environment.h>
+ * @brief Enumerate all strings within a given edit distance of a "center string".
+ *
+ * @signature template <typename TString, unsigned DISTANCE>
+ *            class StringEnumerator<TString, EditEnvironment<HammingDistance, DISTANCE> >;
+ *
+ * @tparam TString  Type of the string to enumerate the environment of.
+ * @tparam DISTANCE The maximal distance to generate strings with.
+ *
+ * See @link StringEnumerator @endlink for examples.
+ */
 
-.Memvar.StringEnumerator#trim
-..class:Class.StringEnumerator
-..summary:Indicate whether to ignore substitutions in first or last character of string in Levenshtein mode (optimization for approximate search).
-..signature:trim
-..remarks:
-This is useful when searching for such enumerated strings in large texts.
-Patterns with substitutions in the first base would also be found
-..default:$true$
-
-.Spec.Hamming StringEnumerator
-..general:Class.StringEnumerator
-..cat:Miscalleneous
-..summary:Enumerate all strings within a given edit distance of a "center string".
-..signature:StringEnumerator<TString, EditEnvironment<HammingDistance, DISTANCE> >
-..param.TString:Type of the string to enumerate the environment of.
-..param.DISTANCE:The maximal distance to generate strings with.
-...type:nolink:$unsigned$
-..remarks:See @Class.StringEnumerator@ for examples.
-..include:seqan/misc/edit_environment.h
-
-.Spec.Levenshtein StringEnumerator
-..general:Class.StringEnumerator
-..cat:Miscalleneous
-..summary:Enumerate all strings within a given edit distance of a "center string".
-..signature:StringEnumerator<TString, EditEnvironment<LevenshteinDistance, DISTANCE> >
-..param.TString:Type of the string to enumerate the environment of.
-..param.DISTANCE:The maximal distance to generate strings with.
-...type:nolink:$unsigned$
-..remarks:See @Class.StringEnumerator@ for examples.
-..remarks:Note that the @Function.length@ function does not work for $DISTANCE > 2$.
-..include:seqan/misc/edit_environment.h
+/*!
+ * @class LevenshteinStringEnumerator
+ * @extends StringEnumerator
+ * @headerfile <seqan/misc/edit_environment.h>
+ * @brief Enumerate all strings within a given edit distance of a "center string" (of edit distance &lt; 3).
+ *
+ * @signature template <typename TString, unsigned DISTANCE>
+ *            class StringEnumerator<TString, EditEnvironment<LevenshteinDistance, DISTANCE> >;
+ *
+ * @tparam TString  Type of the string to enumerate the environment of.
+ * @tparam DISTANCE The maximal distance to generate strings with.
+ *
+ * See @link StringEnumerator @endlink for examples.
+ *
+ * @note The @link StringEnumerator#length LevenshteinStringEnumerator#length @endlink function does not work for
+ *       <tt>DISTANCE &gt; 2</tt>.
  */
 
 template <typename TObject, typename TSpec>
@@ -142,6 +157,9 @@ struct StringEnumeratorHammingModifier_
     TSize       errorPos;           // position of substitution
     unsigned    character;          // replacement character
     unsigned    skipChar;           // skip the original character
+
+    StringEnumeratorHammingModifier_() : errorPos(0), character(0), skipChar(0)
+    {}
 };
 
 template <typename TObject, unsigned DISTANCE>
@@ -154,7 +172,7 @@ public:
     typedef StringEnumeratorHammingModifier_<TSignedSize> TModifier;
 
     TObject & orig;
-//		typename RemoveConst_<TObject>::Type	tmp;
+//        typename RemoveConst_<TObject>::Type    tmp;
     String<TValue>                          tmp;
 
     TModifier   mod[DISTANCE];
@@ -163,7 +181,8 @@ public:
 
     Iter(TObject & _original) :
         orig(_original),
-        minDist(0)
+        minDist(0),
+        trim(true)
     {
         goBegin(*this);
     }
@@ -178,7 +197,8 @@ public:
 
     Iter(TObject & _original, MinimalCtor) :
         orig(_original),
-        minDist(0) {}
+        minDist(0),
+        trim(true) {}
 
     Iter(TObject & _original, unsigned _minDist, bool _trim, MinimalCtor) :
         orig(_original),
@@ -200,6 +220,10 @@ struct StringEnumeratorLevenshteinModifier_
     unsigned    character;          // replacement character
     unsigned    skipChar;           // skip the original character
     TState      state;              // current state subst/insert before/delete
+
+    StringEnumeratorLevenshteinModifier_() :
+            errorPosOrig(0), errorPos(0), errorPosEnd(0), character(0), skipChar(0), state(DISABLED_)
+    {}
 };
 
 template <typename TObject, unsigned DISTANCE>
@@ -212,7 +236,7 @@ public:
     typedef StringEnumeratorLevenshteinModifier_<TSignedSize> TModifier;
 
     TObject & orig;
-//		typename RemoveConst_<TObject>::Type	tmp;
+//        typename RemoveConst_<TObject>::Type    tmp;
     String<TValue>                          tmp;
 
     TModifier   mod[DISTANCE + 1];
@@ -223,6 +247,7 @@ public:
     Iter(TObject & _original) :
         orig(_original),
         minDist(0),
+        currentDistance(0),
         trim(true)
     {
         goBegin(*this);
@@ -231,6 +256,7 @@ public:
     Iter(TObject & _original, unsigned _minDist, bool _trim) :
         orig(_original),
         minDist(_minDist),
+        currentDistance(0),
         trim(_trim)
     {
         goBegin(*this);
@@ -238,11 +264,14 @@ public:
 
     Iter(TObject & _original, MinimalCtor) :
         orig(_original),
-        minDist(0) {}
+        minDist(0),
+        currentDistance(0),
+        trim(true) {}
 
     Iter(TObject & _original, unsigned _minDist, bool _trim, MinimalCtor) :
         orig(_original),
         minDist(_minDist),
+        currentDistance(0),
         trim(_trim) {}
 
     inline bool _reinit(int pos, int posOrig)
@@ -271,9 +300,9 @@ public:
 
                 _mod.errorPosOrig = posOrig;
                 _mod.errorPos = pos;
-                _mod.skipChar = (unsigned) orig[posOrig];
+                _mod.skipChar = ordValue(orig[posOrig]);
                 _mod.character = (0 == _mod.skipChar) ? 1 : 0;
-                assignValueAt(tmp, pos, (TValue) _mod.character);
+                assignValue(tmp, pos, (TValue) _mod.character);
                 ++pos;
                 ++posOrig;
                 break;
@@ -364,7 +393,12 @@ public:
 // Metafunction Value                                        StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Metafunction.Value.param.T.type:Class.StringEnumerator
+/*!
+ * @mfn StringEnumerator#Value
+ * @brief Return value type of the string to enumerate.
+ *
+ * @signature Value<TStringEnumerator>::Type;
+ */
 
 template <typename TObject, typename TSpec>
 struct Value<StringEnumerator<TObject, TSpec> > : Value<TObject>
@@ -374,7 +408,12 @@ struct Value<StringEnumerator<TObject, TSpec> > : Value<TObject>
 // Metafunction Reference                                    StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Metafunction.Reference.param.T.type:Class.StringEnumerator
+/*!
+ * @mfn StringEnumerator#Reference
+ * @brief Returns reference type of the enumerated strings.
+ *
+ * @signature Reference<TStringEnumerator>::Type;
+ */
 
 template <typename TObject, typename TSpec>
 struct Reference<StringEnumerator<TObject, TSpec> >
@@ -392,7 +431,12 @@ struct Reference<StringEnumerator<TObject, TSpec> const>
 // Metafunction Size                                         StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Metafunction.Size.param.T.type:Class.StringEnumerator
+/*!
+ * @mfn StringEnumerator#Size
+ * @brief Returns size type.
+ *
+ * @signature Size<TStringEnumerator>::Type;
+ */
 
 template <typename TObject, typename TSpec>
 struct Size<StringEnumerator<TObject, TSpec> > : Size<TObject>
@@ -402,7 +446,12 @@ struct Size<StringEnumerator<TObject, TSpec> > : Size<TObject>
 // Metafunction Difference                                   StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Metafunction.Difference.param.T.type:Class.StringEnumerator
+/*!
+ * @mfn StringEnumerator#Difference
+ * @brief Returns difference type.
+ *
+ * @signature Difference<TStringEnumerator>::Type;
+ */
 
 template <typename TObject, typename TSpec>
 struct Difference<StringEnumerator<TObject, TSpec> > : Difference<TObject>
@@ -412,7 +461,12 @@ struct Difference<StringEnumerator<TObject, TSpec> > : Difference<TObject>
 // Metafunction Position                                     StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Metafunction.Position.param.T.type:Class.StringEnumerator
+/*!
+ * @mfn StringEnumerator#Position
+ * @brief Returns position type.
+ *
+ * @signature Position<TStringEnumerator>::Type;
+ */
 
 template <typename TObject, typename TSpec>
 struct Position<StringEnumerator<TObject, TSpec> > : Position<TObject>
@@ -422,7 +476,12 @@ struct Position<StringEnumerator<TObject, TSpec> > : Position<TObject>
 // Metafunction Iterator                                     StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Metafunction.Iterator.param.T.type:Class.StringEnumerator
+/*!
+ * @mfn StringEnumerator#Iterator
+ * @brief Returns iterator type.
+ *
+ * @signature Position<TStringEnumerator, TSpec>::Type;
+ */
 
 template <typename TObject, typename TSpec>
 struct Iterator<StringEnumerator<TObject, TSpec>, Standard>
@@ -440,7 +499,12 @@ struct Iterator<StringEnumerator<TObject, TSpec> const, Standard>
 // Metafunction Host                                         StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Metafunction.Host.param.T.type:Class.StringEnumerator
+/*!
+ * @mfn StringEnumerator#Host
+ * @brief Returns host type.
+ *
+ * @signature Host<TStringEnumerator>::Type;
+ */
 
 template <typename TObject, typename TSpec>
 struct Host<StringEnumerator<TObject, TSpec> >
@@ -480,7 +544,17 @@ _dataHost(StringEnumerator<TText, TSpec> const & enumerator)
 // Function begin()                                          StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Function.begin.param.object.type:Class.StringEnumerator
+/*!
+ * @fn StringEnumerator#begin
+ * @brief Return begin iterator.
+ *
+ * @signature TIter begin(stringEnum[, tag]);
+ *
+ * @param[in] stringEnum StringEnumerator to query.
+ * @param[in] tag        Iterator tag to use.
+ *
+ * @return TIter Iterator to the first string in the enumerator.
+ */
 
 template <typename TObject, typename TSpec>
 inline Iter<StringEnumerator<TObject, TSpec>, Standard>
@@ -500,7 +574,17 @@ begin(StringEnumerator<TObject, TSpec> const & enumerator, Standard)
 // Function end()                                            StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Function.end.param.object.type:Class.StringEnumerator
+/*!
+ * @fn StringEnumerator#end
+ * @brief Return end iterator.
+ *
+ * @signature TIter end(stringEnum[, tag]);
+ *
+ * @param[in] stringEnum StringEnumerator to query.
+ * @param[in] tag        Iterator tag to use.
+ *
+ * @return TIter End iterator for the string enumerator.
+ */
 
 template <typename TObject, typename TSpec>
 inline Iter<StringEnumerator<TObject, TSpec>, Standard>
@@ -524,7 +608,16 @@ end(StringEnumerator<TObject, TSpec> const & enumerator, Standard)
 // Function length()                                 Hamming StringEnumerator
 // --------------------------------------------------------------------------
 
-///.Function.length.param.object.type:Class.StringEnumerator
+/*!
+ * @fn StringEnumerator#length
+ * @brief Return number of strings that will be enumerated.
+ *
+ * @signature TSize length(stringEnum);
+ *
+ * @param[in] stringEnum StringEnumerator to query.
+ *
+ * @return TSize The number of elements in the enumerator  (Metafunction: @link StringEnumerator#Size @endlink).
+ */
 
 template <typename TObject, unsigned DISTANCE>
 inline typename Size<StringEnumerator<TObject, EditEnvironment<HammingDistance, DISTANCE> > >::Type
@@ -602,7 +695,7 @@ goBegin(Iter<StringEnumerator<TObject, EditEnvironment<HammingDistance, DISTANCE
         it.mod[0].errorPos = 0;
         it.mod[0].skipChar = -1;
         it.mod[0].character = 0;
-        assignValueAt(it.tmp, 0, (TValue) 0);
+        assignValue(it.tmp, 0, (TValue) 0);
         i = 1;
     }
     else
@@ -610,9 +703,9 @@ goBegin(Iter<StringEnumerator<TObject, EditEnvironment<HammingDistance, DISTANCE
         {
             TModifier & mod = it.mod[i];
             mod.errorPos = (mDist - 1) - i;
-            mod.skipChar = (unsigned) it.orig[mod.errorPos];
+            mod.skipChar = ordValue(it.orig[mod.errorPos]);
             mod.character = (0 == mod.skipChar) ? 1 : 0;
-            assignValueAt(it.tmp, mod.errorPos, (TValue) mod.character);
+            assignValue(it.tmp, mod.errorPos, (TValue) mod.character);
         }
     for (; i < DISTANCE; ++i)
     {
@@ -713,11 +806,11 @@ operator++(Iter<StringEnumerator<TObject, EditEnvironment<HammingDistance, DISTA
             // output the original tuple only once
             if (mod->character == mod->skipChar)
                 continue;
-            assignValueAt(it.tmp, mod->errorPos, (TValue) mod->character);
+            assignValue(it.tmp, mod->errorPos, (TValue) mod->character);
             break;
         }
         mod->character = (0 == mod->skipChar) ? 1 : 0;
-        assignValueAt(it.tmp, mod->errorPos, (TValue) mod->character);
+        assignValue(it.tmp, mod->errorPos, (TValue) mod->character);
 
         if (++i == DISTANCE || (mod + 1)->errorPos == (TSignedSize) - 1)
         {
@@ -729,25 +822,24 @@ operator++(Iter<StringEnumerator<TObject, EditEnvironment<HammingDistance, DISTA
                 if (mod->errorPos >= 0)
                 {
                     // std::cout << "org" << it.orig << "  tmp" << it.tmp << " ___  ";
-                    assignValueAt(it.tmp, mod->errorPos, it.orig[mod->errorPos]);
+                    assignValue(it.tmp, mod->errorPos, it.orig[mod->errorPos]);
                     // std::cout << "org" << it.orig << "  tmp" << it.tmp << std::endl;
                 }
 
                 // next error position
                 if (++(mod->errorPos) < (TSignedSize)(length(it.tmp) - i))
                 {
-                    mod->skipChar = (unsigned) it.orig[mod->errorPos];
+                    mod->skipChar = ordValue(it.orig[mod->errorPos]);
                     mod->character = (0 == mod->skipChar) ? 1 : 0;
-                    assignValueAt(it.tmp, mod->errorPos, (TValue) mod->character);
+                    assignValue(it.tmp, mod->errorPos, (TValue) mod->character);
 
                     for (; i > 0; )
                     {
-                        mod = &it.mod[i];
                         it.mod[i - 1].errorPos = mod->errorPos + 1;
-                        --i;
-                        mod->skipChar = (unsigned) it.orig[mod->errorPos];
+                        mod = &it.mod[--i];
+                        mod->skipChar = ordValue(it.orig[mod->errorPos]);
                         mod->character = (0 == mod->skipChar) ? 1 : 0;
-                        assignValueAt(it.tmp, mod->errorPos, (TValue) mod->character);
+                        assignValue(it.tmp, mod->errorPos, (TValue) mod->character);
                     }
                     return it;
                 }
@@ -872,7 +964,7 @@ operator++(Iter<StringEnumerator<TObject, EditEnvironment<LevenshteinDistance, D
             if (mod->character == mod->skipChar)
                 continue;
             if (mod->errorPos >= 0)
-                assignValueAt(it.tmp, mod->errorPos, (TValue) mod->character);
+                assignValue(it.tmp, mod->errorPos, (TValue) mod->character);
             return it;
         }
 
@@ -881,7 +973,7 @@ operator++(Iter<StringEnumerator<TObject, EditEnvironment<LevenshteinDistance, D
         {
             mod->character = (0 == mod->skipChar) ? 1 : 0;
             if (mod->errorPos >= 0)
-                assignValueAt(it.tmp, mod->errorPos, (TValue) mod->character);
+                assignValue(it.tmp, mod->errorPos, (TValue) mod->character);
         }
 
         // next modifier
@@ -895,10 +987,10 @@ operator++(Iter<StringEnumerator<TObject, EditEnvironment<LevenshteinDistance, D
     {
         // restore char at old position
         if (mod->errorPos >= 0 && static_cast<unsigned>(mod->errorPos) < length(it.tmp))
-            assignValueAt(it.tmp, mod->errorPos, it.orig[mod->errorPosOrig]);
+            assignValue(it.tmp, mod->errorPos, it.orig[mod->errorPosOrig]);
 
-//					int iMax = (TSignedSize)(length(it.tmp) - i);
-//					if (mod->state == mod->INSERT_) ++iMax;
+//                    int iMax = (TSignedSize)(length(it.tmp) - i);
+//                    if (mod->state == mod->INSERT_) ++iMax;
 
         // next error position
         if (++(mod->errorPos) < mod->errorPosEnd)
@@ -911,11 +1003,11 @@ operator++(Iter<StringEnumerator<TObject, EditEnvironment<LevenshteinDistance, D
                 if (mod->state != mod->DELETE_)
                 {
                     if (mod->state == mod->SUBST_)
-                        mod->skipChar = (unsigned) it.orig[mod->errorPosOrig];
+                        mod->skipChar = ordValue(it.orig[mod->errorPosOrig]);
                     else
                         mod->skipChar = -1;
                     mod->character = (0 == mod->skipChar) ? 1 : 0;
-                    assignValueAt(it.tmp, mod->errorPos, (TValue) mod->character);
+                    assignValue(it.tmp, mod->errorPos, (TValue) mod->character);
                 }
             }
             else if (!it._reinit(mod->errorPos, mod->errorPosOrig))
@@ -1140,4 +1232,6 @@ operator!=(
 
 }  // namespace seqan
 
-#endif  // #ifndef SEQAN_CORE_INCLUDE_MISC_EDIT_ENVIRONMENT_H_
+#endif  // #ifndef SEQAN_INCLUDE_MISC_EDIT_ENVIRONMENT_H_
+
+//  LocalWords:  StringEnumerator

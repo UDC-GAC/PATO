@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,677 +30,614 @@
 //
 // ==========================================================================
 // Author: David Weese <david.weese@fu-berlin.de>
+// Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
 // ==========================================================================
 
 #ifndef SEQAN_HEADER_MODIFIER_ITERATOR_H
 #define SEQAN_HEADER_MODIFIER_ITERATOR_H
 
-namespace SEQAN_NAMESPACE_MAIN
+namespace seqan
 {
 
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Class.ModifiedIterator:
-..summary:Allows to modify arbitrary iterators by specializing what differs from an origin.
-..cat:Modifier
-..signature:ModifiedIterator<THost[, TSpec]>
-..param.THost:Original iterator.
-...type:Concept.RandomAccessIteratorConcept
-..param.TSpec:The modifier type.
-...metafunction:Metafunction.Spec
-..implements:Concept.RandomAccessIteratorConcept
-..remarks:$THost$ can also be a modified iterator, so you can create custom iterators by combining predefined ones.
-..include:seqan/modifier.h
-*/
-
-	template < typename THost, typename TSpec = void >
-	class ModifiedIterator {
-	public:
-		Holder<THost, Simple>					data_host;
-		typename Cargo<ModifiedIterator>::Type	data_cargo;
-
-		ModifiedIterator() {
-            SEQAN_CHECKPOINT;
-        }
-
-		ModifiedIterator(ModifiedIterator &_origin):
-			data_host(_origin.data_host),
-			data_cargo(_origin.data_cargo) {
-            SEQAN_CHECKPOINT;
-        }
-
-		ModifiedIterator(ModifiedIterator const &_origin):
-			data_host(_origin.data_host),
-			data_cargo(_origin.data_cargo) {
-            SEQAN_CHECKPOINT;
-        }
-
-		template <typename T>
-		ModifiedIterator(T & _origin) {
-            SEQAN_CHECKPOINT;
-			assign(*this, _origin);
-		}
-
-		template <typename T>
-		ModifiedIterator(T const & _origin) {
-            SEQAN_CHECKPOINT;
-			assign(*this, _origin);
-		}
-//____________________________________________________________________________
-
-		template <typename T>
-		inline ModifiedIterator const &
-		operator = (T & _origin) {
-            SEQAN_CHECKPOINT;
-			assign(*this, _origin);
-			return *this;
-		}
-
-		template <typename T>
-		inline ModifiedIterator const &
-		operator = (T const & _origin) {
-            SEQAN_CHECKPOINT;
-			assign(*this, _origin);
-			return *this;
-		}
-	};
-
-	template < typename THost, typename TSpec >
-	struct Spec< ModifiedIterator<THost, TSpec> > {
-		typedef TSpec Type;
-	};
-
-	template < typename THost, typename TSpec >
-	struct Spec< ModifiedIterator<THost, TSpec> const > {
-		typedef TSpec Type;
-	};
-
-
-	// an iterator is not the owner of the values pointing at
-	// it can be constant while
-	// - pointing to an alterable object
-	// - returning an non-constant value
-	// - being an iterator of an alterable container
-
-	template < typename THost, typename TSpec >
-	struct Value< ModifiedIterator<THost, TSpec> >:
-		Value<THost> {};
-
-	template < typename THost, typename TSpec >
-	struct Value< ModifiedIterator<THost, TSpec> const >:
-		Value< ModifiedIterator<THost, TSpec> > {};
-
-
-	template < typename THost, typename TSpec >
-	struct GetValue< ModifiedIterator<THost, TSpec> >:
-		GetValue<THost> {};
-
-	template < typename THost, typename TSpec >
-	struct GetValue< ModifiedIterator<THost, TSpec> const >:
-		GetValue< ModifiedIterator<THost, TSpec> > {};
-
-
-	template < typename THost, typename TSpec >
-	struct Reference< ModifiedIterator<THost, TSpec> >:
-		Reference<THost> {};
-
-	template < typename THost, typename TSpec >
-	struct Reference< ModifiedIterator<THost, TSpec> const >:
-		Reference< ModifiedIterator<THost, TSpec> > {};
-
-	template < typename THost, typename TSpec >
-	struct Size< ModifiedIterator<THost, TSpec> >:
-		Size<THost> {};
-
-	template < typename THost, typename TSpec >
-	struct Position< ModifiedIterator<THost, TSpec> >:
-		Position<THost> {};
-
-	template < typename THost, typename TSpec >
-	struct Difference< ModifiedIterator<THost, TSpec> >:
-		Difference<THost> {};
-
-
-	template < typename THost, typename TSpec >
-	struct Host< ModifiedIterator<THost, TSpec> > {
-		typedef THost Type;
-	};
-
-	template < typename THost, typename TSpec >
-	struct Host< ModifiedIterator<THost, TSpec> const > {
-		typedef THost const Type;
-	};
-
-
-	//template < typename THost, typename TSpec >
-	//struct Container< ModifiedIterator<THost, TSpec> >:
-	//	Container<THost> {};
-
-	//template < typename THost, typename TSpec >
-	//struct Container< ModifiedIterator<THost, TSpec> const >:
-	//	Container< ModifiedIterator<THost, TSpec> > {};
-
-	template <typename THost, typename TSpec>
-	class ModifiedString;
-
-	template <typename THost, typename TSpec >
-	struct Container< ModifiedIterator<THost, TSpec> >
-	{
-		typedef typename Container<THost>::Type THostContainer;
-		typedef ModifiedString<THostContainer, TSpec> Type;
-	};
-	template <typename THost, typename TSpec >
-	struct Container< ModifiedIterator<THost, TSpec> const>
-	{
-		typedef typename Container<THost>::Type THostContainer;
-		typedef ModifiedString<THostContainer, TSpec> Type;
-	};
-
-	//////////////////////////////////////////////////////////////////////////////
-	// host interface
-	//////////////////////////////////////////////////////////////////////////////
-
-	template <typename THost, typename TSpec>
-	inline Holder<THost, Simple> &
-	_dataHost(ModifiedIterator<THost, TSpec> & me) 
-	{
-        SEQAN_CHECKPOINT;
-		return me.data_host;
-	}
-	
-	template <typename THost, typename TSpec>
-	inline Holder<THost, Simple> const &
-	_dataHost(ModifiedIterator<THost, TSpec> const & me) 
-	{
-        SEQAN_CHECKPOINT;
-		return me.data_host;
-	}
-
-	template <typename THost, typename TSpec>
-	inline typename Reference< typename Cargo<ModifiedIterator<THost, TSpec> >::Type >::Type
-	cargo(ModifiedIterator<THost, TSpec> & me) 
-	{
-        SEQAN_CHECKPOINT;
-		return me.data_cargo;
-	}
-
-	template <typename THost, typename TSpec>
-	inline typename Reference< typename Cargo<ModifiedIterator<THost, TSpec> const>::Type >::Type
-	cargo(ModifiedIterator<THost, TSpec> const & me) 
-	{
-        SEQAN_CHECKPOINT;
-		return me.data_cargo;
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// container/setContainer interface
-	//////////////////////////////////////////////////////////////////////////////
-
-	template <typename THost, typename TSpec>
-	inline typename Container<ModifiedIterator<THost, TSpec> >::Type //no reference
-	container(ModifiedIterator<THost, TSpec> & me) 
-	{
-        SEQAN_CHECKPOINT;
-		typedef typename Container<ModifiedIterator<THost, TSpec> >::Type TContainer;
-		TContainer temp_(container(host(me)));
-		_copyCargo(temp_, me);
-		return temp_;
-	}
-
-	template <typename THost, typename TSpec>
-	inline typename Container<ModifiedIterator<THost, TSpec> const>::Type //no reference
-	container(ModifiedIterator<THost, TSpec> const & me) 
-	{
-        SEQAN_CHECKPOINT;
-		typedef typename Container<ModifiedIterator<THost, TSpec> const>::Type TContainer;
-		TContainer temp_(container(host(me)));
-		_copyCargo(temp_, me);
-		return temp_;
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-
-	template <typename TIteratorHost, typename TSpec, typename TStringHost>
-	inline void
-	setContainer(
-		ModifiedIterator<TIteratorHost, TSpec> & me, 
-		ModifiedString<TStringHost, TSpec> & cont) 
-	{
-        SEQAN_CHECKPOINT;
-		setContainer(host(me), host(cont));
-		_copyCargo(me, cont);
-	}
-	template <typename TIteratorHost, typename TSpec, typename TStringHost>
-	inline void
-	setContainer(
-		ModifiedIterator<TIteratorHost, TSpec> & me, 
-		ModifiedString<TStringHost, TSpec> const & cont) 
-	{
-        SEQAN_CHECKPOINT;
-		setContainer(host(me), host(const_cast<ModifiedString<TStringHost, TSpec> &>(cont)));
-		_copyCargo(me, cont);
-	}
-	template <typename THost, typename TSpec, typename TContainer>
-	inline void
-	setContainer(ModifiedIterator<THost, TSpec> & me, TContainer & cont) 
-	{
-        SEQAN_CHECKPOINT;
-		setContainer(host(me), cont);
-	}
-/*	template <typename THost, typename TSpec, typename TContainer>
-	inline void
-	setContainer(ModifiedIterator<THost, TSpec> & me, TContainer const & cont) 
-	{
-	SEQAN_CHECKPOINT
-		THost &_host = host(me);
-		setContainer(_host, host(cont));
-		_copyCargo(me, cont);
-	}
-*/
-	//////////////////////////////////////////////////////////////////////////////
-	// assign
-	//////////////////////////////////////////////////////////////////////////////
-    
-    template <typename TTarget, typename TSource>
-    inline void 
-    _assignModifiedIterator(TTarget &me, TSource &_origin, True)
-    {
-		host(me) = _origin;
-    }
-
-    template <typename TTarget, typename TSource>
-    inline void 
-    _assignModifiedIterator(TTarget &me, TSource &_origin, False)
-    {
-		host(me) = host(_origin);
-		cargo(me) = cargo(_origin);
-    }
-
-	template <typename THost, typename TSpec, typename THost2>
-	inline ModifiedIterator<THost, TSpec> const &
-	assign(ModifiedIterator<THost, TSpec> & me, ModifiedIterator<THost2, TSpec> & _origin) {
-        SEQAN_CHECKPOINT;
-        _assignModifiedIterator(me, _origin, typename IsSameType<THost, ModifiedIterator<THost2, TSpec> >::Type());
-		return me;
-	}
-
-	template <typename THost, typename TSpec, typename THost2>
-	inline ModifiedIterator<THost, TSpec> const &
-	assign(ModifiedIterator<THost, TSpec> & me, ModifiedIterator<THost2, TSpec> const & _origin) {
-        SEQAN_CHECKPOINT;
-        _assignModifiedIterator(me, _origin, typename IsSameType<THost, ModifiedIterator<THost2, TSpec> >::Type());
-		return me;
-	}
-
-	template <typename THost, typename TSpec, typename T>
-	inline ModifiedIterator<THost, TSpec> const &
-	assign(ModifiedIterator<THost, TSpec> & me, T & _origin) {
-        SEQAN_CHECKPOINT;
-		host(me) = _origin;
-		return me;
-	}
-
-	template <typename THost, typename TSpec, typename T>
-	inline ModifiedIterator<THost, TSpec> const &
-	assign(ModifiedIterator<THost, TSpec> & me, T const & _origin) {
-        SEQAN_CHECKPOINT;
-		host(me) = _origin;
-		return me;
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// value
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline typename Reference<ModifiedIterator<THost, TSpec> >::Type 
-	value(ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		return value(host(me));
-	}
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline typename Reference<ModifiedIterator<THost, TSpec> const>::Type 
-	value(ModifiedIterator<THost, TSpec> const & me)
-	{
-        SEQAN_CHECKPOINT;
-		return value(host(me));
-	}
-
-	template <typename THost, typename TSpec>
-	inline typename Reference<ModifiedIterator<THost, TSpec> >::Type 
-	operator * (ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		return value(me);
-	}
-
-	template <typename THost, typename TSpec>
-	inline typename Reference<ModifiedIterator<THost, TSpec> const>::Type 
-	operator * (ModifiedIterator<THost, TSpec> const & me)
-	{
-        SEQAN_CHECKPOINT;
-		return value(me);
-	}
-
-
-	//////////////////////////////////////////////////////////////////////////////
-	// operator ++
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline void
-	goNext(ModifiedIterator<THost, TSpec> & me)
-	{
-	SEQAN_CHECKPOINT
-		goNext(host(me));
-	}
-
-	template <typename THost, typename TSpec>
-	inline ModifiedIterator<THost, TSpec> const &
-	operator ++ (ModifiedIterator<THost, TSpec> & me)
-	{
-	SEQAN_CHECKPOINT
-		goNext(me);
-		return me;
-	}
-
-	template <typename THost, typename TSpec>
-	inline ModifiedIterator<THost, TSpec>
-	operator ++ (ModifiedIterator<THost, TSpec> & me, int)
-	{
-	SEQAN_CHECKPOINT
-		ModifiedIterator<THost, TSpec> temp_(me);
-		goNext(me);
-		return temp_;
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// operator --
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline void
-	goPrevious(ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		goPrevious(host(me));
-	}
-
-	template <typename THost, typename TSpec>
-	inline ModifiedIterator<THost, TSpec> const &
-	operator -- (ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		goPrevious(me);
-		return me;
-	}
-
-	template <typename THost, typename TSpec>
-	inline ModifiedIterator<THost, TSpec>
-	operator -- (ModifiedIterator<THost, TSpec> & me, int)
-	{
-        SEQAN_CHECKPOINT;
-		ModifiedIterator<THost, TSpec> temp_(me);
-		goPrevious(me);
-		return temp_;
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// operator +
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec, typename TDelta>
-	inline ModifiedIterator<THost, TSpec> &
-	operator += (ModifiedIterator<THost, TSpec> & me, TDelta delta) {
-        SEQAN_CHECKPOINT;
-		host(me) += delta;
-		return me;
-	}
-
-	template <typename THost, typename TSpec, typename TDelta>
-	inline ModifiedIterator<THost, TSpec>
-	operator + (ModifiedIterator<THost, TSpec> const & me, TDelta delta) {
-        SEQAN_CHECKPOINT;
-		ModifiedIterator<THost, TSpec> temp_(me);
-		temp_ += delta;
-		return temp_;
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// operator -
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec, typename TDelta>
-	inline ModifiedIterator<THost, TSpec> &
-	operator -= (ModifiedIterator<THost, TSpec> & me, TDelta delta) {
-        SEQAN_CHECKPOINT;
-		host(me) -= delta;
-		return me;
-	}
-
-	template <typename THost, typename TSpec, typename TDelta>
-	inline ModifiedIterator<THost, TSpec>
-	operator - (ModifiedIterator<THost, TSpec> const & me, TDelta delta) {
-        SEQAN_CHECKPOINT;
-		ModifiedIterator<THost, TSpec> temp_(me);
-		temp_ -= delta;
-		return temp_;
-	}
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline typename Difference< ModifiedIterator<THost, TSpec> >::Type
-	operator - (ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b) {
-        SEQAN_CHECKPOINT;
-		return host(a) - host(b);
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// goBegin
-	//////////////////////////////////////////////////////////////////////////////
-
-	template <typename THost, typename TSpec, typename TContainer>
-	inline void
-	goBegin(ModifiedIterator<THost, TSpec> & me,
-			TContainer const & container)
-	{
-        SEQAN_CHECKPOINT;
-		host(me) = begin(container);
-	}
-
-	template <typename THost, typename TSpec>
-	inline void
-	goBegin(ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		goBegin(me, container(me));
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// goEnd
-	//////////////////////////////////////////////////////////////////////////////
-
-	template <typename THost, typename TSpec, typename TContainer>
-	inline void
-	goEnd(ModifiedIterator<THost, TSpec> & me,
-			TContainer const & container)
-	{
-        SEQAN_CHECKPOINT;
-		host(me) = end(container);
-	}
-
-	template <typename THost, typename TSpec>
-	inline void
-	goEnd(ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		goEnd(me, container(me));
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// position
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline typename Position<ModifiedIterator<THost, TSpec> const>::Type 
-	position(ModifiedIterator<THost, TSpec> const & me)
-	{
-        SEQAN_CHECKPOINT;
-		return position(host(me));
-	}
-
-	// redefinition candidate
-	template <typename THost, typename TSpec, typename TContainer>
-	inline typename Position<ModifiedIterator<THost, TSpec> const>::Type 
-	position(ModifiedIterator<THost, TSpec> const & me, TContainer const &cont)
-	{
-        SEQAN_CHECKPOINT;
-		return position(host(me), cont);
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// operator ==
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline bool
-	operator == (ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b) {
-		return host(a) == host(b);
-	}
-
-	template <typename THost, typename TSpec>
-	inline bool
-	operator != (ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b) {
-		return !(a == b);
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// operator <
-	//////////////////////////////////////////////////////////////////////////////
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline bool
-	operator < (ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b) {
-        SEQAN_CHECKPOINT;
-		return host(a) < host(b);
-	}
-
-	template <typename THost, typename TSpec>
-	inline bool
-	operator > (ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b) {
-        SEQAN_CHECKPOINT;
-		return b < a;
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// atBegin
-	//////////////////////////////////////////////////////////////////////////////
-
-	template <typename THost, typename TSpec, typename TContainer>
-	inline bool
-	atBegin(ModifiedIterator<THost, TSpec> & me,
-			TContainer const & container)
-	{
-        SEQAN_CHECKPOINT;
-		return atBegin(const_cast<ModifiedIterator<THost, TSpec> const &>(me), container);
-	}
-
-	// redefinition candidate
-	template <typename THost, typename TSpec, typename TContainer>
-	inline bool
-	atBegin(ModifiedIterator<THost, TSpec> const & me,
-			TContainer const & container)
-	{
-        SEQAN_CHECKPOINT;
-		return atBegin(host(me), container);
-	}
-
-	template <typename THost, typename TSpec>
-	inline bool
-	atBegin(ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		return atBegin(const_cast<ModifiedIterator<THost, TSpec> const &>(me));
-	}
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline bool
-	atBegin(ModifiedIterator<THost, TSpec> const & me)
-	{
-        SEQAN_CHECKPOINT;
-		return atBegin(host(me));
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	// atEnd
-	//////////////////////////////////////////////////////////////////////////////
-
-	template <typename THost, typename TSpec, typename TContainer>
-	inline bool
-	atEnd(ModifiedIterator<THost, TSpec> & me,
-			TContainer const & container)
-	{
-        SEQAN_CHECKPOINT;
-		return atEnd(const_cast<ModifiedIterator<THost, TSpec> const &>(me), container);
-	}
-
-	// redefinition candidate
-	template <typename THost, typename TSpec, typename TContainer>
-	inline bool
-	atEnd(ModifiedIterator<THost, TSpec> const & me,
-			TContainer const & container)
-	{
-        SEQAN_CHECKPOINT;
-		return atEnd(host(me), container);
-	}
-
-	template <typename THost, typename TSpec>
-	inline bool
-	atEnd(ModifiedIterator<THost, TSpec> & me)
-	{
-        SEQAN_CHECKPOINT;
-		return atEnd(const_cast<ModifiedIterator<THost, TSpec> const &>(me));
-	}
-
-	// redefinition candidate
-	template <typename THost, typename TSpec>
-	inline bool
-	atEnd(ModifiedIterator<THost, TSpec> const & me)
-	{
-        SEQAN_CHECKPOINT;
-		return atEnd(host(me));
-	}
+// ==========================================================================
+// Forwards
+// ==========================================================================
+
+template <typename THost, typename TSpec> class ModifiedString;
+
+// ==========================================================================
+// Classes
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Class ModifiedIterator
+// --------------------------------------------------------------------------
+
+/*!
+ * @class ModifiedIterator
+ * @implements RandomAccessIteratorConcept
+ * @headerfile <seqan/modifier.h>
+ * @brief Allows you to modify arbitrary iterators by specializing what differs from an origin.
+ *
+ * @signature template <typename THost[, typename TSpec]>
+ *            class ModifiedIterator;
+ *
+ * @tparam THost The host iterator type.
+ * @tparam TSpec Tag used for the specialization, defaults to <tt>void</tt>.
+ *
+ * <tt>THost</tt> can also be a modified iterator, so you can create custom iterators by combining predefined ones.
+ */
+
+template <typename THostIter, typename TSpec = void>
+class ModifiedIterator
+{
+public:
+    typedef typename Cargo<ModifiedIterator>::Type TCargo_;
+
+    THostIter _host;
+    TCargo_ _cargo;
+
+    ModifiedIterator()
+    {}
+
+    template <typename TOtherHostIter>
+    ModifiedIterator(ModifiedIterator<TOtherHostIter, TSpec> const & origin):
+            _host(origin._host), _cargo(origin._cargo)
+    {}
+
+    explicit
+    ModifiedIterator(THostIter const & host): _host(host)
+    {}
+};
+
+// ==========================================================================
+// Metafunctions
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Metafunction Spec
+// --------------------------------------------------------------------------
+
+template < typename THost, typename TSpec >
+struct Spec< ModifiedIterator<THost, TSpec> > {
+    typedef TSpec Type;
+};
+
+template < typename THost, typename TSpec >
+struct Spec< ModifiedIterator<THost, TSpec> const > {
+    typedef TSpec Type;
+};
+
+// --------------------------------------------------------------------------
+// Metafunction Value
+// --------------------------------------------------------------------------
+
+// an iterator is not the owner of the values pointing at
+// it can be constant while
+// - pointing to an alterable object
+// - returning an non-constant value
+// - being an iterator of an alterable container
+
+template <typename THost, typename TSpec>
+struct Value<ModifiedIterator<THost, TSpec> > : Value<THost>
+{};
+
+template <typename THost, typename TSpec>
+struct Value<ModifiedIterator<THost, TSpec> const> : Value<ModifiedIterator<THost, TSpec> >
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction GetValue
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+struct GetValue< ModifiedIterator<THost, TSpec> > : GetValue<THost>
+{};
+
+template <typename THost, typename TSpec>
+struct GetValue<ModifiedIterator<THost, TSpec> const> : GetValue<ModifiedIterator<THost, TSpec> >
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction Reference
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+struct Reference<ModifiedIterator<THost, TSpec> > : Reference<THost>
+{};
+
+template <typename THost, typename TSpec>
+struct Reference<ModifiedIterator<THost, TSpec> const> : Reference<THost>
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction Size
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+struct Size<ModifiedIterator<THost, TSpec> > : Size<THost>
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction Positions
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+struct Position<ModifiedIterator<THost, TSpec> > : Position<THost>
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction Difference
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+struct Difference<ModifiedIterator<THost, TSpec> > : Difference<THost>
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction Host
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+struct Host<ModifiedIterator<THost, TSpec> >
+{
+    typedef THost Type;
+};
+
+template <typename THost, typename TSpec>
+struct Host<ModifiedIterator<THost, TSpec> const>
+{
+    typedef THost const Type;
+};
+
+// --------------------------------------------------------------------------
+// Metafunction Container
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec >
+struct Container<ModifiedIterator<THost, TSpec> >
+{
+    typedef typename Container<THost>::Type THostContainer;
+    typedef ModifiedString<THostContainer, TSpec> Type;
+};
+
+template <typename THost, typename TSpec >
+struct Container<ModifiedIterator<THost, TSpec> const>
+{
+    typedef typename Container<THost>::Type THostContainer;
+    typedef ModifiedString<THostContainer, TSpec> Type;
+};
+
+// ==========================================================================
+// Functions
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Function host()                                         [ModifiedIterator]
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline typename Host<ModifiedIterator<THost, TSpec> >::Type &
+host(ModifiedIterator<THost, TSpec> & me)
+{
+    return me._host;
+}
+
+template <typename THost, typename TSpec>
+inline typename Host<ModifiedIterator<THost, TSpec> const>::Type &
+host(ModifiedIterator<THost, TSpec> const & me)
+{
+    return me._host;
+}
+
+// // --------------------------------------------------------------------------
+// // Function host()
+// // --------------------------------------------------------------------------
+
+// template <typename THost, typename TSpec>
+// inline THost &
+// host(ModifiedIterator<THost, TSpec> & me)
+// {
+//     return value(me.data_host);
+// }
+
+// template <typename THost, typename TSpec>
+// inline THost const &
+// host(ModifiedIterator<THost, TSpec> const & me)
+// {
+//     return value(me._host);
+// }
+
+// --------------------------------------------------------------------------
+// Function cargo()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline typename Reference<typename Cargo<ModifiedIterator<THost, TSpec> >::Type>::Type
+cargo(ModifiedIterator<THost, TSpec> & me)
+{
+    return me._cargo;
+}
+
+template <typename THost, typename TSpec>
+inline typename Reference<typename Cargo<ModifiedIterator<THost, TSpec> const>::Type>::Type
+cargo(ModifiedIterator<THost, TSpec> const & me)
+{
+    return me._cargo;
+}
+
+// --------------------------------------------------------------------------
+// Function container()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline typename Container<ModifiedIterator<THost, TSpec> >::Type //no reference
+container(ModifiedIterator<THost, TSpec> & me)
+{
+    typedef typename Container<ModifiedIterator<THost, TSpec> >::Type TContainer;
+    TContainer cont(container(host(me)));
+    _copyCargo(cont, me);
+    return cont;
+}
+
+template <typename THost, typename TSpec>
+inline typename Container<ModifiedIterator<THost, TSpec> const>::Type //no reference
+container(ModifiedIterator<THost, TSpec> const & me)
+{
+    typedef typename Container<ModifiedIterator<THost, TSpec> const>::Type TContainer;
+    TContainer cont(container(host(me)));
+    _copyCargo(cont, me);
+    return cont;
+}
+
+// --------------------------------------------------------------------------
+// Function setContainer()
+// --------------------------------------------------------------------------
+
+template <typename TIteratorHost, typename TSpec, typename TStringHost>
+inline void
+setContainer(
+        ModifiedIterator<TIteratorHost, TSpec> & me,
+        ModifiedString<TStringHost, TSpec> & cont)
+{
+    setContainer(host(me), host(cont));
+    _copyCargo(me, cont);
+}
+
+template <typename TIteratorHost, typename TSpec, typename TStringHost>
+inline void
+setContainer(
+        ModifiedIterator<TIteratorHost, TSpec> & me,
+        ModifiedString<TStringHost, TSpec> const & cont)
+{
+    setContainer(host(me), host(const_cast<ModifiedString<TStringHost, TSpec> &>(cont)));
+    _copyCargo(me, cont);
+}
+
+// --------------------------------------------------------------------------
+// Function assign()
+// --------------------------------------------------------------------------
+
+// TODO(holtgrew): Do!
+
+// --------------------------------------------------------------------------
+// Function value()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline typename Reference<ModifiedIterator<THost, TSpec> >::Type
+value(ModifiedIterator<THost, TSpec> & me)
+{
+    return value(host(me));
+}
+
+template <typename THost, typename TSpec>
+inline typename Reference<ModifiedIterator<THost, TSpec> const>::Type
+value(ModifiedIterator<THost, TSpec> const & me)
+{
+    return value(host(me));
+}
+
+// --------------------------------------------------------------------------
+// Function operator*()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline typename Reference<ModifiedIterator<THost, TSpec> >::Type
+operator*(ModifiedIterator<THost, TSpec> & me)
+{
+    return value(me);
+}
+
+template <typename THost, typename TSpec>
+inline typename Reference<ModifiedIterator<THost, TSpec> const>::Type
+operator*(ModifiedIterator<THost, TSpec> const & me)
+{
+    return value(me);
+}
+
+// --------------------------------------------------------------------------
+// Function goNext()
+// --------------------------------------------------------------------------
+
+// redefinition candidate
+template <typename THost, typename TSpec>
+inline void
+goNext(ModifiedIterator<THost, TSpec> & me)
+{
+    // goNext(host(me));
+    ++host(me);
+}
+
+// --------------------------------------------------------------------------
+// Function operator++()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline ModifiedIterator<THost, TSpec> &
+operator++(ModifiedIterator<THost, TSpec> & me)
+{
+    goNext(me);
+    return me;
+}
+
+template <typename THost, typename TSpec>
+inline ModifiedIterator<THost, TSpec>
+operator++(ModifiedIterator<THost, TSpec> & me, int)
+{
+    ModifiedIterator<THost, TSpec> temp(me);
+    goNext(me);
+    return temp;
+}
+
+// --------------------------------------------------------------------------
+// Function goPrevious()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline void
+goPrevious(ModifiedIterator<THost, TSpec> & me)
+{
+    goPrevious(host(me));
+}
+
+// --------------------------------------------------------------------------
+// Function operator--()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline ModifiedIterator<THost, TSpec> &
+operator--(ModifiedIterator<THost, TSpec> & me)
+{
+    goPrevious(me);
+    return me;
+}
+
+template <typename THost, typename TSpec>
+inline ModifiedIterator<THost, TSpec>
+operator--(ModifiedIterator<THost, TSpec> & me, int)
+{
+    ModifiedIterator<THost, TSpec> temp(me);
+    goPrevious(me);
+    return temp;
+}
+
+// --------------------------------------------------------------------------
+// Function operator+=()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec, typename TDelta>
+inline ModifiedIterator<THost, TSpec> &
+operator += (ModifiedIterator<THost, TSpec> & me, TDelta delta)
+{
+    host(me) += delta;
+    return me;
+}
+
+// --------------------------------------------------------------------------
+// Function operator+()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec, typename TDelta>
+inline ModifiedIterator<THost, TSpec>
+operator+(ModifiedIterator<THost, TSpec> const & me, TDelta delta)
+{
+    ModifiedIterator<THost, TSpec> temp_(me);
+    temp_ += delta;
+    return temp_;
+}
+
+// --------------------------------------------------------------------------
+// Function operator-=()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec, typename TDelta>
+inline ModifiedIterator<THost, TSpec> &
+operator-=(ModifiedIterator<THost, TSpec> & me, TDelta delta)
+{
+    host(me) -= delta;
+    return me;
+}
+
+// --------------------------------------------------------------------------
+// Function operator-()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec, typename TDelta>
+inline ModifiedIterator<THost, TSpec>
+operator-(ModifiedIterator<THost, TSpec> const & me, TDelta delta)
+{
+    ModifiedIterator<THost, TSpec> temp_(me);
+    temp_ -= delta;
+    return temp_;
+}
+
+template <typename THost, typename TSpec>
+inline typename Difference< ModifiedIterator<THost, TSpec> >::Type
+operator-(ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b)
+{
+    return host(a) - host(b);
+}
+
+// --------------------------------------------------------------------------
+// Function goBegin()
+// --------------------------------------------------------------------------
+
+// (weese:) the default implementations should do the same
+
+//template <typename THost, typename TSpec, typename TContainer>
+//inline void
+//goBegin(ModifiedIterator<THost, TSpec> & me,
+//        TContainer & container)
+//{
+//    host(me) = begin(host(container));
+//}
+//
+//template <typename THost, typename TSpec>
+//inline void
+//goBegin(ModifiedIterator<THost, TSpec> & me)
+//{
+//    goBegin(me, container(me));
+//}
+
+// --------------------------------------------------------------------------
+// Function goEnd()
+// --------------------------------------------------------------------------
+
+//template <typename THost, typename TSpec, typename TContainer>
+//inline void
+//goEnd(ModifiedIterator<THost, TSpec> & me,
+//      TContainer & container)
+//{
+//    host(me) = end(host(container));
+//}
+//
+//template <typename THost, typename TSpec>
+//inline void
+//goEnd(ModifiedIterator<THost, TSpec> & me)
+//{
+//    goEnd(me, container(me));
+//}
+
+// --------------------------------------------------------------------------
+// Function position() (overloads for rooted iterators only)
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline typename Position<ModifiedIterator<THost, TSpec> const>::Type
+position(ModifiedIterator<THost, TSpec> const & me)
+{
+    return position(host(me));
+}
+
+template <typename TContainer1, typename TIterator, typename TSpec1, typename TSpec2, typename TContainer2>
+inline typename Position<ModifiedIterator<Iter<TContainer1, AdaptorIterator<TIterator, TSpec1> >, TSpec2> const>::Type
+position(ModifiedIterator<Iter<TContainer1, AdaptorIterator<TIterator, TSpec1> >, TSpec2> const & me,
+        TContainer2 const &)
+{
+    return position(me); // rooted has container
+}
+
+// --------------------------------------------------------------------------
+// Function operator==()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline bool
+operator == (ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b)
+{
+    return host(a) == host(b);
+}
+
+// --------------------------------------------------------------------------
+// Function operator!=()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline bool
+operator != (ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b)
+{
+    return !(a == b);
+}
+
+// --------------------------------------------------------------------------
+// Function operator<()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline bool
+operator<(ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b)
+{
+    return host(a) < host(b);
+}
+
+// --------------------------------------------------------------------------
+// Function operator>()
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline bool
+operator>(ModifiedIterator<THost, TSpec> const & a, ModifiedIterator<THost, TSpec> const & b)
+{
+    return b < a;
+}
+
+// --------------------------------------------------------------------------
+// Function atBegin() (overloads for rooted iterators only)
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline bool
+atBegin(ModifiedIterator<THost, TSpec> const & me)
+{
+    return atBegin(host(me));
+}
+
+// rooted overload
+template <typename TContainer1, typename TIterator, typename TSpec1, typename TSpec2, typename TContainer2>
+inline bool
+atBegin(ModifiedIterator<Iter<TContainer1, AdaptorIterator<TIterator, TSpec1> >, TSpec2> const & me,
+        TContainer2 const &)
+{
+    return atBegin(me);
+}
+
+// --------------------------------------------------------------------------
+// Function atEnd() (overloads for rooted iterators only)
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TSpec>
+inline bool
+atEnd(ModifiedIterator<THost, TSpec> const & me)
+{
+    return atEnd(host(me));
+}
+
+// rooted overload
+template <typename TContainer1, typename TIterator, typename TSpec1, typename TSpec2, typename TContainer2>
+inline bool
+atEnd(ModifiedIterator<Iter<TContainer1, AdaptorIterator<TIterator, TSpec1> >, TSpec2> const & me,
+      TContainer2 const &)
+{
+    return atEnd(me);
+}
 
 }
 
 // Adapt SeqAn modified to std.
 namespace std
 {
-	template<typename THost, typename TSpec>
-	struct iterator_traits<seqan::ModifiedIterator<THost, TSpec> >
-	{
-		typedef ::seqan::ModifiedIterator<THost, TSpec> TIter;
+    template<typename THost, typename TSpec>
+    struct iterator_traits<seqan::ModifiedIterator<THost, TSpec> >
+    {
+        typedef seqan::ModifiedIterator<THost, TSpec> TIter;
 
-		typedef random_access_iterator_tag iterator_category;
-		typedef typename ::seqan::Value<TIter>::Type value_type;
-		typedef typename ::seqan::Difference<TIter>::Type difference_type;
-		typedef typename ::seqan::Value<TIter>::Type * pointer;
-		typedef typename ::seqan::Reference<TIter>::Type reference;
-	};
+        typedef random_access_iterator_tag iterator_category;
+        typedef typename seqan::Value<TIter>::Type value_type;
+        typedef typename seqan::Difference<TIter>::Type difference_type;
+        typedef typename seqan::Value<TIter>::Type * pointer;
+        typedef typename seqan::Reference<TIter>::Type reference;
+    };
 }
 
 #endif

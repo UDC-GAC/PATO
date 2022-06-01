@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,17 +29,17 @@
 // DAMAGE.
 //
 // ==========================================================================
+// Author: David Weese <david.weese@fu-berlin.de>
+// ==========================================================================
 
-#ifndef SEQAN_HEADER_FILE_FORWARDS_H 
-#define SEQAN_HEADER_FILE_FORWARDS_H 
-
-//SEQAN_NO_GENERATED_FORWARDS: no forwards are generated for this file
+#ifndef SEQAN_HEADER_FILE_FORWARDS_H
+#define SEQAN_HEADER_FILE_FORWARDS_H
 
 //////////////////////////////////////////////////////////////////////////////
 
-namespace SEQAN_NAMESPACE_MAIN 
+namespace seqan
 {
-    
+
 //////////////////////////////////////////////////////////////////////////////
 
 template <typename TSource, typename TSpec>
@@ -49,7 +49,7 @@ class Align;
 
 //////////////////////////////////////////////////////////////////////////////
 
-} //namespace SEQAN_NAMESPACE_MAIN
+} //namespace seqan
 
 //////////////////////////////////////////////////////////////////////////////
 

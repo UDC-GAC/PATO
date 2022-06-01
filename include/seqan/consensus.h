@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,29 +29,42 @@
 // DAMAGE.
 //
 // ==========================================================================
+// Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
+// ==========================================================================
 
-#ifndef SEQAN_HEADER_CONSENSUS_H
-#define SEQAN_HEADER_CONSENSUS_H
+#ifndef INCLUDE_SEQAN_CONSENSUS_H_
+#define INCLUDE_SEQAN_CONSENSUS_H_
 
-// Seqan
+// ==========================================================================
+// Dependencies
+// ==========================================================================
+
 #include <seqan/score.h>
 #include <seqan/modifier.h>
 #include <seqan/graph_types.h>
 #include <seqan/graph_algorithms.h>
-#include <seqan/refinement.h>
 #include <seqan/graph_align.h>
+#include <seqan/align.h>
 #include <seqan/graph_msa.h>
 #include <seqan/store.h>
+#include <seqan/seq_io.h>
 
+// ==========================================================================
+// Old Consensus Module
+// ==========================================================================
 
-#ifdef SEQAN_SWITCH_USE_FORWARDS
-#include <seqan/consensus/consensus_generated_forwards.h>
-#endif
-
-// Consensus tool
 #include <seqan/consensus/consensus_base.h>
 #include <seqan/consensus/consensus_score.h>
 #include <seqan/consensus/consensus_realign.h>
 #include <seqan/consensus/consensus_library.h>
 
-#endif //#ifndef SEQAN_HEADER_...
+// ==========================================================================
+// New, Store-Based Module
+// ==========================================================================
+
+#include <seqan/consensus/overlap_info_computation.h>
+#include <seqan/consensus/consensus_builder.h>
+#include <seqan/consensus/consensus_aligner.h>
+#include <seqan/consensus/consensus_aligner_interface.h>
+
+#endif  // #ifndef INCLUDE_SEQAN_CONSENSUS_H_

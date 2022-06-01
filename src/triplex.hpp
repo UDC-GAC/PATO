@@ -1,6 +1,7 @@
 #ifndef _TRIPLEX_HPP_
 #define _TRIPLEX_HPP_
 
+#include <string>
 #include <vector>
 #include <fstream>
 #include <iostream>
@@ -10,7 +11,7 @@
 #include "triplex_pattern.hpp"
 #include "triplex_alphabet.hpp"
 
-namespace SEQAN_NAMESPACE_MAIN
+namespace seqan
 {
 
 enum orientation
@@ -377,27 +378,24 @@ inline bool load_sequences(TSequenceSet& sequences,
                            TNameSet& names,
                            const char *file_name)
 {
-    MultiSeqFile fasta_file;
-    if (!open(fasta_file.concat, file_name, OPEN_RDONLY)) {
+    SeqFileIn fasta_file;
+
+    if (!open(fasta_file, file_name)) {
+        std::cerr << "PATO: error opening input file '" << file_name << "'\n";
         return false;
     }
+    readRecords(names, sequences, fasta_file);
 
-    AutoSeqFormat format;
-    guessFormat(fasta_file.concat, format);
-    split(fasta_file, format);
-
-    unsigned int num_seqs = length(fasta_file);
-    resize(sequences, num_seqs, Exact());
-    resize(names, num_seqs, Exact());
-
-    TriplexString sequence;
-    for (unsigned int i = 0; i < num_seqs; i++) {
-        assignCroppedSeqId(names[i], fasta_file[i], format);
-        assignSeq(sequence, fasta_file[i], format);
-        assign(sequences[i], sequence, Exact());
+    // crop sequence name
+    for (auto& name : names) {
+        std::string tmp_name(name.data_begin, length(name));
+        size_t num_chars = std::min(tmp_name.find_first_of(' '),
+                                    tmp_name.size());
+        tmp_name = tmp_name.substr(0, num_chars);
+        name = tmp_name;
     }
 
-    return num_seqs > 0;
+    return length(sequences) > 0;
 }
 
 template <typename TString>
@@ -524,14 +522,15 @@ inline std::vector<std::vector<bool>> encode_sequence(TString& motif,
                                                       std::vector<std::vector<bool>>& block_runs,
                                                       unsigned int min_block_run)
 {
-    typedef typename Iterator<TString>::Type TIter;
+    typedef typename Iterator<TString, Standard>::Type TIter;
 
     std::vector<std::vector<bool>> encoded_seq(3, std::vector<bool>(length(motif), false));
 
     unsigned int counter = 0;
     unsigned int run_counter = 0;
 
-    for (TIter it = begin(motif); it != end(motif); it++, counter++) {
+    for (TIter it = begin(motif, Standard());
+         it != end(motif, Standard()); it++, counter++) {
         if (*it == filter_char) {
             encoded_seq[0][counter] = true;
         } else if (*it == interrupt_char) {
@@ -762,8 +761,8 @@ inline void reduce_motif_set(TMotifSet& output, TMotifSet& input)
         TOligoMotif *motif = cargo(prop_map, getValue(vertex_it));
 
         TCounts tree_result;
-        findIntervals(tree, beginPosition(*motif), endPosition(*motif),
-                      tree_result);
+        findIntervals(tree_result, tree, beginPosition(*motif),
+                      endPosition(*motif));
         for (TCountIter it = begin(tree_result); it != end(tree_result); it++) {
             if (getValue(vertex_it) == *it) {
                 continue;
@@ -775,7 +774,7 @@ inline void reduce_motif_set(TMotifSet& output, TMotifSet& input)
     }
 
     TComponent components;
-    TSize num_components = connectedComponents(parser, components);
+    TSize num_components = connectedComponents(components, parser);
 
     TCompMap comp_map;
 
@@ -810,8 +809,7 @@ inline unsigned int filter_with_guanine_and_error_rate(TMotifSet& motif_set,
                                                        const options& opts)
 {
     typedef typename Value<TMotifSet>::Type TPattern;
-    typedef typename Host<TPattern>::Type TString;
-    typedef ModifiedString<TString, ModView<FunctorRYFilter>> TFilter;
+    typedef ModifiedString<TPattern, ModView<FunctorRYFilter>> TFilter;
 
     TMotifSet tmp_set;
     TMotifSet *ptr_set;
@@ -1050,7 +1048,7 @@ inline void count_duplicates_strict(StringSet<ModStringTriplex<TSpec, TSpec>>& s
     typedef ModStringTriplex<TSpec, TSpec> TString;
     typedef StringSet<TString> TStringSet;
     typedef StringSet<TriplexString> TText;
-    typedef typename Iterator<TStringSet>::Type	TIter;
+    typedef typename Iterator<TStringSet, Standard>::Type TIter;
     typedef Index<TText> TIndex;
     typedef typename Id<TString>::Type TId;
     typedef typename Position<TString>::Type TPos;
@@ -1059,12 +1057,14 @@ inline void count_duplicates_strict(StringSet<ModStringTriplex<TSpec, TSpec>>& s
     typedef typename Iterator<TMap>::Type TMapIter;
 
     TText string_set;
-    for (TIter it = begin(strings); it != end(strings); it++) {
+    for (TIter it = begin(strings, Standard());
+         it != end(strings, Standard()); it++) {
         appendValue(string_set, ttsString(*it));
     }
 
     TIndex index_esa(string_set);
-    for (TIter it = begin(strings); it != end(strings); it++) {
+    for (TIter it = begin(strings, Standard());
+         it != end(strings, Standard()); it++) {
         int occ = 0;
         TMap loci_map;
 
@@ -1441,7 +1441,6 @@ inline void match_tfo_tts_pair(TMatches& matches,
         }
 
         if (m < min_score) {
-            // save potentials
             continue;
         }
 
@@ -1648,6 +1647,8 @@ inline void print_summary(TPotentials& potentials,
 
     std::ofstream output_file(toCString(output_file_name), std::ios_base::out);
     if (!output_file) {
+        std::cerr << "PATO: error opening output file '"
+                  << toCString(output_file_name) << "'\n";
         return;
     }
 
@@ -1686,6 +1687,8 @@ inline void print_tfo_tts_pairs(TMatches &matches,
 
     std::ofstream output_file(toCString(output_file_name), std::ios_base::out);
     if (!output_file) {
+        std::cerr << "PATO: error opening output file '"
+                  << toCString(output_file_name) << "'\n";
         return;
     }
 

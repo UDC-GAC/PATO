@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -35,16 +35,17 @@
 #ifndef SEQAN_HEADER_INDEX_MERGER3_H
 #define SEQAN_HEADER_INDEX_MERGER3_H
 
-namespace SEQAN_NAMESPACE_MAIN
+namespace seqan
 {
 
 //namespace SEQAN_NAMESPACE_PIPELINING
 //{
 
-	struct Merger3;
+    struct Merger3;
 
     template < typename TInput0, typename TInput12 >
-    struct Value< Pipe< Bundle2< TInput0, TInput12 >, Merger3 > > {
+    struct Value< Pipe< Bundle2< TInput0, TInput12 >, Merger3 > >
+    {
         typedef typename Size<TInput0>::Type Type;
     };
 
@@ -56,18 +57,18 @@ namespace SEQAN_NAMESPACE_MAIN
     {
         typedef typename Value<TInput0>::Type   InType0;
         typedef typename Value<TInput12>::Type  InType12;
-        typedef typename Size<Pipe>::Type       SizeType;
+        typedef typename Size<Pipe>::Type       TSize;
 
         Bundle2 <
             TInput0,
             TInput12 >  in;
-        SizeType        N, tmp;
+        TSize           N, tmp;
         int             minStream;
         bool            twoStreams;
 
         Pipe(Bundle2< TInput0, TInput12 > _in):
             in(_in) {}
-        
+
         static inline bool less1(const InType0& i0, const InType12& i12)
         { // lexic. order for pairs
             return (i0.i3[0] <  i12.i3[0] ||
@@ -101,7 +102,7 @@ namespace SEQAN_NAMESPACE_MAIN
         inline typename Value<Pipe>::Type const & operator*() const {
             return tmp;
         }
-        
+
         inline Pipe& operator++() {
             if (minStream) {
                 #ifdef SEQAN_TEST_SKEW3
@@ -145,15 +146,15 @@ namespace SEQAN_NAMESPACE_MAIN
     //////////////////////////////////////////////////////////////////////////////
     // global pipe functions
     template < typename TInput >
-	inline bool control(Pipe< TInput, Merger3 > &me, ControlBeginRead const &command) {
+    inline bool control(Pipe< TInput, Merger3 > &me, ControlBeginRead const &command) {
         if (!control(me.in, command)) return false;
         me.twoStreams = !eof(me.in.in1);
         me.minStream = eof(me.in.in2)? -1: 1;
         me.N = length(me);
         me.getMin();
-		return true;
-	}
-    
+        return true;
+    }
+
     template < typename TInput >
     inline typename Size< Pipe< TInput, Merger3 > >::Type
     length(Pipe< TInput, Merger3 > const &me) {

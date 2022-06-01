@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -36,20 +36,17 @@
 #include <seqan/basic.h>
 #include <seqan/sequence.h>
 #include <seqan/align.h>
-#include <seqan/file.h>
+#include <seqan/stream.h>
+#include <seqan/parallel.h>
+#include <seqan/seq_io.h>
+#include <seqan/bam_io.h>
+#include <seqan/gff_io.h>
+#include <seqan/ucsc_io.h>
+#include <seqan/misc/name_store_cache.h>
 
 #include <sstream>
 #include <algorithm>
 #include <set>
-
-#ifndef SEQAN_HAS_SAMTOOLS 
-#define SEQAN_HAS_SAMTOOLS 0
-#endif  // #ifndef SEQAN_HAS_SAMTOOLS 
-
-#if SEQAN_HAS_SAMTOOLS
-#include <sam.h>
-#include <bam.h>
-#endif  // #if SEQAN_HAS_SAMTOOLS
 
 //////////////////////////////////////////////////////////////////////////////
 // FRAGMENT STORE SUB-CONTAINERS
@@ -71,8 +68,5 @@
 #include <seqan/store/store_io_sam.h>
 #include <seqan/store/store_io_gff.h>
 #include <seqan/store/store_io_ucsc.h>
-#if SEQAN_HAS_SAMTOOLS
-#include <seqan/store/store_io_bam.h>
-#endif  // #if SEQAN_HAS_SAMTOOLS
 
 #endif //#ifndef SEQAN_HEADER_...

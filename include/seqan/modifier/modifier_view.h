@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -30,364 +30,396 @@
 //
 // ==========================================================================
 // Author: David Weese <david.weese@fu-berlin.de>
+// Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
 // ==========================================================================
+
+// TODO(holtgrew): Split into modified_string_mod_view.h and modified_iterator_mod_view.h.
+// TODO(holtgrew): Move out convert()
 
 #ifndef SEQAN_MODIFIER_MODIFIER_VIEW_H_
 #define SEQAN_MODIFIER_MODIFIER_VIEW_H_
 
-namespace seqan {
+namespace seqan
+{
 
-/**
-.Spec.ModView:
-..summary:Transforms the characters of the $THost$ string/iterator using a custom function.
-..cat:Modifier
-..general:Class.ModifiedIterator
-..general:Class.ModifiedString
-..signature:ModifiedIterator<THost, ModView<TFunctor> >
-..signature:ModifiedString<THost, ModView<TFunctor> >
-..param.THost:Original string/iterator.
-...type:Concept.RandomAccessIteratorConcept
-..param.TFunctor:A unary function (see STL's $unary_function$).
-...remarks:The argument type of $TFunctor$ must be $VALUE<THost>::Type$.
-..remarks:The @Metafunction.Value@ type of this modifier is the result type of $TFunctor$.
-..include:seqan/modifier.h
-*/
+// ==========================================================================
+// Forwards
+// ==========================================================================
+
+// ==========================================================================
+// Classes
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Class ModView
+// --------------------------------------------------------------------------
+
+/*!
+ * @class ModViewModifiedIterator
+ * @extends ModifiedIterator
+ * @headerfile <seqan/modifier.h>
+ *
+ * @brief Transforms the character of a host using a custom functor.
+ *
+ * @signature template <typename THost, typename TFunctor>
+ *            class ModifiedIterator<THost, ModView<TFunctor> >;
+ *
+ * @tparam THost    The host iterator.
+ * @tparam TFunctor A unary functor type.
+ */
+
+/*!
+ * @class ModViewModifiedString
+ * @extends ModifiedString
+ * @headerfile <seqan/modifier.h>
+ *
+ * @brief Transforms the character of a host using a custom functor.
+ *
+ * @signature template <typename THost, typename TFunctor>
+ *            class ModifiedString<THost, ModView<TFunctor> >;
+ *
+ * @tparam THost    The host iterator.
+ * @tparam TFunctor A unary functor type.
+ */
 
 template <typename TFunctor>
 struct ModView {};
 
 template <typename TFunctor>
-struct ModViewCargo {
-    TFunctor	func;
+struct ModViewCargo
+{
+    TFunctor    func;
+
+    ModViewCargo() : func()
+    {}
 };
 
-
-//////////////////////////////////////////////////////////////////////////////
-// view iterator
-//////////////////////////////////////////////////////////////////////////////
-
-
 template <typename THost, typename TFunctor>
-struct Cargo< ModifiedIterator<THost, ModView<TFunctor> > > {
-    typedef ModViewCargo<TFunctor>	Type;
-};
-
-
-template <typename THost, typename TFunctor>
-class ModifiedIterator<THost, ModView<TFunctor> > {
+class ModifiedIterator<THost, ModView<TFunctor> >
+{
 public:
-    Holder<THost, Simple>					data_host;
-    typename Cargo<ModifiedIterator>::Type	data_cargo;
+    typedef typename Cargo<ModifiedIterator>::Type TCargo_;
 
-    mutable typename Value<ModifiedIterator>::Type	tmp_value;
+    THost _host;
+    TCargo_ _cargo;
 
-    ModifiedIterator() {}
+    mutable typename Value<ModifiedIterator>::Type tmp_value;
 
-    explicit ModifiedIterator(TFunctor &_func) {
-        SEQAN_CHECKPOINT;
-        assignModViewFunctor(*this, _func);
-    }
+    ModifiedIterator() : _host(), tmp_value()
+    {}
 
-    explicit ModifiedIterator(TFunctor const &_func) {
-        SEQAN_CHECKPOINT;
-        assignModViewFunctor(*this, _func);
-    }
+    template <typename TOtherHost>
+    ModifiedIterator(ModifiedIterator<TOtherHost, ModView<TFunctor> > & origin) :
+        _host(origin._host), _cargo(origin._cargo), tmp_value()
+    {}
 
-    ModifiedIterator(ModifiedIterator &_origin):
-        data_host(_origin.data_host),
-        data_cargo(_origin.data_cargo) {
-        SEQAN_CHECKPOINT;
-    }
+    explicit
+    ModifiedIterator(THost const & host) :
+        _host(host), tmp_value()
+    {}
 
-    ModifiedIterator(ModifiedIterator const &_origin):
-        data_host(_origin.data_host),
-        data_cargo(_origin.data_cargo) {
-        SEQAN_CHECKPOINT;
-    }
-
-    template <typename T>
-    ModifiedIterator(T & _origin) {
-        SEQAN_CHECKPOINT;
-        assign(*this, _origin);
-    }
-
-    template <typename T>
-    ModifiedIterator(T const & _origin) {
-        SEQAN_CHECKPOINT;
-        assign(*this, _origin);
-    }
-//____________________________________________________________________________
-
-    template <typename T>
-    inline ModifiedIterator const &
-    operator = (T & _origin) {
-        SEQAN_CHECKPOINT;
-        assign(*this, _origin);
-        return *this;
-    }
-
-    template <typename T>
-    inline ModifiedIterator const &
-    operator = (T const & _origin) {
-        SEQAN_CHECKPOINT;
-        assign(*this, _origin);
-        return *this;
+    ModifiedIterator(THost const & host, TFunctor const & functor):
+        _host(host), tmp_value()
+    {
+        cargo(*this).func = functor;
     }
 };
 
-template <typename THost, typename TFunctor>
-struct Value< ModifiedIterator<THost, ModView<TFunctor> > > {
-    typedef typename TFunctor::result_type			TResult;
-    typedef typename RemoveConst_<TResult>::Type	Type;
-};
+// --------------------------------------------------------------------------
+// Class ModifiedString
+// --------------------------------------------------------------------------
 
 template <typename THost, typename TFunctor>
-struct GetValue< ModifiedIterator<THost, ModView<TFunctor> > >:
-    Value< ModifiedIterator<THost, ModView<TFunctor> > > {};
-
-template <typename THost, typename TFunctor>
-struct Reference< ModifiedIterator<THost, ModView<TFunctor> > > {
-    typedef typename Value< ModifiedIterator<THost, ModView<TFunctor> > >::Type & Type;
-};
-
-
-//////////////////////////////////////////////////////////////////////////////
-// value
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename THost, typename TFunctor>
-inline typename Reference<ModifiedIterator<THost, ModView<TFunctor> > >::Type 
-value(ModifiedIterator<THost, ModView<TFunctor> > & me)
+class ModifiedString<THost, ModView<TFunctor> >
 {
-    SEQAN_CHECKPOINT;
-    me.tmp_value = cargo(me).func(getValue(host(me)));
-    return me.tmp_value;
-}
+public:
+    typedef typename Pointer_<THost>::Type       THostPointer_;
+    typedef typename Cargo<ModifiedString>::Type TCargo_;
+
+    mutable THostPointer_ _host;
+    TCargo_ _cargo;
+
+    mutable typename Value<ModifiedString>::Type tmp_value;
+
+    // Default constructor.
+    ModifiedString() : _host(), tmp_value()
+    {}
+
+    // Construct with the actual host.
+    explicit
+    ModifiedString(typename Parameter_<THost>::Type host):
+        _host(_toPointer(host)), tmp_value()
+    {}
+
+    // Construct with the functor.
+    explicit
+    ModifiedString(TFunctor const & functor):
+        _host(), tmp_value()
+    {
+        cargo(*this).func = functor;
+    }
+
+    // Constructor for creating a ModifiedString with const host from a non-const host.
+    template <typename THost_>
+    explicit
+    ModifiedString(THost_ & host,
+                   SEQAN_CTOR_ENABLE_IF(IsConstructible<THost, THost_>)) :
+            _host(_toPointer(host)), tmp_value()
+    {
+        ignoreUnusedVariableWarning(dummy);
+    }
+
+    // Construct with the actual host; variant with functor.
+    ModifiedString(typename Parameter_<THost>::Type host, TFunctor const & functor) :
+            _host(_toPointer(host)), tmp_value()
+    {
+        cargo(*this).func = functor;
+    }
+
+    // Constructor for creating a ModifiedString with const host with a non-const host; variant with functor.
+    template <typename THost_>
+    explicit
+    ModifiedString(THost_ & host,
+                   TFunctor const & functor,
+                   SEQAN_CTOR_ENABLE_IF(IsConstructible<THost, THost_>)) :
+            _host(_toPointer(host)), tmp_value()
+    {
+        ignoreUnusedVariableWarning(dummy);
+        cargo(*this).func = functor;
+    }
+
+    // Constructor for innermost type; hand down to _host which is a ModifiedString itself.
+    template <typename THost_>
+    explicit
+    ModifiedString(THost_ && host,
+                   SEQAN_CTOR_ENABLE_IF(IsAnInnerHost<
+                                            typename RemoveReference<THost>::Type,
+                                            typename RemoveReference<THost_>::Type >)) :
+            _host(std::forward<THost_>(host)), tmp_value()
+    {
+        ignoreUnusedVariableWarning(dummy);
+    }
+
+    // Constructor for innermost type; hand down to _host which is a ModifiedString itself.  Variant with functor.
+    template <typename THost_>
+    explicit
+    ModifiedString(THost_ && host,
+                   TFunctor const & functor,
+                   SEQAN_CTOR_ENABLE_IF(IsAnInnerHost<
+                                            typename RemoveReference<THost>::Type,
+                                            typename RemoveReference<THost_>::Type >)) :
+            _host(std::forward<THost_>(host)), tmp_value()
+    {
+        ignoreUnusedVariableWarning(dummy);
+        cargo(*this).func = functor;
+    }
+
+    template <typename TPos>
+    inline typename Reference<ModifiedString>::Type
+    operator[](TPos pos)
+    {
+        return value(*this, pos);
+    }
+
+    template <typename TPos>
+    inline typename Reference<ModifiedString const>::Type
+    operator[](TPos pos) const
+    {
+        return value(*this, pos);
+    }
+};
+
+// ==========================================================================
+// Metafunctions
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Metafunction Cargo                                      [ModifiedIterator]
+// --------------------------------------------------------------------------
 
 template <typename THost, typename TFunctor>
-inline typename Reference<ModifiedIterator<THost, ModView<TFunctor> > const>::Type 
-value(ModifiedIterator<THost, ModView<TFunctor> > const & me)
+struct Cargo<ModifiedIterator<THost, ModView<TFunctor> > >
 {
-    SEQAN_CHECKPOINT;
-    me.tmp_value = cargo(me).func(getValue(host(me)));
-    return me.tmp_value;
-}
+    typedef ModViewCargo<TFunctor>    Type;
+};
 
-
-//////////////////////////////////////////////////////////////////////////////
-// getValue
-//////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
+// Metafunction Value                                      [ModifiedIterator]
+// --------------------------------------------------------------------------
 
 template <typename THost, typename TFunctor>
-inline typename GetValue<ModifiedIterator<THost, ModView<TFunctor> > >::Type 
+struct Value<ModifiedIterator<THost, ModView<TFunctor> > >
+{
+    typedef typename TFunctor::result_type            TResult_;
+    typedef typename RemoveConst_<TResult_>::Type   Type;
+};
+
+template <typename THost, typename TFunctor>
+struct Value<ModifiedIterator<THost, ModView<TFunctor> > const> :
+    Value<ModifiedIterator<THost, ModView<TFunctor> > >
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction GetValue                                   [ModifiedIterator]
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TFunctor>
+struct GetValue<ModifiedIterator<THost, ModView<TFunctor> > > :
+    Value<ModifiedIterator<THost, ModView<TFunctor> > >
+{};
+
+template <typename THost, typename TFunctor>
+struct GetValue<ModifiedIterator<THost, ModView<TFunctor> > const> :
+    Value<ModifiedIterator<THost, ModView<TFunctor> > >
+{};
+
+// --------------------------------------------------------------------------
+// Metafunction Reference                                  [ModifiedIterator]
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TFunctor>
+struct Reference<ModifiedIterator<THost, ModView<TFunctor> > > :
+    Value<ModifiedIterator<THost, ModView<TFunctor> > >
+{};
+
+template <typename THost, typename TFunctor>
+struct Reference<ModifiedIterator<THost, ModView<TFunctor> > const> :
+    Value<ModifiedIterator<THost, ModView<TFunctor> > >
+{};
+
+// NOTE(h-2): ModView element access is always by copy never by reference
+// This is a workaround for dangling references to the stack when
+// combining infixes and modified views, more precisely:
+//  if you iterate over an infix of a modview then value() on the iterator
+//  will return reference to the tmp_value inside the moditerator
+//  which might have been destructed.
+// This is a more general problem that stems from the fact that
+// "virtual strings" of the same type (infixes, modstrings) can be
+// automatically compacted into one layer, but combinations cannot.
+// This workaround happens in ModView, because it is used less frequently
+// then Infixes.
+
+// --------------------------------------------------------------------------
+// Metafunction Cargo                                        [ModifiedString]
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TFunctor>
+struct Cargo< ModifiedString<THost, ModView<TFunctor> > >
+{
+    typedef ModViewCargo<TFunctor>    Type;
+};
+
+// ==========================================================================
+// Functions
+// ==========================================================================
+
+// --------------------------------------------------------------------------
+// Function getValue()                                     [ModifiedIterator]
+// --------------------------------------------------------------------------
+
+template <typename THost, typename TFunctor>
+inline typename GetValue<ModifiedIterator<THost, ModView<TFunctor> > >::Type
 getValue(ModifiedIterator<THost, ModView<TFunctor> > & me)
 {
-    SEQAN_CHECKPOINT;
-    return cargo(me).func(getValue(host(me)));
+    return cargo(me).func(*host(me));
 }
 
 template <typename THost, typename TFunctor>
-inline typename GetValue<ModifiedIterator<THost, ModView<TFunctor> > const>::Type 
+inline typename GetValue<ModifiedIterator<THost, ModView<TFunctor> > const>::Type
 getValue(ModifiedIterator<THost, ModView<TFunctor> > const & me)
 {
-    SEQAN_CHECKPOINT;
-    return cargo(me).func(getValue(host(me)));
+    return cargo(me).func(*host(me));
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-// assignModViewFunctor
-//////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
+// Function value()                                        [ModifiedIterator]
+// --------------------------------------------------------------------------
 
 template <typename THost, typename TFunctor>
-inline void
-assignModViewFunctor(ModifiedIterator<THost, ModView<TFunctor> > & me, TFunctor const & _func) 
+inline typename GetValue<ModifiedIterator<THost, ModView<TFunctor> > >::Type
+value(ModifiedIterator<THost, ModView<TFunctor> > & me)
 {
-    SEQAN_CHECKPOINT;
-    cargo(me).func = _func;
+    return getValue(me);
 }
-
-
-//////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////
-// view string
-//////////////////////////////////////////////////////////////////////////////
-
 
 template <typename THost, typename TFunctor>
-struct Cargo< ModifiedString<THost, ModView<TFunctor> > > {
-    typedef ModViewCargo<TFunctor>	Type;
-};
-
-template <typename THost, typename TFunctor>
-class ModifiedString<THost, ModView<TFunctor> > {
-public:
-    Holder<THost>							data_host;
-    typename Cargo<ModifiedString>::Type	data_cargo;
-
-    mutable typename Value<ModifiedString>::Type	tmp_value;
-
-    ModifiedString() {}
-
-    explicit ModifiedString(TFunctor &_func) {
-        SEQAN_CHECKPOINT;
-        cargo(*this).func = _func;
-    }
-
-    explicit ModifiedString(TFunctor const &_func) {
-        SEQAN_CHECKPOINT;
-        cargo(*this).func = _func;
-    }
-
-    explicit ModifiedString(ModifiedString const &_origin, TFunctor const &_func):
-        data_host(_origin.data_host)
-    {
-        SEQAN_CHECKPOINT;
-        cargo(*this).func = _func;
-    }
-
-    ModifiedString(ModifiedString &_origin):
-        data_host(_origin.data_host),
-        data_cargo(_origin.data_cargo) {
-        SEQAN_CHECKPOINT;
-    }
-
-    ModifiedString(ModifiedString const &_origin):
-        data_host(_origin.data_host),
-        data_cargo(_origin.data_cargo) {
-        SEQAN_CHECKPOINT;
-    }
-
-    ModifiedString(THost &_origin) {
-        SEQAN_CHECKPOINT;
-        setHost(*this, _origin);
-    }
-
-    template <typename T>
-    ModifiedString(T & _origin) {
-        SEQAN_CHECKPOINT;
-        setValue(*this, _origin);
-    }
-
-    template <typename T>
-    ModifiedString(T const & _origin) {
-        SEQAN_CHECKPOINT;
-        setValue(*this, _origin);
-    }
-
-    template <typename T>
-    inline ModifiedString const &
-    operator = (T & _origin) {
-        SEQAN_CHECKPOINT;
-        assign(*this, _origin);
-        return *this;
-    }
-
-    template <typename TPos>
-    inline typename Reference<ModifiedString>::Type 
-    operator [] (TPos pos)
-    {
-        SEQAN_CHECKPOINT;
-        return value(*this, pos);
-    }
-
-    template <typename TPos>
-    inline typename Reference<ModifiedString const>::Type 
-    operator [] (TPos pos) const
-    {
-        SEQAN_CHECKPOINT;
-        return value(*this, pos);
-    }
-};
-
-
-//////////////////////////////////////////////////////////////////////////////
-// value
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename THost, typename TFunctor, typename TPos>
-inline typename Reference<ModifiedString<THost, ModView<TFunctor> > >::Type 
-value(ModifiedString<THost, ModView<TFunctor> > & me, TPos pos)
+inline typename GetValue<ModifiedIterator<THost, ModView<TFunctor> > const>::Type
+value(ModifiedIterator<THost, ModView<TFunctor> > const & me)
 {
-    SEQAN_CHECKPOINT;
-    me.tmp_value = cargo(me).func(getValue(host(me), pos));
-    return me.tmp_value;
+    return getValue(me);
 }
 
-template <typename THost, typename TFunctor, typename TPos>
-inline typename Reference<ModifiedString<THost, ModView<TFunctor> > const>::Type 
-value(ModifiedString<THost, ModView<TFunctor> > const & me, TPos pos)
-{
-    SEQAN_CHECKPOINT;
-    me.tmp_value = cargo(me).func(getValue(host(me), pos));
-    return me.tmp_value;
-}
-
-
-//////////////////////////////////////////////////////////////////////////////
-// getValue
-//////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
+// Function getValue()                                       [ModifiedString]
+// --------------------------------------------------------------------------
 
 template <typename THost, typename TFunctor, typename TPos>
-inline typename GetValue<ModifiedString<THost, ModView<TFunctor> > >::Type 
+inline typename GetValue<ModifiedString<THost, ModView<TFunctor> > >::Type
 getValue(ModifiedString<THost, ModView<TFunctor> > & me, TPos pos)
 {
-    SEQAN_CHECKPOINT;
     return cargo(me).func(getValue(host(me), pos));
 }
 
 template <typename THost, typename TFunctor, typename TPos>
-inline typename GetValue<ModifiedString<THost, ModView<TFunctor> > const>::Type 
+inline typename GetValue<ModifiedString<THost, ModView<TFunctor> > const>::Type
 getValue(ModifiedString<THost, ModView<TFunctor> > const & me, TPos pos)
 {
-    SEQAN_CHECKPOINT;
     return cargo(me).func(getValue(host(me), pos));
 }
 
+// --------------------------------------------------------------------------
+// Function value()                                          [ModifiedString]
+// --------------------------------------------------------------------------
 
-//////////////////////////////////////////////////////////////////////////////
-// assignModViewFunctor
-//////////////////////////////////////////////////////////////////////////////
+template <typename THost, typename TFunctor, typename TPos>
+inline typename GetValue<ModifiedString<THost, ModView<TFunctor> > >::Type
+value(ModifiedString<THost, ModView<TFunctor> > & me, TPos pos)
+{
+    return getValue(me, pos);
+}
+
+template <typename THost, typename TFunctor, typename TPos>
+inline typename GetValue<ModifiedString<THost, ModView<TFunctor> > const>::Type
+value(ModifiedString<THost, ModView<TFunctor> > const & me, TPos pos)
+{
+    return getValue(me, pos);
+}
+
+// --------------------------------------------------------------------------
+// Function assignModViewFunctor()
+// --------------------------------------------------------------------------
 
 template <typename THost, typename TFunctor>
 inline void
-assignModViewFunctor(ModifiedString<THost, ModView<TFunctor> > & me, TFunctor const & _func)
+assignModViewFunctor(ModifiedString<THost, ModView<TFunctor> > & me, TFunctor const & functor)
 {
-    SEQAN_CHECKPOINT;
-    cargo(me).func = _func;
+    cargo(me).func = functor;
 }
 
-
-//////////////////////////////////////////////////////////////////////////////
-
-
-//////////////////////////////////////////////////////////////////////////////
-// convert
-//////////////////////////////////////////////////////////////////////////////
+// --------------------------------------------------------------------------
+// Function convert()
+// --------------------------------------------------------------------------
 
 template < typename TSequence, typename TFunctor >
 inline void
 convert(TSequence & sequence, TFunctor const &F)
 {
-	SEQAN_CHECKPOINT;
 #if defined (_OPENMP) && defined (SEQAN_PARALLEL)
-	// OpenMP does not support for loop with iterators. Therefore use index variables.
-	typedef typename Position<TSequence>::Type	TPos;
-	typedef typename MakeSigned_<TPos>::Type	TSignedPos;
+    // OpenMP does not support for loop with iterators. Therefore use index variables.
+    typedef typename Position<TSequence>::Type    TPos;
+    typedef typename MakeSigned_<TPos>::Type    TSignedPos;
 
-	#pragma omp parallel for if(length(sequence) > 1000000)
-	for(TSignedPos p = 0; p < (TSignedPos)length(sequence); ++p)
-		sequence[p] = F(sequence[p]);
-	
+    #pragma omp parallel for if(length(sequence) > 1000000)
+    for(TSignedPos p = 0; p < (TSignedPos)length(sequence); ++p)
+        sequence[p] = F(sequence[p]);
+
 #else
-	typedef typename Iterator<TSequence, Standard>::Type	TIter;
+    typedef typename Iterator<TSequence, Standard>::Type    TIter;
 
-	TIter it = begin(sequence, Standard());
-	TIter itEnd = end(sequence, Standard());
-	for(; it != itEnd; ++it)
-		*it = F(*it);
+    TIter it = begin(sequence, Standard());
+    TIter itEnd = end(sequence, Standard());
+    for(; it != itEnd; ++it)
+        *it = F(*it);
 #endif
 }
 
@@ -395,23 +427,22 @@ template < typename TSequence, typename TFunctor >
 inline void
 convert(TSequence const & sequence, TFunctor const &F)
 {
-	SEQAN_CHECKPOINT;
 #if defined (_OPENMP) && defined (SEQAN_PARALLEL)
-	// OpenMP does not support for loop with iterators. Therefore use index variables.
-	typedef typename Position<TSequence>::Type	TPos;
-	typedef typename MakeSigned_<TPos>::Type	TSignedPos;
+    // OpenMP does not support for loop with iterators. Therefore use index variables.
+    typedef typename Position<TSequence>::Type    TPos;
+    typedef typename MakeSigned_<TPos>::Type    TSignedPos;
 
-	#pragma omp parallel for if(length(sequence) > 1000000)
-	for(TSignedPos p = 0; p < (TSignedPos)length(sequence); ++p)
-		sequence[p] = F(sequence[p]);
-	
+    #pragma omp parallel for if(length(sequence) > 1000000)
+    for(TSignedPos p = 0; p < (TSignedPos)length(sequence); ++p)
+        sequence[p] = F(sequence[p]);
+
 #else
-	typedef typename Iterator<TSequence, Standard>::Type	TIter;
+    typedef typename Iterator<TSequence const, Standard>::Type    TIter;
 
-	TIter it = begin(sequence, Standard());
-	TIter itEnd = end(sequence, Standard());
-	for(; it != itEnd; ++it)
-		*it = F(*it);
+    TIter it = begin(sequence, Standard());
+    TIter itEnd = end(sequence, Standard());
+    for(; it != itEnd; ++it)
+        *it = F(*it);
 #endif
 }
 

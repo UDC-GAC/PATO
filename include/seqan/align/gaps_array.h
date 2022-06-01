@@ -1,7 +1,7 @@
 // ==========================================================================
 //                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
-// Copyright (c) 2006-2010, Knut Reinert, FU Berlin
+// Copyright (c) 2006-2018, Knut Reinert, FU Berlin
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -29,1180 +29,889 @@
 // DAMAGE.
 //
 // ==========================================================================
-//  Author: Andreas Gogol-Doering <andreas.doering@mdc-berlin.de>
+// Author: Andreas Gogol-Doering <andreas.doering@mdc-berlin.de>
+// Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
 // ==========================================================================
 
-#ifndef SEQAN_HEADER_GAPS_ARRAY_H
-#define SEQAN_HEADER_GAPS_ARRAY_H
+// SEQAN_NO_GENERATED_FORWARDS
 
-namespace SEQAN_NAMESPACE_MAIN
-{
+// TODO(holtgrew): Currently, operations are a function of the whole gap count, could be of clipped region only.
+// TODO(holtgrew): Problem with the gap value, getValue(), value().
 
-//////////////////////////////////////////////////////////////////////////////
-// Tag
+#ifndef SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_ARRAY_H_
+#define SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_ARRAY_H_
 
-struct ArrayGaps;
+namespace seqan {
 
+// ============================================================================
+// Forwards
+// ============================================================================
 
-//////////////////////////////////////////////////////////////////////////////
-// Gaps - ArrayGaps Spec
-//////////////////////////////////////////////////////////////////////////////
+// Internally used tag for creating iterators at the begin of containers.
+struct Begin__;
+typedef Tag<Begin__> Begin_;
 
-/**
-.Spec.ArrayGaps:
-..cat:Alignments
-..general:Class.Gaps
-..summary:Stores gaps sizes in an array.
-..signature:Gaps<TSource, ArrayGaps >
-..param.TSource:Type of the ungapped sequence.
-...metafunction:Metafunction.Source
-..include:seqan/align.h
-*/
-template <typename TSource>
-class Gaps<TSource, ArrayGaps>
-{
-public:
-	typedef typename Size<Gaps>::Type TSize;
-	typedef String<TSize> TArr;
-	typedef typename Position<TSource>::Type TSourcePosition;
-	typedef typename Position<Gaps>::Type TViewPosition;
+// Internally used tag for creating iterators at the end of containers.
+struct End__;
+typedef Tag<End__> End_;
 
-public:
-	String<TSize> data_arr; //a list of gap and non-gap region lengths
-	TViewPosition data_end_position;
-	TViewPosition data_unclipped_end_position;  // TODO(holtgrew): Wrong name? Simply number of trailing gaps?
+// Internally used tag for creating iterators inside of containers.
+struct Position__;
+typedef Tag<Position__> Position_;
 
-	Holder<TSource> data_source;
-	TSourcePosition clipped_source_begin;
-	TSourcePosition clipped_source_end;
+struct ArrayGaps_;
+typedef Tag<ArrayGaps_> ArrayGaps;
 
-public:
-	Gaps():
-		data_unclipped_end_position(0),
-		clipped_source_begin(0),
-		clipped_source_end(0)
-	{
-SEQAN_CHECKPOINT
-	}
-	Gaps(TSize _size):
-		data_unclipped_end_position(0),
-		clipped_source_begin(0),
-		clipped_source_end(0)
-	{
-		_initToResize(*this, _size);
-	}
-	Gaps(TSource & source_):
-		data_unclipped_end_position(0),
-		data_source(source_),
-		clipped_source_begin(beginPosition(source_)),
-		clipped_source_end(endPosition(source_))
-	{
-SEQAN_CHECKPOINT
-		_initToResize(*this, length(source_));
-	}
+template <typename TSequence> class Gaps<TSequence, ArrayGaps>;
 
-	template <typename TSource2>
-	Gaps(TSource2 const & source_):
-		data_unclipped_end_position(0),
-		clipped_source_begin(0),
-		clipped_source_end(length(source_))
-		//clipped_source_begin(beginPosition(source_)),
-		//clipped_source_end(endPosition(source_))
-	{
-SEQAN_CHECKPOINT
-		data_source = source_;
-		_initToResize(*this, length(source_));
-	}
+template <typename TSequence>
+inline void _reinitArrayGaps(Gaps<TSequence, ArrayGaps> & gaps);
 
-	Gaps(Gaps const & other_):
-		data_arr(other_.data_arr),
-		data_end_position(other_.data_end_position),
-		data_unclipped_end_position(other_.data_unclipped_end_position),
-//		data_source(value(other_.data_source)), //variant: setValue => Align benutzen gemeinsame Sources
-		data_source(other_.data_source),		//variant: assignValue => Align kopieren Sources
-		clipped_source_begin(other_.clipped_source_begin),
-		clipped_source_end(other_.clipped_source_end)
-	{
-SEQAN_CHECKPOINT
-	}
-	Gaps & operator = (Gaps const & other_)
-	{
-SEQAN_CHECKPOINT
-		data_arr = other_.data_arr;
-		data_end_position = other_.data_end_position;
-		data_unclipped_end_position = other_.data_unclipped_end_position,
-		setValue(data_source, source(other_));
-		clipped_source_begin = other_.clipped_source_begin;
-		clipped_source_end = other_.clipped_source_end; 
-		return *this;
-	}
+// ============================================================================
+// Tags, Classes, Enums
+// ============================================================================
 
-	~Gaps()
-	{
-SEQAN_CHECKPOINT
-	}
+struct ArrayGaps_;
+typedef Tag<ArrayGaps_> ArrayGaps;
 
-	inline typename Reference<Gaps>::Type
-	operator[](TViewPosition view_pos)
-	{
-SEQAN_CHECKPOINT
-		return value(*this, view_pos);
-	}
-	inline typename Reference<Gaps const>::Type
-	operator[](TViewPosition view_pos) const
-	{
-SEQAN_CHECKPOINT
-		return value(*this, view_pos);
-	}
-//____________________________________________________________________________
-};
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline String<typename Size<Gaps<TSource, ArrayGaps> >::Type> &
-_dataArr(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_arr;
-}
-template <typename TSource>
-inline String<typename Size<Gaps<TSource, ArrayGaps> >::Type> const &
-_dataArr(Gaps<TSource, ArrayGaps> const & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_arr;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline Holder<TSource> &
-_dataSource(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_source;
-}
-template <typename TSource>
-inline Holder<TSource> const &
-_dataSource(Gaps<TSource, ArrayGaps> const & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_source;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline typename Position<Gaps<TSource, ArrayGaps> >::Type
-endPosition(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_end_position;
-}
-template <typename TSource>
-inline typename Position<Gaps<TSource, ArrayGaps> >::Type
-endPosition(Gaps<TSource, ArrayGaps> const & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_end_position;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline typename Position<Gaps<TSource, ArrayGaps> >::Type
-_getTrailingGaps(Gaps<TSource, ArrayGaps> const & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_unclipped_end_position;
-}
-
-template <typename TSource, typename TSize>
-inline void
-_setTrailingGaps(Gaps<TSource, ArrayGaps> & me, TSize const & size)
-{
-	TSize zero = 0;
-	if (size >= zero)
-	{
-		me.data_unclipped_end_position = size;
-	}
-	else
-	{
-		me.data_unclipped_end_position = 0;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////
-/**
- * Returns the length of the gaps sequence including the trailing gaps
+/*!
+ * @class ArrayGaps
+ * @headerfile <seqan/align.h>
+ * @extends Gaps
+ * @brief Stores length of gap- and non-gap runs in an array.
+ *
+ * @signature template <typename TSequence>
+ *            class Gaps<TSequence, ArrayGaps>
+ *
+ * @tparam TSequence The type of the underling sequence.
  */
-template <typename TSource>
-inline typename Position<Gaps<TSource, ArrayGaps> >::Type
-_unclippedLength(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	return me.data_end_position + me.data_unclipped_end_position;
-}
 
-//////////////////////////////////////////////////////////////////////////////
+/*!
+ * @fn ArrayGaps::Gaps
+ * @headerfile <seqan/align.h>
+ * @brief Constructor.
+ *
+ * @signature Gaps::Gaps([other]);
+ * @signature Gaps::Gaps(seq);
+ *
+ * @param[in] other Other Gaps object to copy from.
+ * @param[in] seq   Sequence concept to construct the gaps for.
+ */
 
-template <typename TSource, typename TPosition>
-inline void 
-_setEndPosition(Gaps<TSource, ArrayGaps> & me, TPosition _pos)
-{
-SEQAN_CHECKPOINT
-	me.data_end_position = _pos;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.clippedBeginPosition:
-..summary:Begin position of the source segment.
-..cat:Alignments
-..signature:clippedBeginPosition(object)
-..param.object:An object that has a source
-...type:Class.Gaps
-..returns:The position of the first item in @Function.source.source(object)@ that is used in object.
-..see:Function.begin
-..see:Function.source
-..see:Function.clippedEndPosition
-..include:seqan/align.h
-*/
-template <typename TSource>
-inline typename Position<TSource>::Type
-clippedBeginPosition(Gaps<TSource, ArrayGaps> const & me)
-{
-SEQAN_CHECKPOINT
-	return me.clipped_source_begin;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource, typename TSourcePosition>
-inline void
-_setClippedBeginPosition(Gaps<TSource, ArrayGaps> & me, TSourcePosition _pos)
-{
-SEQAN_CHECKPOINT
-	me.clipped_source_begin = _pos;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.clippedEndPosition:
-..summary:Position of the end of the source segment.
-..cat:Alignments
-..signature:clippedEndPosition(object)
-..param.object:An object that has a source
-...type:Class.Gaps
-..returns:The position behind the last element of the source segment.
-..see:Function.end
-..see:Function.sourceEnd
-..see:Function.clippedBeginPosition
-..include:seqan/align.h
-*/
-template <typename TSource>
-inline typename Position<TSource>::Type
-clippedEndPosition(Gaps<TSource, ArrayGaps> const & me)
-{
-SEQAN_CHECKPOINT
-	return me.clipped_source_end;
-}
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource, typename TSourcePosition>
-inline void
-_setClippedEndPosition(Gaps<TSource, ArrayGaps> & me, TSourcePosition _pos)
-{
-SEQAN_CHECKPOINT
-	me.clipped_source_end = _pos;
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource, typename TSize>
-inline void
-_initToResize(Gaps<TSource, ArrayGaps> & me,
-				TSize _size)
-{
-SEQAN_CHECKPOINT
-	resize(_dataArr(me), 2);
-	_dataArr(me)[0] = 0;
-	_dataArr(me)[1] = _size;
-	_setEndPosition(me, _size);
-	_setTrailingGaps(me, 0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline void
-clearGaps(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	_initToResize(me, clippedEndPosition(me) - clippedBeginPosition(me));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline void
-clear(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	_initToResize(me, 0);
-	_setClippedBeginPosition(me, 0);
-	_setClippedEndPosition(me, 0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline void
-clearClipping(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	_setEndPosition(me, length(source(me)));
-	_setTrailingGaps(me, 0);
-	_setClippedBeginPosition(me, 0);
-	_setClippedEndPosition(me, length(source(me)));
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Function.toViewPosition:
-..summary:Transforms source to view position.
-..cat:Alignments
-..signature:toViewPosition(gaps, pos)
-..param.gap:A Gaps object, e.g. a row in the alignment.
-...type:Class.Gaps
-..param.pos:Position in the original sequence to get the view position for.
-..returns:The position in the view/gaps position.
-..remarks:If $gap$ is a clipped alignment row, gaps in the clipped part will influence the result. The position $pos$ is counted from the unclipped begin position and must be greater or equal the clipped begin position of $gap$.
-..see:Function.toSourcePosition
-..include:seqan/align.h
-*/
-template <typename TSource>
-inline typename Position< Gaps<TSource, ArrayGaps> >::Type
-toViewPosition(Gaps<TSource, ArrayGaps> const & gaps,
-			   typename Position<TSource>::Type pos)
-{
-SEQAN_CHECKPOINT
-
-	SEQAN_ASSERT_GEQ(pos, clippedBeginPosition(gaps));
-	pos -= clippedBeginPosition(gaps);
-
-	typedef Gaps<TSource, ArrayGaps> const TGaps;
-	typedef typename Size<TGaps>::Type TSize;
-	typedef String<TSize> const TArr;
-
-	typename Iterator<TArr, Standard>::Type arr_begin = begin(_dataArr(gaps));
-	typename Iterator<TArr, Standard>::Type arr_end = end(_dataArr(gaps));
-	typename Position<TGaps>::Type view_pos = pos;
-	typename Position<TSource>::Type source_pos = pos;
-	
-	while (true)
-	{
-		if (arr_begin == arr_end) return view_pos;
-		TSize step = *arr_begin;
-		view_pos += step;
-	    
-		++arr_begin;
-	    
-		step = *arr_begin;
-		if (source_pos < step) return view_pos;
-		source_pos -= step;
-	    
-		++arr_begin;
-	}
-}
-
-//____________________________________________________________________________
-
-/**
-.Function.toSourcePosition:
-..summary:Transforms view to source position, if the view position is a gap, the original position of the next non-gap entry is returned.
-..cat:Alignments
-..signature:toSourcePosition(gaps, pos)
-..param.gap:A Gaps object, e.g. a row in the alignment.
-...type:Class.Gaps
-..param.pos:Position in the view sequence (this includes gaps) to get the original position for.
-..returns:The position in the source sequence.
-..remarks:If $gap$ is a clipped alignment row, gaps in the clipped part will influence the result. The position $pos$ is counted from the unclipped begin position.
-..see:Function.toViewPosition
-..include:seqan/align.h
-*/
-template <typename TSource>
-inline typename Position<TSource>::Type
-toSourcePosition(Gaps<TSource, ArrayGaps> const & gaps,
-				 typename Position< Gaps<TSource, ArrayGaps> >::Type pos)
-{
-SEQAN_CHECKPOINT
-	typedef Gaps<TSource, ArrayGaps> const TGaps;
-	typedef typename Size<TGaps>::Type TSize;
-	typedef String<TSize> const TArr;
-
-	typename Iterator<TArr, Standard>::Type arr_begin = begin(_dataArr(gaps));
-	typename Iterator<TArr, Standard>::Type arr_end = end(_dataArr(gaps));
-	typename Position<TSource>::Type source_pos = clippedBeginPosition(gaps);
-	typename Position<TGaps>::Type view_pos = pos;
-	
-	while (true)
-	{
-		if (arr_begin == arr_end) return source_pos;
-
-		TSize step = *arr_begin;
-		if (view_pos <= step) return source_pos;
-		view_pos -= step;
-	    
-		++arr_begin;
-		step = *arr_begin;
-		if (view_pos <= step ) return source_pos + view_pos;
-		source_pos += step;
-		view_pos -= step;
-	    
-		++arr_begin;
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////
-// returns an iterator to view-Position 
-
-template <typename TGaps, typename TPosition>
-inline typename Iterator<TGaps, Standard>::Type
-_iteratorGapsArray(TGaps & gaps, 
-					 TPosition view_position)
-{
-	typedef typename Size<TGaps>::Type TSize;
-	typedef typename TGaps::TArr const TArr;
-	typedef typename Source<TGaps>::Type TSource;
-	typedef typename Iterator<TArr, Standard>::Type TArrIterator;
-	typedef typename Value<TArrIterator>::Type TArrIteratorType;
-
- 	TArrIterator arr_begin = begin(_dataArr(gaps), Standard());
-	TArrIterator arr_end = end(_dataArr(gaps), Standard());
-	typename Position<TGaps>::Type block = 0;
-
-	TArrIteratorType view_pos = view_position;
-
-	if (emptySource(gaps))
-	{
-		for (; arr_begin != arr_end; ++arr_begin)
-		{
-			if (view_pos < *arr_begin) break;
-			++block;
-			view_pos -= *arr_begin;
-		}
-		return typename Iterator<TGaps, Standard>::Type(
-			gaps, 
-			block, 
-			view_pos);
-	}
-	else
-	{
-		typename Position<TSource>::Type source_pos = clippedBeginPosition(gaps);
-
-		while (true)
-		{
-			if ((arr_begin == arr_end) || (view_pos < *arr_begin))
-			{
-				break;
-			}
-			++block;
-			view_pos -= *arr_begin;
-			++arr_begin;
-
-			if (view_pos < *arr_begin)
-			{
-				source_pos += view_pos;
-				break;
-			}
-			++block;
-			view_pos -= *arr_begin;
-			source_pos += *arr_begin;
-			++arr_begin;
-		}
-
-		return typename Iterator<TGaps, Standard>::Type(
-			gaps,
-            iter(source(gaps), source_pos),
-			block, 
-			view_pos);
-	}
-
-}
-
-template <typename TSource, typename TPosition, typename TTag>
-inline typename Iterator<Gaps<TSource, ArrayGaps>, Tag<TTag> const>::Type
-iter(Gaps<TSource, ArrayGaps> & gaps,
-	 TPosition view_pos,
-	 Tag<TTag> const)
-{
-SEQAN_CHECKPOINT
-	return _iteratorGapsArray(gaps, view_pos);
-}
-template <typename TSource, typename TPosition, typename TTag>
-inline typename Iterator<Gaps<TSource, ArrayGaps> const, Tag<TTag> const>::Type
-iter(Gaps<TSource, ArrayGaps> const & gaps,
-	 TPosition view_pos,
-	 Tag<TTag> const)
-{
-SEQAN_CHECKPOINT
-	return _iteratorGapsArray<Gaps<TSource, ArrayGaps> const>(gaps, view_pos);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline typename Position< Gaps<TSource, ArrayGaps> >::Type
-beginPosition(Gaps<TSource, ArrayGaps> & gaps)
-{
-SEQAN_CHECKPOINT
-	return value(_dataArr(gaps), 0);
-}
-template <typename TSource>
-inline typename Position< Gaps<TSource, ArrayGaps> const>::Type
-beginPosition(Gaps<TSource, ArrayGaps> const & gaps)
-{
-SEQAN_CHECKPOINT
-	return value(_dataArr(gaps), 0);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-
-template <typename TSource, typename TPosition>
-inline void
-setBeginPosition(Gaps<TSource, ArrayGaps> & me,
-				 TPosition view_position)
-{
-SEQAN_CHECKPOINT
-	TPosition old_pos = beginPosition(me);
-	if (length(_dataArr(me)) == 0)
-	{
-		_initToResize(me, length(source(me)));
-	}
-	_dataArr(me)[0] = view_position;
-	_setEndPosition(me, endPosition(me) + view_position - old_pos);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource, typename TPosition>
-inline void
-setClippedBeginPosition(Gaps<TSource, ArrayGaps> & me,
-					   TPosition source_position)
-{
-	SEQAN_ASSERT_GT(length(_dataArr(me)), 0u);
-
-	typedef Gaps<TSource, ArrayGaps> TGaps;
-	typedef typename Position<TGaps>::Type TViewPosition;
-	typedef typename TGaps::TArr TArr;
-
-	TPosition old_clipped_begin_pos = clippedBeginPosition(me);
-	if (old_clipped_begin_pos == source_position) return;
-	else if (source_position < old_clipped_begin_pos)
-	{
-SEQAN_CHECKPOINT
-		TViewPosition delta = old_clipped_begin_pos - source_position;
-		TViewPosition view_begin_pos = beginPosition(me);
-		if (view_begin_pos <= delta)
-		{
-			setBeginPosition(me, 0);
-		}
-		else
-		{
-			setBeginPosition(me, view_begin_pos - delta);
-		}
-		_setEndPosition(me, endPosition(me) + delta);
-		_dataArr(me)[1] += delta;
-		_setClippedBeginPosition(me, source_position);
-	}
-	else //(source_position > old_clipped_begin_pos)
-	{
-SEQAN_CHECKPOINT
-		TViewPosition view_pos = toViewPosition(me, source_position);
-		TViewPosition source_pos_left = source_position - old_clipped_begin_pos;
-		TViewPosition gaps_count = 0;
-
-		typename Iterator<TArr, Standard>::Type it_arr_begin = begin(_dataArr(me));
-		typename Iterator<TArr, Standard>::Type it_arr_end = end(_dataArr(me));
-		typename Iterator<TArr, Standard>::Type it_arr = it_arr_begin;
-
-		while (it_arr != it_arr_end)
-		{
-			gaps_count += *it_arr;
-			++it_arr;
-			if (*it_arr > source_pos_left) 
-			{
-				*it_arr_begin = view_pos;
-				*it_arr -= source_pos_left;
-				if (it_arr - it_arr_begin > 1)
-				{
-					replace(_dataArr(me), 1, it_arr - it_arr_begin, "");
-				}
-				_setClippedBeginPosition(me, source_position);
-				return;
-			}
-			gaps_count += *it_arr;
-			source_pos_left -= *it_arr;
-			++it_arr;
-		}
-		//alignment is empty
-		clear(me);
-	}
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource, typename TPosition>
-inline void
-setClippedEndPosition(Gaps<TSource, ArrayGaps> & me,
-					 TPosition source_position)
-{
-	typedef Gaps<TSource, ArrayGaps> TGaps;
-	typedef typename Position<TGaps>::Type TViewPosition;
-	typedef typename TGaps::TArr TArr;
-
-	TArr arr = _dataArr(me);
-	SEQAN_ASSERT_GT(length(arr), 0u);
-
-	TPosition old_end_begin_pos = clippedEndPosition(me);
-	if (old_end_begin_pos == source_position) return;
-	else if (source_position < old_end_begin_pos)
-	{
-SEQAN_CHECKPOINT
-		typename Iterator<TArr, Standard>::Type it_arr_begin = begin(_dataArr(me));
-		typename Iterator<TArr, Standard>::Type it_arr_end = end(_dataArr(me));
-		typename Iterator<TArr, Standard>::Type it_arr = it_arr_begin;
-		TViewPosition end_pos = 0;
-		TViewPosition chars_to_scan = source_position - clippedBeginPosition(me);
-
-		while (it_arr != it_arr_end)
-		{
-			end_pos += *it_arr;
-			++it_arr;
-			if (*it_arr >= chars_to_scan)
-			{
-				resize(_dataArr(me), it_arr - it_arr_begin + 1);
-				*it_arr = chars_to_scan;
-				_setEndPosition(me, end_pos + chars_to_scan);
-				break;
-			}
-			end_pos += *it_arr;
-			chars_to_scan -= *it_arr;
-			++it_arr;
-		}
-	}
-	else //(source_position > old_end_begin_pos)
-	{
-SEQAN_CHECKPOINT
-		*(end(_dataArr(me)) - 1) += (source_position - old_end_begin_pos);
-		_setEndPosition(me, endPosition(me) + source_position - old_end_begin_pos);
-	}
-	_setClippedEndPosition(me, source_position);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-
-template <typename TSource>
-inline typename Size<TSource>::Type
-sourceLength(Gaps<TSource, ArrayGaps> & me)
-{
-SEQAN_CHECKPOINT
-	return clippedEndPosition(me) - clippedBeginPosition(me);
-}
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-// Gaps Iterator
-//////////////////////////////////////////////////////////////////////////////
-
-
-template <typename TGaps>
-class Iter<TGaps, GapsIterator<ArrayGaps> >
+template <typename TSequence>
+class Gaps<TSequence, ArrayGaps>
 {
 public:
-	typedef typename Size<TGaps>::Type TGapsSize;
-	typedef String<TGapsSize> TArr;
-	typedef typename Position<TArr>::Type TArrPosition;
-	typedef typename Source<Iter>::Type TSourceIterator;
+    // -----------------------------------------------------------------------
+    // Internal Typedefs
+    // -----------------------------------------------------------------------
 
-	TGaps * data_container;								//the gaps object
-	mutable TSourceIterator data_source;			
-	mutable TArrPosition data_block;					//block in array of container
-	mutable TGapsSize data_sub;							//position block
+    typedef typename Size<Gaps>::Type          TSize_;
+    typedef typename Size<TSequence>::Type     TSequenceSize_;
+    typedef typename Position<Gaps>::Type      TPosition_;
+    typedef typename Position<TSequence>::Type TSequencePosition_;
+    typedef typename Value<Gaps>::Type         TValue_;
 
-public:
-	Iter() 
-	{
-SEQAN_CHECKPOINT
-	}
-	Iter(Iter const & other_):
-		data_container(other_.data_container),
-		data_source(other_.data_source),
-		data_block(other_.data_block),
-		data_sub(other_.data_sub)
-	{
-SEQAN_CHECKPOINT
-	}
-	Iter(TGaps & container_,
-			TSourceIterator source_iterator,
-			TArrPosition block_ = 0,
-			TGapsSize sub_ = 0):
-		data_container(&container_),
-		data_source(source_iterator),
-		data_block(block_),
-		data_sub(sub_)
-	{
-SEQAN_CHECKPOINT
-	}
+    typedef String<TSequenceSize_>             TArray_;
+    typedef typename Position<TArray_>::Type   TArrayPos_;
 
-	Iter(TGaps & container_,
-			TArrPosition block_,
-			TGapsSize sub_ = 0):
-		data_container(&container_),
-		data_block(block_),
-		data_sub(sub_)
-	{
-SEQAN_CHECKPOINT
-	}
+    // -----------------------------------------------------------------------
+    // Member Variables
+    // -----------------------------------------------------------------------
 
-	~Iter()
-	{
-SEQAN_CHECKPOINT
-	}
+    // Holder of the underlying sequence.
+    Holder<TSequence> _source;
 
-	Iter const & operator = (Iter const & other_)
-	{
-SEQAN_CHECKPOINT
-		data_container = other_.data_container;
-		data_block = other_.data_block;
-		data_sub = other_.data_sub;
-		data_source = other_.data_source;
-		return *this;
-	}
+    // The array with the alternating gap/source char counts.
+    TArray_ _array;
+
+    // Begin and end position in the source.
+    TSequencePosition_ _sourceBeginPos, _sourceEndPos;
+    // Begin and end position in the view.
+    TPosition_ _clippingBeginPos, _clippingEndPos;
+    // TODO(holtgrew): The following is a possible optimization.
+    // // Index of clipping begin and end in the _array seq/gap char count array.
+    // // This identifies a slice of the view.
+    // TArrayPos_ _clippingBeginIdx, _clippingEndIdx;
+    // // Offset within the slice.
+    // TSequenceSize_ _clippingBeginOffset, _clippingEndOffset;
+
+    // -----------------------------------------------------------------------
+    // Constructors
+    // -----------------------------------------------------------------------
+
+    Gaps() : _sourceBeginPos(0), _sourceEndPos(0), _clippingBeginPos(0), _clippingEndPos(0)//,
+             // _clippingBeginIdx(0), _clippingEndIdx(0), _clippingBeginOffset(0), _clippingEndOffset(0)
+    {}
+
+    explicit
+    Gaps(TSequence & seq) :
+            _source(seq), _sourceBeginPos(0), _sourceEndPos(length(seq)),
+            _clippingBeginPos(0), _clippingEndPos(length(seq))//,
+            // _clippingBeginIdx(0), _clippingEndIdx(0), _clippingBeginOffset(0),
+            // _clippingEndOffset(0)
+    {
+        // Initialize array gaps object for ungapped sequence.
+        _reinitArrayGaps(*this);
+    }
+
+    Gaps(Gaps const & other) :
+        _source(other._source), _array(other._array), _sourceBeginPos(other._sourceBeginPos),
+        _sourceEndPos(other._sourceEndPos), _clippingBeginPos(other._clippingBeginPos),
+        _clippingEndPos(other._clippingEndPos)
+    {}
+
+    // -----------------------------------------------------------------------
+    // Array Subscript Operator
+    // -----------------------------------------------------------------------
+
+    inline Gaps &
+    operator=(Gaps const & other)
+    {
+        setValue(_source, source(other));
+        _array = other._array;
+        _sourceBeginPos = other._sourceBeginPos;
+        _sourceEndPos = other._sourceEndPos;
+        _clippingBeginPos = other._clippingBeginPos;
+        _clippingEndPos = other._clippingEndPos;
+        return *this;
+    }
+
+    // -----------------------------------------------------------------------
+    // Array Subscript Operator
+    // -----------------------------------------------------------------------
+
+    inline typename Reference<Gaps>::Type
+    operator[](TPosition_ const clippedViewPos)
+    {
+        return value(*this, clippedViewPos);
+    }
+
+    inline typename Reference<Gaps const>::Type
+    operator[](TPosition_ const clippedViewPos) const
+    {
+        return value(*this, clippedViewPos);
+    }
 };
 
-//////////////////////////////////////////////////////////////////////////////
+// ----------------------------------------------------------------------------
+// Function swap()
+// ----------------------------------------------------------------------------
 
-template <typename TGaps>
-inline typename GetValue< Iter<TGaps, GapsIterator<ArrayGaps> > >::Type
-getValue(Iter<TGaps, GapsIterator<ArrayGaps> > & me)
+template <typename TSequence>
+void swap(Gaps<TSequence, ArrayGaps> & lhs, Gaps<TSequence, ArrayGaps> & rhs)
 {
-SEQAN_CHECKPOINT
-	typedef typename Value<Iter<TGaps, GapsIterator<ArrayGaps> > >::Type TValue;
-	if (isGap(me)) return gapValue<TValue>();
-	else return getValue(source(me));
-}
-template <typename TGaps>
-inline typename GetValue< Iter<TGaps, GapsIterator<ArrayGaps> > const>::Type
-getValue(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
-{
-SEQAN_CHECKPOINT
-	typedef typename Value<Iter<TGaps, GapsIterator<ArrayGaps> > const>::Type TValue;
-	if (isGap(me)) return gapValue<TValue>();
-	else return getValue(source(me));
+    swap(lhs._source, rhs._source);
+    swap(lhs._array, rhs._array);
+
+    std::swap(lhs._sourceBeginPos, rhs._sourceBeginPos);
+    std::swap(lhs._sourceEndPos, rhs._sourceEndPos);
+    std::swap(lhs._clippingBeginPos, rhs._clippingBeginPos);
+    std::swap(lhs._clippingEndPos, rhs._clippingEndPos);
 }
 
-//____________________________________________________________________________
+// ============================================================================
+// Metafunctions
+// ============================================================================
 
-template <typename TGaps>
-inline bool 
-isGap(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
+
+
+// ============================================================================
+// Functions
+// ============================================================================
+
+// ----------------------------------------------------------------------------
+// Function detach()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Remove? Only used by module blast.
+
+template <typename TSequence>
+void detach(Gaps<TSequence, ArrayGaps> & gaps)
 {
-SEQAN_CHECKPOINT
-	return !(me.data_block & 1);
+    detach(gaps._source);
 }
 
-template <typename TGaps>
-inline bool 
-isClipped(Iter<TGaps, GapsIterator<ArrayGaps> > const &)
+// ----------------------------------------------------------------------------
+// Function _setLength()
+// ----------------------------------------------------------------------------
+
+// Set the length, only use if TSequence is Nothing.
+
+template <typename TSequence, typename TSize>
+inline void _setLength(Gaps<TSequence, ArrayGaps> & gaps, TSize newLen)
 {
-	return false;
+    // Reset array.
+    resize(gaps._array, 3);
+    gaps._array[0] = 0;
+    gaps._array[1] = newLen;
+    gaps._array[2] = 0;
+    // Reset clipping information.
+    gaps._clippingBeginPos = 0;
+    gaps._clippingEndPos = newLen;
+    gaps._sourceBeginPos = 0;
+    gaps._sourceEndPos = gaps._clippingEndPos;
+    // gaps._clippingBeginIdx = 1;
+    // gaps._clippingBeginOffset = 0;
+    // gaps._clippingEndIdx = 1;
+    // gaps._clippingEndOffset = value(gaps._source)[1];
 }
 
+// ----------------------------------------------------------------------------
+// Helper Function _reinitArrayGaps()
+// ----------------------------------------------------------------------------
 
-//____________________________________________________________________________
+// Reset the array gaps DS such that represents the ungapped sequence.
 
-template <typename TGaps>
-inline typename Size<TGaps>::Type
-countGaps(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
+template <typename TSequence>
+inline void _reinitArrayGaps(Gaps<TSequence, ArrayGaps> & gaps)
 {
-	if (isGap(me))
-	{
-		typedef typename Size<TGaps>::Type TGapsSize;
-		typedef String<TGapsSize> const TArr;
-
-		TArr & arr = _dataArr(container(me));
-		typename Position<TArr>::Type pos = me.data_block;
-		typename Position<TArr>::Type block_pos = me.data_sub;
-
-		if (length(arr) == pos)
-		{//counting trailing gaps
-			if (block_pos <= _getTrailingGaps(container(me)))
-			{//is in range of trailing gaps
-SEQAN_CHECKPOINT
-				return _getTrailingGaps(container(me)) - block_pos;
-			}
-			else
-			{//no trailing gaps here
-SEQAN_CHECKPOINT
-				return 0;
-			}
-		}
-		else
-		{
-SEQAN_CHECKPOINT
-			return arr[pos] - me.data_sub;
-		}
-	}
-	else
-	{
-SEQAN_CHECKPOINT
-		return 0;
-	}
+    _setLength(gaps, length(value(gaps._source)));
 }
 
-template <typename TGaps>
-inline typename Size<TGaps>::Type
-countCharacters(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
+// ----------------------------------------------------------------------------
+// Function begin()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): We'd rather have "TTag const &" here.
+template <typename TSequence, typename TTag>
+inline typename Iterator<Gaps<TSequence, ArrayGaps> >::Type
+begin(Gaps<TSequence, ArrayGaps> & gaps, Tag<TTag> const /*tag*/)
 {
-	if (isGap(me))
-	{// only count chars
-SEQAN_CHECKPOINT
-		return 0;
-	}
-	else
-	{//count chars
-SEQAN_CHECKPOINT
-		typedef typename Size<TGaps>::Type TGapsSize;
-		typedef String<TGapsSize> const TArr;
-
-		TArr & arr = _dataArr(container(me));
-		typename Position<TArr>::Type pos = me.data_block;
-		typename Position<TArr>::Type block_pos = me.data_sub;
-
-		return arr[pos] - block_pos;
-	}
+    typedef typename Iterator<Gaps<TSequence, ArrayGaps> >::Type TIter;
+    return TIter(gaps, Begin_());
 }
 
-//____________________________________________________________________________
-
-template <typename T>
-inline void 
-_goNextArrayGapsIterator(T const & me)
+// TODO(holtgrew): We'd rather have "TTag const &" here.
+template <typename TSequence, typename TTag>
+inline typename Iterator<Gaps<TSequence, ArrayGaps> const>::Type
+begin(Gaps<TSequence, ArrayGaps> const & gaps, Tag<TTag> const /*tag*/)
 {
-	if (!isGap(me))
-	{
-SEQAN_CHECKPOINT
-		goNext(me.data_source);
-	}
-
-	++me.data_sub;
-	if ((me.data_block < length(_dataArr(container(me)))) && (me.data_sub >= _dataArr(container(me))[me.data_block]))
-	{
-SEQAN_CHECKPOINT
-		++me.data_block;
-		me.data_sub = 0;
-	}
-}
-template <typename TGaps>
-inline void 
-goNext(Iter<TGaps, GapsIterator<ArrayGaps> > & me)
-{
-	_goNextArrayGapsIterator(me);
-}
-template <typename TGaps>
-inline void 
-goNext(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
-{
-	_goNextArrayGapsIterator(me);
+    typedef typename Iterator<Gaps<TSequence, ArrayGaps> const>::Type TIter;
+    return TIter(gaps, Begin_());
 }
 
-//____________________________________________________________________________
+// ----------------------------------------------------------------------------
+// Function end()
+// ----------------------------------------------------------------------------
 
-template <typename T>
-inline void 
-_goPreviousArrayGapsIterator(T const & me)
+// TODO(holtgrew): We'd rather have "TTag const &" here.
+template <typename TSequence, typename TTag>
+inline typename Iterator<Gaps<TSequence, ArrayGaps> >::Type
+end(Gaps<TSequence, ArrayGaps> & gaps, Tag<TTag> const /*tag*/)
 {
-	if (me.data_sub > 0)
-	{
-SEQAN_CHECKPOINT
-		--me.data_sub;
-	}
-	else
-	{
-		if (me.data_block > 0)
-		{
-SEQAN_CHECKPOINT
-			--me.data_block;
-			me.data_sub = _dataArr(container(me))[me.data_block] - 1;
-		}
-	}
-	if (!isGap(me))
-	{
-SEQAN_CHECKPOINT
-		goPrevious(me.data_source);
-	}
-}
-template <typename TGaps>
-inline void 
-goPrevious(Iter<TGaps, GapsIterator<ArrayGaps> > & me)
-{
-	_goPreviousArrayGapsIterator(me);
-}
-template <typename TGaps>
-inline void 
-goPrevious(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
-{
-	_goPreviousArrayGapsIterator(me);
-}
-//____________________________________________________________________________
-
-template <typename TGaps>
-inline bool 
-atBegin(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
-{
-SEQAN_CHECKPOINT
-	return ((me.data_block == 1) && (me.data_sub == 0));
+    typedef typename Iterator<Gaps<TSequence, ArrayGaps> >::Type TIter;
+    return TIter(gaps, End_());
 }
 
-template <typename TGaps>
-inline bool 
-atBegin(Iter<TGaps, GapsIterator<ArrayGaps> > & me)
+// TODO(holtgrew): We'd rather have "TTag const &" here.
+template <typename TSequence, typename TTag>
+inline typename Iterator<Gaps<TSequence, ArrayGaps> const>::Type
+end(Gaps<TSequence, ArrayGaps> const & gaps, Tag<TTag> const /*tag*/)
 {
-SEQAN_CHECKPOINT
-	return ((me.data_block == 1) && (me.data_sub == 0));
+    typedef typename Iterator<Gaps<TSequence, ArrayGaps> const>::Type TIter;
+    return TIter(gaps, End_());
 }
 
-//____________________________________________________________________________
+// ----------------------------------------------------------------------------
+// Function iter()
+// ----------------------------------------------------------------------------
 
-template <typename TGaps>
-inline bool 
-atEnd(Iter<TGaps, GapsIterator<ArrayGaps> > const & me)
+// TODO(holtgrew): We'd rather have "TTag const &" here.
+template <typename TSequence, typename TTag, typename TPosition>
+inline typename Iterator<Gaps<TSequence, ArrayGaps> >::Type
+iter(Gaps<TSequence, ArrayGaps> & gaps, TPosition pos, Tag<TTag> const /*tag*/)
 {
-    SEQAN_CHECKPOINT;
-    return ((me.data_block == length(_dataArr(container(me)))) && (me.data_sub == container(me).data_unclipped_end_position));
+    typedef typename Iterator<Gaps<TSequence, ArrayGaps> >::Type TIter;
+    return TIter(gaps, pos, Position_());
 }
 
-template <typename TGaps>
-inline bool 
-atEnd(Iter<TGaps, GapsIterator<ArrayGaps> > & me)
+// TODO(holtgrew): We'd rather have "TTag const &" here.
+template <typename TSequence, typename TTag, typename TPosition>
+inline typename Iterator<Gaps<TSequence, ArrayGaps> const>::Type
+iter(Gaps<TSequence, ArrayGaps> const & gaps, TPosition pos, Tag<TTag> const /*tag*/)
 {
-    SEQAN_CHECKPOINT;
-    return ((me.data_block == length(_dataArr(container(me)))) && (me.data_sub == container(me).data_unclipped_end_position));
+    typedef typename Iterator<Gaps<TSequence, ArrayGaps> const>::Type TIter;
+    return TIter(gaps, pos, Position_());
 }
 
-//____________________________________________________________________________
+// ----------------------------------------------------------------------------
+// Function length()
+// ----------------------------------------------------------------------------
 
-template <typename TGaps, typename TCount>
+template <typename TSequence>
+inline typename Size<Gaps<TSequence, ArrayGaps> >::Type
+length(Gaps<TSequence, ArrayGaps> const & gaps)
+{
+    SEQAN_ASSERT_GEQ(gaps._clippingEndPos, gaps._clippingBeginPos);
+    return gaps._clippingEndPos - gaps._clippingBeginPos;
+}
+
+// ----------------------------------------------------------------------------
+// Function unclippedLength()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence>
+inline typename Size<Gaps<TSequence, ArrayGaps> >::Type
+unclippedLength(Gaps<TSequence, ArrayGaps> const & gaps)
+{
+    typedef typename Size<Gaps<TSequence, ArrayGaps> >::Type TSize;
+
+    TSize result = 0;
+    for (unsigned i = 0; i < length(gaps._array); ++i)
+        result += gaps._array[i];
+
+    return result;
+}
+
+// ----------------------------------------------------------------------------
+// Function createSource()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Remove? Switch to Hosted Type Interface?
+
+template <typename TSequence>
+inline void createSource(Gaps<TSequence, ArrayGaps> & gaps)
+{
+    create(gaps._source);
+}
+
+// ----------------------------------------------------------------------------
+// Function source()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence>
+inline typename Source<Gaps<TSequence, ArrayGaps> const>::Type &
+source(Gaps<TSequence, ArrayGaps> const & gaps)
+{
+    return value(gaps._source);
+}
+
+template <typename TSequence>
+inline typename Source<Gaps<TSequence, ArrayGaps> >::Type &
+source(Gaps<TSequence, ArrayGaps> & gaps)
+{
+    return value(gaps._source);
+}
+
+// ----------------------------------------------------------------------------
+// Function setSource()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): Test with clippings, also for AnchorGaps.
+
+template <typename TSequence>
 inline void
-insertGaps(Iter<TGaps, GapsIterator<ArrayGaps> > const & me,
-		   TCount size)
+setSource(Gaps<TSequence, ArrayGaps> & gaps, TSequence & source)
 {
-	typedef typename Size<TGaps>::Type TGapsSize;
-	typedef String<TGapsSize> TArr;
-
-	TArr & arr = _dataArr(container(me));
-	typename Position<TArr>::Type pos = me.data_block;
-	typename Position<TArr>::Type block_pos = me.data_sub;
-	typename Iterator<TArr, Rooted>::Type it = iter(arr, pos);
-
-	if (isGap(me))
-	{
-		if (pos < length(arr))
-		{//here is a gap: expand it
-SEQAN_CHECKPOINT
-			value(it) += size;
-		}
-		else if (pos == length(arr))
-		{//gap at end: add trailing gaps
-			if (block_pos <= _getTrailingGaps(container(me)))
-			{
-SEQAN_CHECKPOINT
-				_setTrailingGaps(container(me), _getTrailingGaps(container(me)) + size);
-			}
-			return; // do not adjust right position
-		}
-	}
-	else
-	{
-		if (me.data_sub)
-		{//here is no gap: insert one
-SEQAN_CHECKPOINT
-			_clearSpace(arr, 2, pos + 1, pos + 1, Generous());
-
-			it = iter(arr, pos); //reload, since iterator could be invalid
-			it[2] = it[0] - me.data_sub;
-			it[0] = me.data_sub;
-			it[1] = size;
-
-			++me.data_block;
-			me.data_sub = 0;
-		}
-		else
-		{//insert gaps at begin of a char block
-SEQAN_CHECKPOINT
-			me.data_sub = arr[pos - 1];
-			arr[pos - 1] += size; //note: pos > 0 because this is a char block
-			--me.data_block;
-		}
-	}
-
-	//adjust right position
-	_setEndPosition(container(me), endPosition(container(me)) + size);
+    setValue(gaps._source, source);
+    _reinitArrayGaps(gaps);
 }
 
-//____________________________________________________________________________
-
-//delete up to size gaps 
-	
-template <typename TGaps, typename TCount>
+template <typename TSequence>
 inline void
-removeGaps(Iter<TGaps, GapsIterator<ArrayGaps> > const & me,
-		   TCount _size)
+setSource(Gaps<TSequence const, ArrayGaps> & gaps, TSequence & source)
 {
-	typedef typename Size<TGaps>::Type TGapsSize;
-	typedef String<TGapsSize> TArr;
-
-	TGapsSize size = _size;
-
-	if (isGap(me))
-	{//here is a gap
-		TArr & arr = _dataArr(container(me));
-		if (me.data_block < length(arr))
-		{//not trailing gaps
-			typename Iterator<TArr, Standard>::Type it = iter(arr, me.data_block);
-
-			TGapsSize rest_size = *it - me.data_sub;
-
-			if (rest_size <= size)
-			{//remove rest of gap block
-				if (me.data_sub || !me.data_block)
-				{//keep this gap block
-SEQAN_CHECKPOINT
-					*it = me.data_sub;
-					++me.data_block;
-					me.data_sub = 0;
-				}
-				else
-				{//remove complete gap block, merge two char blocks
-SEQAN_CHECKPOINT
-					TGapsSize data_sub = *(it-1); //(note: this well defined, since "it" was not the first block)
-
-					*(it-1) += *(it+1);
-					replace(_dataArr(container(me)), me.data_block, me.data_block + 2, "");
-
-					--me.data_block;
-					me.data_sub = data_sub;
-				}
-				_setEndPosition(container(me), endPosition(container(me)) - rest_size);
-			}
-			else
-			{//remove a part of this block
-SEQAN_CHECKPOINT
-				*it -= size;
-				_setEndPosition(container(me), endPosition(container(me)) - size);
-			}
-		}
-		else if (me.data_block == length(arr))
-		{
-			if (me.data_sub <= _getTrailingGaps(container(me)))
-			{//remove trailing gaps
-				if (size > (_getTrailingGaps(container(me)) - me.data_sub))
-				{//remove more than exists
-SEQAN_CHECKPOINT
-					_setTrailingGaps(container(me), me.data_sub);
-				}
-				else
-				{//remove less or equal than exists
-SEQAN_CHECKPOINT
-					_setTrailingGaps(container(me), _getTrailingGaps(container(me)) - size);
-				}
-			}
-		}//else: trailing gaps: infinite gaps here - nothing to do
-	}
-	//else: here is no gap - nothing to do
+    setValue(gaps._source, source);
+    _reinitArrayGaps(gaps);
 }
 
-//____________________________________________________________________________
+// ----------------------------------------------------------------------------
+// Function assignSource()
+// ----------------------------------------------------------------------------
 
-template <typename TGaps1, typename TGaps2>
+template <typename TSequence, typename TSequence2>
+inline void
+assignSource(Gaps<TSequence, ArrayGaps> & gaps, TSequence2 const & source)
+{
+    value(gaps._source) = source;
+    _reinitArrayGaps(gaps);
+}
+
+// ----------------------------------------------------------------------------
+// Function toSourcePosition()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition>
+inline typename Position<TSequence>::Type
+toSourcePosition(Gaps<TSequence, ArrayGaps> const & gaps, TPosition const clippedViewPos, LeftOfViewPos const & /*tag*/)
+{
+    typedef Gaps<TSequence, ArrayGaps>         TGaps;
+    typedef typename Position<TGaps>::Type     TGapsPos;
+    typedef typename TGaps::TArrayPos_         TArrayPos;
+    typedef typename Position<TSequence>::Type TSourcePos;
+
+    // Translate from clipped view position to unclipped view position.
+    TGapsPos unclippedViewPos = clippedViewPos + clippedBeginPosition(gaps);
+
+    // Get index i of the according bucket and offset within bucket.
+    TSourcePos result = 0;
+    TArrayPos i = 1;
+    TSourcePos const iEnd = length(gaps._array);
+
+    if (unclippedViewPos < static_cast<TGapsPos>(gaps._array[0]))
+        return 0;
+
+    TSourcePos counter = unclippedViewPos - gaps._array[0];
+    for (; counter > TGapsPos(0) && i < iEnd; ++i)
+    {
+        if (counter < gaps._array[i])
+            break;
+
+        if (i % 2)  // character bucket
+            result += gaps._array[i];
+        counter -= gaps._array[i];
+    }
+    if (i % 2)  // character bucket.
+    {
+        if (i == length(gaps._array))  // We pointing behind the last bucket.
+            return --result;
+        result += counter;  // If maps into char bucket.
+        if (counter == gaps._array[i])
+            --result;
+        return result;
+    }
+    return --result;
+}
+
+template <typename TSequence, typename TPosition>
+inline typename Position<TSequence>::Type
+toSourcePosition(Gaps<TSequence, ArrayGaps> const & gaps, TPosition const clippedViewPos, RightOfViewPos const & /*tag*/)
+{
+    typedef Gaps<TSequence, ArrayGaps>         TGaps;
+    typedef typename Position<TGaps>::Type     TGapsPos;
+    typedef typename TGaps::TArrayPos_         TArrayPos;
+    typedef typename Position<TSequence>::Type TSourcePos;
+
+    // Translate from clipped view position to unclipped view position.
+    TGapsPos unclippedViewPos = clippedViewPos + clippedBeginPosition(gaps);
+
+    // Get index i of the according bucket and offset within bucket.
+    TSourcePos result = 0;
+    TArrayPos i = 0;
+    TSourcePos const iEnd = length(gaps._array);
+
+    for (TSourcePos counter = unclippedViewPos; counter > TGapsPos(0) && i < iEnd;)
+    {
+        if (counter > gaps._array[i])
+        {
+            if (i % 2)  // character bucket
+                result += gaps._array[i];
+            counter -= gaps._array[i];
+            i += 1;
+        }
+        else if (counter <= gaps._array[i])
+        {
+            if (i % 2)  // character bucket
+                result += counter;
+            counter = 0;
+        }
+    }
+
+    return result;
+}
+
+// ----------------------------------------------------------------------------
+// Function toViewPosition()
+// ----------------------------------------------------------------------------
+
+// Parameter rightOfGaps moves to the right end of gaps if the character at sourcePosition is followed by a gap in the
+// view.
+template <typename TSequence, typename TPosition>
+inline typename Position<Gaps<TSequence, ArrayGaps> >::Type
+toViewPosition(Gaps<TSequence, ArrayGaps> const & gaps, TPosition sourcePosition, bool rightOfGaps = true)
+{
+    typedef Gaps<TSequence, ArrayGaps>     TGaps;
+    typedef typename Position<TGaps>::Type TGapsPosition;
+    typedef typename TGaps::TArray_        TArray;
+    typedef typename TGaps::TArrayPos_     TArrayPos;
+    typedef typename Value<TArray>::Type   TArrayValue;
+
+    if (sourcePosition == TPosition(0))
+        return gaps._array[0] - clippedBeginPosition(gaps);
+
+    // First, convert to unclipped source position.
+    TGapsPosition unclippedViewPosition = 0;
+    TArrayPos i = 0;
+    for (TArrayValue counter = sourcePosition; counter > TArrayValue(0); ++i)
+    {
+        if (i % 2 /*== 1*/)  // sequence bucket
+        {
+            if (counter > gaps._array[i])
+            {
+                unclippedViewPosition += gaps._array[i];
+                counter -= gaps._array[i];
+            }
+            else if (counter < gaps._array[i])
+            {
+                unclippedViewPosition += counter;
+                counter = 0;
+            }
+            else  // counter == gaps._array[i]
+            {
+                unclippedViewPosition += counter;
+                if (rightOfGaps && i + 2 < length(gaps._array))
+                    unclippedViewPosition += gaps._array[i + 1];
+                counter = 0;
+            }
+        }
+        else  // gaps bucket
+        {
+            unclippedViewPosition += gaps._array[i];
+        }
+    }
+
+    // Return after clipping.
+    return unclippedViewPosition - clippedBeginPosition(gaps);
+}
+
+// ----------------------------------------------------------------------------
+// Function insertGaps()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition, typename TCount>
+inline void
+insertGaps(Gaps<TSequence, ArrayGaps> & gaps, TPosition clippedViewPos, TCount count)
+{
+    typedef Gaps<TSequence, ArrayGaps>     TGaps;
+    typedef typename Position<TGaps>::Type TGapsPosition;
+    typedef typename TGaps::TArray_        TArray;
+    typedef typename TGaps::TArrayPos_     TArrayPos;
+    typedef typename Position<TSequence>::Type TSeqPos;
+
+    // Translate from clipped view position to unclipped view position.
+    TGapsPosition unclippedViewPos = clippedViewPos + clippedBeginPosition(gaps);
+
+    // Get index i of the according bucket and offset within bucket.
+    TArrayPos i = 0;
+    TSeqPos offset = 0;
+    for (TSeqPos counter = unclippedViewPos; counter > 0;)
+    {
+        SEQAN_ASSERT_LT(i, length(gaps._array));
+        if (counter > gaps._array[i])
+        {
+            counter -= gaps._array[i];
+            i += 1;
+        }
+        else
+        {
+            offset = counter;
+            counter = 0;
+        }
+    }
+
+    SEQAN_ASSERT_GEQ(gaps._array[i], offset);
+
+    // Insert gaps, simple and fast if we are in a gaps bucket, a bit harder
+    // otherwise.
+    if (i % 2)  // character bucket
+    {
+        if (gaps._array[i] > offset)  // In the middle of the bucket.
+        {
+            TArray arr;
+            resize(arr, 2, 0);
+            arr[0] = count;
+            arr[1] = gaps._array[i] - offset;
+            gaps._array[i] = offset;
+            insert(gaps._array, i + 1, arr);
+        }
+        else  // At the end of the bucket.
+        {
+            if (i + 1 < length(gaps._array))  // Not at end of array.
+            {
+                gaps._array[i + 1] += count;
+            }
+            else  // At end of array.
+            {
+                resize(gaps._array, length(gaps._array) + 2, 0);
+                gaps._array[i + 1] = count;
+                gaps._array[i + 2] = 0;
+            }
+        }
+    }
+    else  // gap bucket
+    {
+        gaps._array[i] += count;
+    }
+
+    // Adjust clipping information.
+    gaps._clippingEndPos += count;
+}
+
+// ----------------------------------------------------------------------------
+// Function removeGaps()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition, typename TCount>
+inline typename Size<Gaps<TSequence, ArrayGaps> >::Type
+removeGaps(Gaps<TSequence, ArrayGaps> & gaps, TPosition clippedViewPos, TCount count)
+{
+    typedef Gaps<TSequence, ArrayGaps>     TGaps;
+    typedef typename Position<TGaps>::Type TGapsPosition;
+    typedef typename TGaps::TArray_        TArray;
+    typedef typename TGaps::TArrayPos_     TArrayPos;
+    typedef typename Value<TArray>::Type   TArrayValue;
+    typedef typename Position<TSequence>::Type   TSeqPos;
+
+    // Translate from clipped view position to unclipped view position.
+    TGapsPosition pos = clippedViewPos + clippedBeginPosition(gaps);
+
+    // Get index i of the according bucket and offset within bucket.
+    SEQAN_ASSERT_GEQ(length(gaps._array), 2u);
+    // Start at position 1 if there are no leading gaps.
+    TArrayPos i = (gaps._array[0] == 0);
+    TSeqPos offset = 0;
+    for (TSeqPos counter = pos; counter > 0;)
+    {
+        SEQAN_ASSERT_LT(i, length(gaps._array));
+        if (counter > gaps._array[i])
+        {
+            counter -= gaps._array[i];
+            i += 1;
+        }
+        else
+        {
+            offset = counter;
+            counter = 0;
+        }
+    }
+
+    // Advance into next bucket if at end of current.
+    if (offset > 0 && offset == gaps._array[i])
+    {
+        i += 1;
+        offset = 0;
+    }
+
+    // If we are inside a non-gap bucket then we cannot remove any gaps.
+    if (i % 2)
+        return 0;
+
+    // Otherwise, we can remove gaps right of the current position but not
+    // more than there are.
+    TSeqPos toRemove = count;
+    if (toRemove > gaps._array[i] - offset)
+        toRemove = gaps._array[i] - offset;
+    gaps._array[i] -= toRemove;
+    // In some cases, we remove the whole gap and merge the character buckets.
+    if (gaps._array[i] == TArrayValue(0))
+    {
+        // No merging for leading and trailing gap.
+        if (i != TArrayPos(0) && i != TArrayPos(length(gaps._array) - 1))
+        {
+            gaps._array[i - 1] += gaps._array[i + 1];
+            erase(gaps._array, i, i + 2);
+        }
+    }
+
+    // Also update the right clipping position.
+    gaps._clippingEndPos -= toRemove;
+
+    // Finally, return number of removed gaps.
+    return toRemove;
+}
+
+// ----------------------------------------------------------------------------
+// Function clearGaps()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence>
+inline void
+clearGaps(Gaps<TSequence, ArrayGaps> & gaps)
+{
+    _reinitArrayGaps(gaps);
+}
+
+// ----------------------------------------------------------------------------
+// Function clear()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence>
+inline void
+clear(Gaps<TSequence, ArrayGaps> & gaps)
+{
+    clear(gaps._source);
+    clear(gaps._array);
+    gaps._sourceBeginPos     = 0;
+    gaps._sourceEndPos       = 0;
+    gaps._clippingBeginPos   = 0;
+    gaps._clippingEndPos     = 0;
+    // cannot use clearGaps() here, since that calls value() on _source
+    // which instates the Holder to Owner; we want it to be empty
+}
+
+// ----------------------------------------------------------------------------
+// Function isGap()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition>
 inline bool
-operator == (Iter<TGaps1, GapsIterator<ArrayGaps> > & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > & _right)
+isGap(Gaps<TSequence, ArrayGaps> const & gaps, TPosition clippedViewPos)
 {
-SEQAN_CHECKPOINT
-	return (_left.data_block == _right.data_block) && (_left.data_sub == _right.data_sub);
-}
-template <typename TGaps1, typename TGaps2>
-inline bool
-operator == (Iter<TGaps1, GapsIterator<ArrayGaps> > const & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > & _right)
-{
-SEQAN_CHECKPOINT
-	return (_left.data_block == _right.data_block) && (_left.data_sub == _right.data_sub);
-}
-template <typename TGaps1, typename TGaps2>
-inline bool
-operator == (Iter<TGaps1, GapsIterator<ArrayGaps> > & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > const & _right)
-{
-SEQAN_CHECKPOINT
-	return (_left.data_block == _right.data_block) && (_left.data_sub == _right.data_sub);
-}
-template <typename TGaps1, typename TGaps2>
-inline bool
-operator == (Iter<TGaps1, GapsIterator<ArrayGaps> > const & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > const & _right)
-{
-SEQAN_CHECKPOINT
-	return (_left.data_block == _right.data_block) && (_left.data_sub == _right.data_sub);
-}
-//____________________________________________________________________________
+    typedef Gaps<TSequence, ArrayGaps>     TGaps;
+    typedef typename Position<TGaps>::Type TGapsPosition;
+    typedef typename TGaps::TArrayPos_     TArrayPos;
+    typedef typename Position<TSequence>::Type TSeqPos;
 
-template <typename TGaps1, typename TGaps2>
-inline bool
-operator != (Iter<TGaps1, GapsIterator<ArrayGaps> > & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > & _right)
-{
-SEQAN_CHECKPOINT
-	return (_left.data_block != _right.data_block) || (_left.data_sub != _right.data_sub);
-}
-template <typename TGaps1, typename TGaps2>
-inline bool
-operator != (Iter<TGaps1, GapsIterator<ArrayGaps> > const & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > & _right)
-{
-SEQAN_CHECKPOINT
-	return (_left.data_block != _right.data_block) || (_left.data_sub != _right.data_sub);
-}
-template <typename TGaps1, typename TGaps2>
-inline bool
-operator != (Iter<TGaps1, GapsIterator<ArrayGaps> > & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > const & _right)
-{
-SEQAN_CHECKPOINT
-	return (_left.data_block != _right.data_block) || (_left.data_sub != _right.data_sub);
-}
-template <typename TGaps1, typename TGaps2>
-inline bool
-operator != (Iter<TGaps1, GapsIterator<ArrayGaps> > const & _left, 
-			 Iter<TGaps2, GapsIterator<ArrayGaps> > const & _right)
-{
-SEQAN_CHECKPOINT
-	return (_left.data_block != _right.data_block) || (_left.data_sub != _right.data_sub);
+    // Translate from clipped view position to unclipped view position.
+    TGapsPosition pos = clippedViewPos + clippedBeginPosition(gaps);
+
+    // Get index i of the according bucket and offset within bucket.
+    SEQAN_ASSERT_GEQ(length(gaps._array), 2u);
+    // Start at position 1 if there are no leading gaps.
+    TArrayPos i = (gaps._array[0] == 0);
+    TSeqPos offset = 0;
+    for (TSeqPos counter = pos; counter > TSeqPos(0);)
+    {
+        SEQAN_ASSERT_LT(i, length(gaps._array));
+        if (counter > gaps._array[i])
+        {
+            counter -= gaps._array[i];
+            i += 1;
+        }
+        else
+        {
+            offset = counter;
+            counter = 0;
+        }
+    }
+
+    // Advance into next bucket if at end of current.
+    if (offset > TSeqPos(0) && offset == gaps._array[i])
+        i += 1;
+
+    return !(i % 2);
 }
 
+// ----------------------------------------------------------------------------
+// Function clearClipping()
+// ----------------------------------------------------------------------------
 
-//////////////////////////////////////////////////////////////////////////////
-}// namespace SEQAN_NAMESPACE_MAIN
+template <typename TSequence>
+inline void
+clearClipping(Gaps<TSequence, ArrayGaps> & gaps)
+{
+    typedef Gaps<TSequence, ArrayGaps>     TGaps;
+    typedef typename TGaps::TArrayPos_     TArrayPos;
 
-//////////////////////////////////////////////////////////////////////////////
-#endif //#ifndef SEQAN_HEADER_...
+    gaps._sourceBeginPos = 0;
+    gaps._sourceEndPos = length(value(gaps._source));
+    gaps._clippingBeginPos = 0;
+    gaps._clippingEndPos = 0;
+    for (TArrayPos i = 0; i < length(gaps._array); ++i)
+        gaps._clippingEndPos += gaps._array[i];
+
+    SEQAN_ASSERT_LEQ(static_cast<int>(gaps._sourceEndPos), static_cast<int>(gaps._clippingEndPos));
+}
+
+// ----------------------------------------------------------------------------
+// Function setClippedBeginPosition()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition>
+inline void
+setClippedBeginPosition(Gaps<TSequence, ArrayGaps> & gaps, TPosition unclippedViewPosition)
+{
+    gaps._sourceBeginPos = toSourcePosition(gaps, unclippedViewPosition - clippedBeginPosition(gaps));
+    gaps._clippingBeginPos = unclippedViewPosition;
+}
+
+// ----------------------------------------------------------------------------
+// Function setClippedEndPosition()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition>
+inline void
+setClippedEndPosition(Gaps<TSequence, ArrayGaps> & gaps, TPosition unclippedViewPosition)
+{
+    gaps._sourceEndPos = toSourcePosition(gaps, unclippedViewPosition - clippedBeginPosition(gaps));
+    //if (isGap(gaps, unclippedViewPosition - clippedBeginPosition(gaps)))
+    //    gaps._sourceEndPos += 1;
+    gaps._clippingEndPos = unclippedViewPosition;
+}
+
+// ----------------------------------------------------------------------------
+// Function clippedBeginPosition()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence>
+inline typename Position<Gaps<TSequence, ArrayGaps> >::Type
+clippedBeginPosition(Gaps<TSequence, ArrayGaps> const & gaps)
+{
+    return gaps._clippingBeginPos;
+}
+
+// ----------------------------------------------------------------------------
+// Function clippedEndPosition()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence>
+inline typename Position<Gaps<TSequence, ArrayGaps> >::Type
+clippedEndPosition(Gaps<TSequence, ArrayGaps> const & gaps)
+{
+    return gaps._clippingEndPos;
+}
+
+// ----------------------------------------------------------------------------
+// Function setBeginPosition()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition>
+inline void
+setBeginPosition(Gaps<TSequence, ArrayGaps> & gaps, TPosition sourcePosition)
+{
+    setClippedBeginPosition(gaps, toViewPosition(gaps, sourcePosition) + clippedBeginPosition(gaps));
+}
+
+// ----------------------------------------------------------------------------
+// Function setEndPosition()
+// ----------------------------------------------------------------------------
+
+template <typename TSequence, typename TPosition>
+inline void
+setEndPosition(Gaps<TSequence, ArrayGaps> & gaps, TPosition sourcePosition)
+{
+    setClippedEndPosition(gaps, toViewPosition(gaps, sourcePosition) + clippedBeginPosition(gaps));
+}
+
+// ----------------------------------------------------------------------------
+// Function beginPosition()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): We would rather like to have the const version only :(
+template <typename TSequence>
+inline typename Position<TSequence>::Type
+beginPosition(Gaps<TSequence, ArrayGaps> const & gaps)
+{
+    return gaps._sourceBeginPos;
+}
+
+template <typename TSequence>
+inline typename Position<TSequence>::Type
+beginPosition(Gaps<TSequence, ArrayGaps> & gaps)
+{
+    return gaps._sourceBeginPos;
+}
+
+// ----------------------------------------------------------------------------
+// Function endPosition()
+// ----------------------------------------------------------------------------
+
+// TODO(holtgrew): We would rather like to have the const version only :(
+template <typename TSequence>
+inline typename Position<TSequence>::Type
+endPosition(Gaps<TSequence, ArrayGaps> const & gaps)
+{
+    return gaps._sourceEndPos;
+}
+
+template <typename TSequence>
+inline typename Position<ArrayGaps>::Type
+endPosition(Gaps<TSequence, ArrayGaps> & gaps)
+{
+    return gaps._sourceEndPos;
+}
+
+}  // namespace seqan
+
+#endif  // #ifndef SEQAN_INCLUDE_SEQAN_ALIGN_GAPS_ARRAY_H_
