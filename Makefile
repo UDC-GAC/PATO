@@ -3,7 +3,7 @@ BUILD=release
 INCLUDES+=-I include
 
 CXX=g++
-CXXFLAGS+=-std=c++14
+CXXFLAGS+=-std=c++17
 
 cxxflags.release=-O3 -march=native -DNDEBUG
 

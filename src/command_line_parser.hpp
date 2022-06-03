@@ -2,6 +2,7 @@
 #define _COMMAND_LINE_PARSER_HPP_
 
 #include <string>
+#include <iostream>
 
 #include "seqan.hpp"
 #include "options.hpp"
@@ -68,8 +69,8 @@ bool parse_command_line(options& opts, int argc, const char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("mamg", "mixed-antiparallel-min-guanine", "Minimum guanine content to consider anti-parallel binding in a mixed-motif in %.", seqan::ArgParseOption::DOUBLE));
     seqan::addOption(parser, seqan::ArgParseOption("b", "minimum-block-run", "Required number of consecutive matches.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("a", "all-matches", "Process and report all sub-matches in addition to the longest match.", seqan::ArgParseOption::BOOL));
-    seqan::addOption(parser, seqan::ArgParseOption("dd", "detect-duplicates", "Indicates wheter and how duplicates should be detected.", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("ssd", "same-sequence-duplicates", "Wheter to count a feature copy in the same sequence as duplicate or not.", seqan::ArgParseOption::STRING));
+    seqan::addOption(parser, seqan::ArgParseOption("dd", "detect-duplicates", "Indicates whether and how duplicates should be detected.", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("ssd", "same-sequence-duplicates", "Whether to count a feature copy in the same sequence as duplicate or not.", seqan::ArgParseOption::STRING));
     seqan::addOption(parser, seqan::ArgParseOption("fr", "filter-repeats", "Disregards repeated and low-complex regions if enabled.", seqan::ArgParseOption::STRING));
     seqan::addOption(parser, seqan::ArgParseOption("mrl", "minimum-repeat-length", "Minimum length requirement for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("mrp", "maximum-repeat-period", "Maximum repeat period for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
@@ -138,6 +139,52 @@ bool parse_command_line(options& opts, int argc, const char *argv[])
     parse_motifs(opts, motifs);
 
     // check options
+    if (opts.min_length < 10) {
+        std::cerr << "PATO: the minimum triplex length must be greater or equal to 10\n";
+        return false;
+    }
+    if (opts.max_length > 1000) {
+        std::cerr << "PATO: the maximum triplex length must be smaller or equal to 1000\n";
+        return false;
+    }
+    if (opts.error_rate < 0.0 || opts.error_rate > 20.0) {
+        std::cerr << "PATO: the error rate must be a value between 0 and 20\n";
+        return false;
+    }
+    if (opts.max_interruptions > 3) {
+        std::cerr << "PATO: the maximum consecutive interruptions must be smaller or equal to 3\n";
+        return false;
+    }
+    if (opts.min_guanine_rate < 0.0 || opts.min_guanine_rate > 100.0) {
+        std::cerr << "PATO: the minimum guanine proportion in the triplex target site must be a value between 0 and 100\n";
+        return false;
+    }
+    if (opts.max_guanine_rate < 0.0 || opts.max_guanine_rate > 100.0) {
+        std::cerr << "PATO: the maximum guanine proportion in the triplex target site must be a value between 0 and 100\n";
+        return false;
+    }
+    if (opts.min_guanine_rate > opts.max_guanine_rate) {
+        std::cerr << "PATO: the maximum guanine proportion cannot be smaller than the minimum guanine proportion\n";
+        return false;
+    }
+    if (opts.mixed_parallel_max_guanine < 0.0 || opts.mixed_parallel_max_guanine > 100.0) {
+        std::cerr << "PATO: the maximum guanine proportion in a parallel mixed motif must be a value between 0 and 100\n";
+        return false;
+    }
+    if (opts.mixed_antiparallel_min_guanine < 0.0 || opts.mixed_antiparallel_min_guanine > 100.0) {
+        std::cerr << "PATO: the minimum guanine proportion in an anti-parallel mixed motif must be a value between 0 and 100\n";
+        return false;
+    }
+    if (opts.duplicate_cutoff >= 0 && opts.detect_duplicates == 0) {
+        std::cerr << "PATO: duplicate filtering with the specified cutoff value requires duplicate detection mode to be enabled\n";
+        return false;
+    }
+
+    unsigned int tolerated_error = static_cast<unsigned int>(std::floor(opts.error_rate * opts.min_length));
+    if (opts.min_block_run > opts.min_length - 2 * tolerated_error) {
+        std::cerr << "PATO: block match too large given minimum length constraint and error rate.\n";
+        return false;
+    }
 
     // prepare options
     opts.error_rate /= 100.0;

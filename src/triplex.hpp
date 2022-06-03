@@ -1502,7 +1502,6 @@ inline void match_tfo_tts_pair(TMatches& matches,
             matches.push_back(std::move(match));
         }
 
-
         TPotKey key(getSequenceNo(tfo_motif), getSequenceNo(tts_motif));
         if (hasKey(potentials, key)) {
             TPotCargo *potential = &cargo(potentials, key);
