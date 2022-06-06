@@ -516,15 +516,15 @@ inline void parse_segments(TGraph& parser,
 }
 
 template <typename TString, typename TChar>
-inline std::vector<std::vector<bool>> encode_sequence(TString& motif,
+inline std::vector<std::vector<char>> encode_sequence(TString& motif,
                                                       TChar filter_char,
                                                       TChar interrupt_char,
-                                                      std::vector<std::vector<bool>>& block_runs,
+                                                      std::vector<std::vector<char>>& block_runs,
                                                       unsigned int min_block_run)
 {
     typedef typename Iterator<TString, Standard>::Type TIter;
 
-    std::vector<std::vector<bool>> encoded_seq(3, std::vector<bool>(length(motif), false));
+    std::vector<std::vector<char>> encoded_seq(3, std::vector<char>(length(motif), 0));
 
     unsigned int counter = 0;
     unsigned int run_counter = 0;
@@ -817,9 +817,9 @@ inline unsigned int filter_with_guanine_and_error_rate(TMotifSet& motif_set,
 
     auto motif_length = length(motif);
 
-    std::vector<std::vector<bool>> encoded_seq;
-    std::vector<std::vector<bool>> block_runs(motif_length - opts.min_block_run + 1,
-                                              std::vector<bool>(motif_length + 1, false));
+    std::vector<std::vector<char>> encoded_seq;
+    std::vector<std::vector<char>> block_runs(motif_length - opts.min_block_run + 1,
+                                              std::vector<char>(motif_length + 1, 0));
     if (opts.min_guanine_rate <= 0.0) {
         TFilter filter_sequence(motif);
         filter_char = filter_char == 'G' ? 'R' : 'Y';
