@@ -1,7 +1,6 @@
-#ifndef _TRIPLEX_FUNCTORS_HPP_
-#define _TRIPLEX_FUNCTORS_HPP_
+#ifndef TRIPLEX_FUNCTORS_HPP
+#define TRIPLEX_FUNCTORS_HPP
 
-#include "seqan.hpp"
 #include "triplex_alphabet.hpp"
 
 namespace seqan

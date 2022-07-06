@@ -1,7 +1,7 @@
-#ifndef _OPTIONS_HPP_
-#define _OPTIONS_HPP_
+#ifndef OPTIONS_HPP
+#define OPTIONS_HPP
 
-#include "seqan.hpp"
+#include <seqan/sequence.h>
 
 struct options
 {

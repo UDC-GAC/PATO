@@ -1,7 +1,10 @@
-#ifndef _TRIPLEX_PATTERN_HPP_
-#define _TRIPLEX_PATTERN_HPP_
+#ifndef TRIPLEX_PATTERN_HPP
+#define TRIPLEX_PATTERN_HPP
 
-#include "seqan.hpp"
+#include <seqan/basic.h>
+#include <seqan/modifier.h>
+#include <seqan/sequence.h>
+
 #include "triplex_functors.hpp"
 
 namespace seqan

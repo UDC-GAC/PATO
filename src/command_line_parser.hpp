@@ -1,11 +1,12 @@
-#ifndef _COMMAND_LINE_PARSER_HPP_
-#define _COMMAND_LINE_PARSER_HPP_
+#ifndef COMMAND_LINE_PARSER_HPP
+#define COMMAND_LINE_PARSER_HPP
 
+#include <cmath>
 #include <string>
 #include <iostream>
+#include <algorithm>
 
-#include "seqan.hpp"
-#include "options.hpp"
+#include <seqan/arg_parse.h>
 
 void parse_motifs(options& opts, const std::string& motifs)
 {
@@ -34,7 +35,7 @@ void parse_motifs(options& opts, const std::string& motifs)
     }
 }
 
-bool parse_command_line(options& opts, int argc, const char *argv[])
+bool parse_command_line(options& opts, int argc, char *argv[])
 {
     seqan::ArgumentParser parser("PATO");
 
@@ -48,7 +49,7 @@ bool parse_command_line(options& opts, int argc, const char *argv[])
                                   " analyses in multicore computing clusters an"
                                   "d supercomputing facilities.");
 
-    seqan::setDate(parser, "June 2022");
+    seqan::setDate(parser, "July 2022");
     seqan::setVersion(parser, "v0.0.0");
     seqan::setUrl(parser, "https://github.com/amatria/pato");
     seqan::setShortCopyright(parser, "2022 Iñaki Amatria-Barral.");

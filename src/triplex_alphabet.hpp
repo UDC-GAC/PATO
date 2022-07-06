@@ -1,7 +1,9 @@
-#ifndef _TRIPLEX_ALPHABET_HPP_
-#define _TRIPLEX_ALPHABET_HPP_
+#ifndef TRIPLEX_ALPHABET_HPP
+#define TRIPLEX_ALPHABET_HPP
 
-#include "seqan.hpp"
+#include <seqan/basic.h>
+#include <seqan/modifier.h>
+#include <seqan/sequence.h>
 
 namespace seqan
 {
@@ -739,20 +741,16 @@ inline bool isMatch(TAlphabet val1, TAlphabet val2)
 //////////////////////////////////////////////////////////////////////////////
 //Repeat mask
 
-template <>
 inline bool _repeatMaskValue(Triplex const &val) 
 {
 	return val == unknownValue<Triplex>(); // 'N'
-	
 }
-	
-template <>
+
 inline bool _repeatMaskValue(DnaRY const &val)
 {
 	return val == unknownValue<DnaRY>(); // 'N'
 }
 
-template <>
 inline bool _repeatMaskValue(DnaKM const &val)
 {
 	return val == unknownValue<DnaKM>(); // 'N'

@@ -1,19 +1,24 @@
 BUILD=release
 
-INCLUDES+=-I include
+INCLUDES+=-Iinclude
 
 CXX=g++
-CXXFLAGS+=-std=c++17
+CXXFLAGS+=-std=c++17 -Wall
 
-cxxflags.release=-O3 -march=native -DNDEBUG
+cxxflags.serial=-flto -O3 -march=native -s
+cxxflags.profile=-flto -O3 -march=native -p -g
+cxxflags.release=-fopenmp -flto -O3 -march=native -s
 
-CXXFLAGS+=$(cxxflags.$(BUILD))
+CXXFLAGS+=$(cxxflags.$(BUILD)) -DNDEBUG -DSEQAN_DISABLE_VERSION_CHECK -DSEQAN_ENABLE_PARALLELISM=0
 
 LD=g++
 
-ldflags.release=
+ldflags.serial=-flto
+ldflags.profile=-flto -p -g
+ldflags.release=-fopenmp -flto
 
-LDFLAGS+=$(ldflags.$(BUILD))
+# see file seqan/allocator_interface.h:211
+LDFLAGS+=-Wno-alloc-size-larger-than $(ldflags.$(BUILD))
 
 SRCSDIR=src
 OBJSDIR=obj
