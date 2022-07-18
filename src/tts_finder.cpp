@@ -4,6 +4,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include <seqan/parallel/parallel_macros.h>
+
 #include "repeat_filter.hpp"
 #include "guanine_filter.hpp"
 #include "segment_parser.hpp"

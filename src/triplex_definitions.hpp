@@ -61,6 +61,10 @@ typedef std::vector<match_t> match_set_t;
 typedef std::vector<unsigned int> index_set_t;
 typedef std::unordered_map<std::pair<unsigned int, unsigned int>, potential_t, pair_hash_t> potential_set_t;
 
+#if defined(_OPENMP)
+typedef std::vector<match_set_t> match_set_set_t;
+#endif
+
 typedef seqan::Graph<seqan::Automaton<seqan::Triplex, seqan::Triplex>> graph_t;
 typedef seqan::VertexDescriptor<graph_t>::Type vertex_descriptor_t;
 

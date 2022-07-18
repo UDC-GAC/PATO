@@ -1,5 +1,11 @@
 #include "triplex_finder.hpp"
 
+#if defined(_OPENMP)
+#define CACHE_LINE_SIZE 64
+#include <stdlib.h>
+#include <string.h>
+#endif
+
 #include <cmath>
 #include <vector>
 #include <iomanip>
@@ -10,6 +16,7 @@
 
 #include <seqan/modifier.h>
 #include <seqan/sequence.h>
+#include <seqan/parallel/parallel_macros.h>
 
 #include "tfo_finder.hpp"
 #include "tts_finder.hpp"
@@ -40,6 +47,9 @@ struct triplex_pair
 };
 
 typedef std::vector<triplex_pair> pair_set_t;
+#if defined(_OPENMP)
+typedef std::vector<pair_set_t> pair_set_set_t;
+#endif
 
 struct tpx_arguments
 {
@@ -52,23 +62,23 @@ struct tpx_arguments
 
     segment_set_t segments;
 
-#if !defined(_OPENMP)
     pair_set_t& pairs;
 
     match_set_t& matches;
 
+#if !defined(_OPENMP)
     potential_set_t& potentials;
 #else
-    pair_set_t pairs;
-
-    match_set_t matches;
-
     potential_set_t potentials;
 #endif
 
     filter_arguments filter_args;
 
     int min_score;
+#if defined(_OPENMP)
+    int thread_id;
+    int num_threads;
+#endif
 
 #if !defined(_OPENMP)
     tpx_arguments(pair_set_t& _pairs,
@@ -90,14 +100,20 @@ struct tpx_arguments
                                                  * opts.min_length));
     }
 #else
-    tpx_arguments(const options& opts)
-        : filter_args(tpx_motifs, block_runs, encoded_seq)
+    tpx_arguments(pair_set_t& _pairs,
+                  match_set_t& _matches,
+                  const options& opts)
+        : pairs(_pairs),
+          matches(_matches),
+          filter_args(tpx_motifs, block_runs, encoded_seq)
     {
         filter_args.ornt = orientation::both;
         filter_args.filter_char = 'G';
         filter_args.interrupt_char = 'Y';
         filter_args.reduce_set = false;
 
+        thread_id = omp_get_thread_num();
+        num_threads = omp_get_max_threads();
         min_score = opts.min_length
                     - static_cast<int>(std::ceil(opts.error_rate
                                                  * opts.min_length));
@@ -279,13 +295,33 @@ void search_triplex(motif_t& tfo_motif,
     }
 }
 
+#if !defined(_OPENMP)
 void match_tfo_tts_motifs(match_set_t& matches,
                           potential_set_t& potentials,
                           motif_set_t& tfo_motifs,
                           motif_set_t& tts_motifs,
                           const options& opts)
+#else
+void match_tfo_tts_motifs(match_set_set_t& matches,
+                          potential_set_t& potentials,
+                          motif_set_t& tfo_motifs,
+                          motif_set_t& tts_motifs,
+                          const options& opts)
+#endif
 {
+#if !defined(_OPENMP)
     pair_set_t pairs;
+#else
+    matches.resize(omp_get_max_threads());
+
+    pair_set_set_t pairs(omp_get_max_threads());
+
+    unsigned int *indices;
+    posix_memalign((void **) &indices,
+                   CACHE_LINE_SIZE * 2,
+                   omp_get_max_threads() * sizeof(unsigned int));
+    memset(indices, 0, omp_get_max_threads() * sizeof(unsigned int));
+#endif
 
     double st = omp_get_wtime();
 #pragma omp parallel
@@ -293,41 +329,46 @@ void match_tfo_tts_motifs(match_set_t& matches,
 #if !defined(_OPENMP)
     tpx_arguments tpx_args(pairs, matches, potentials, opts);
 #else
-    tpx_arguments tpx_args(opts);
+    tpx_arguments tpx_args(pairs[omp_get_thread_num()],
+                           matches[omp_get_thread_num()],
+                           opts);
 #endif
     make_triplex_parser(tpx_args, opts.max_interruptions);
 
     uint64_t tfo_size = static_cast<uint64_t>(tfo_motifs.size());
     uint64_t tts_size = static_cast<uint64_t>(tts_motifs.size());
-#pragma omp for schedule(static) collapse(2) nowait
+#pragma omp for schedule(static) collapse(2)
     for (uint64_t i = 0; i < tfo_size; i++) {
         for (uint64_t j = 0; j < tts_size; j++) {
             search_triplex_pairs(tfo_motifs[i], i, tts_motifs[j], j, tpx_args, opts.min_length);
         }
     }
 
-#if defined(_OPENMP)
-#pragma omp critical
-{
-    pairs.reserve(pairs.size() + tpx_args.pairs.size());
-    std::move(tpx_args.pairs.begin(), tpx_args.pairs.end(), std::back_inserter(pairs));
-} // #pragma omp critical
-#pragma omp barrier
-#endif
-
-#pragma omp for schedule(dynamic) nowait
+#if !defined(_OPENMP)
     for (unsigned int i = 0; i < pairs.size(); i++) {
         auto& pair = pairs[i];
         search_triplex(tfo_motifs[pair.tfo_id], tts_motifs[pair.tts_id], pair, tpx_args, opts);
     }
+#else
+    int steal_id = tpx_args.thread_id;
+    unsigned int idx;
+    do {
+        while (true) {
+#pragma omp atomic capture
+            idx = indices[steal_id]++;
 
-#if defined(_OPENMP)
-#pragma omp critical
-{
-    matches.reserve(matches.size() + tpx_args.matches.size());
-    std::move(tpx_args.matches.begin(), tpx_args.matches.end(), std::back_inserter(matches));
-} // #pragma omp critical
-#pragma omp critical
+            if (idx >= pairs[steal_id].size()) {
+                break;
+            }
+
+            auto& pair = pairs[steal_id][idx];
+            search_triplex(tfo_motifs[pair.tfo_id], tts_motifs[pair.tts_id], pair, tpx_args, opts);
+        }
+
+        steal_id = (steal_id + 1) % tpx_args.num_threads;
+    } while (steal_id != tpx_args.thread_id);
+
+#pragma omp critical (potential_lock)
 {
     for (auto& potential_entry : tpx_args.potentials) {
         auto result_ptr = potentials.find(potential_entry.first);
@@ -340,8 +381,21 @@ void match_tfo_tts_motifs(match_set_t& matches,
 } // #pragma omp critical
 #endif
 } // #pragma omp parallel
+
+#if defined(_OPENMP)
+    free(indices);
+#endif
+
     double nd = omp_get_wtime();
+#if !defined(_OPENMP)
     std::cout << "TPX in: " << nd - st << " seconds (" << matches.size() << ")\n";
+#else
+    std::size_t total = 0;
+    for (auto& local_matches : matches) {
+        total += local_matches.size();
+    }
+    std::cout << "TPX in: " << nd - st << " seconds (" << total << ")\n";
+#endif
 }
 
 seqan::CharString error_string(match_t& match,
@@ -433,12 +487,21 @@ seqan::CharString error_string(match_t& match,
     return errors.str();
 }
 
+#if !defined(_OPENMP)
 void print_tfo_tts_pairs(match_set_t& matches,
                          motif_set_t& tfo_motifs,
                          name_set_t& tfo_names,
                          motif_set_t& tts_motifs,
                          name_set_t& tts_names,
                          const options& opts)
+#else
+void print_tfo_tts_pairs(match_set_set_t& matches,
+                         motif_set_t& tfo_motifs,
+                         name_set_t& tfo_names,
+                         motif_set_t& tts_motifs,
+                         name_set_t& tts_names,
+                         const options& opts)
+#endif
 {
     seqan::CharString output_file_name;
     seqan::append(output_file_name, opts.output_file);
@@ -455,24 +518,33 @@ void print_tfo_tts_pairs(match_set_t& matches,
     output_file << "# Sequence-ID\tTFO start\tTFO end\tDuplex-ID\tTTS start\tTT"
                    "S end\tScore\tError-rate\tErrors\tMotif\tStrand\tOrientatio"
                    "n\tGuanine-rate\n";
-    for (auto& match : matches) {
-        auto tfo_seq_id = tfo_motifs[match.tfoNo].seqNo;
-        auto tts_seq_id = match.ttsSeqNo;
 
-        output_file << tfo_names[tfo_seq_id] << "\t"
-                    << match.oBegin << "\t"
-                    << match.oEnd << "\t"
-                    << tts_names[tts_seq_id] << "\t"
-                    << match.dBegin << "\t"
-                    << match.dEnd << "\t"
-                    << match.mScore << "\t"
-                    << std::setprecision(2) << 1.0 - match.mScore / (match.dEnd - match.dBegin) << "\t"
-                    << error_string(match, tfo_motifs, tts_motifs, opts) << "\t"
-                    << match.motif << "\t"
-                    << match.strand << "\t"
-                    << (match.parallel ? 'P' : 'A') << "\t"
-                    << match.guanines / (match.dEnd - match.dBegin)
-                    << "\n";
+#if !defined(_OPENMP)
+    for (auto& match: matches) {
+#else
+    for (auto& local_matches : matches) {
+        for (auto& match : local_matches) {
+#endif
+            auto tfo_seq_id = tfo_motifs[match.tfoNo].seqNo;
+            auto tts_seq_id = match.ttsSeqNo;
+
+            output_file << tfo_names[tfo_seq_id] << "\t"
+                        << match.oBegin << "\t"
+                        << match.oEnd << "\t"
+                        << tts_names[tts_seq_id] << "\t"
+                        << match.dBegin << "\t"
+                        << match.dEnd << "\t"
+                        << match.mScore << "\t"
+                        << std::setprecision(2) << 1.0 - match.mScore / (match.dEnd - match.dBegin) << "\t"
+                        << error_string(match, tfo_motifs, tts_motifs, opts) << "\t"
+                        << match.motif << "\t"
+                        << match.strand << "\t"
+                        << (match.parallel ? 'P' : 'A') << "\t"
+                        << match.guanines / (match.dEnd - match.dBegin)
+                        << "\n";
+#if defined(_OPENMP)
+        }
+#endif
     }
 }
 
@@ -529,7 +601,11 @@ void find_triplexes(const options& opts)
         return;
     }
 
+#if !defined(_OPENMP)
     match_set_t matches;
+#else
+    match_set_set_t matches;
+#endif
     potential_set_t potentials;
     match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
 
