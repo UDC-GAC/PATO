@@ -30,7 +30,7 @@ struct tts_arguments
     filter_arguments filter_args;
 
 #if !defined(_OPENMP)
-    tts_arguments(motif_set_t& _motifs)
+    explicit tts_arguments(motif_set_t& _motifs)
         : motifs(_motifs), filter_args(motifs, block_runs, encoded_seq)
     {
         filter_args.ornt = orientation::both;

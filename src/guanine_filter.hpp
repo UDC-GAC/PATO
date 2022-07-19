@@ -195,8 +195,6 @@ unsigned int filter_guanine_error_rate(motif_t& motif,
     unsigned int interrupt_chars = 0;
     unsigned int non_filter_chars = 0;
 
-    bool is_match = false;
-
     unsigned int max_length = motif_length;
     if (opts.max_length >= opts.min_length) {
         max_length = static_cast<unsigned int>(opts.max_length);
@@ -259,7 +257,7 @@ unsigned int filter_guanine_error_rate(motif_t& motif,
             break;
         }
 
-        is_match = false;
+        bool is_match = false;
 
         while (interrupt_chars <= max_error
                && non_filter_chars <= max_tolerated
@@ -314,8 +312,6 @@ unsigned int filter_guanine_error_rate(motif_t& motif,
                       tmp_errors,
                       tag);
         }
-
-        is_match = false;
 
         left++;
         while (left < motif_length

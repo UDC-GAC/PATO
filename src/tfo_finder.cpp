@@ -31,7 +31,7 @@ struct tfo_arguments
     filter_arguments filter_args;
 
 #if !defined(_OPENMP)
-    tfo_arguments(motif_set_t& _motifs)
+    explicit tfo_arguments(motif_set_t& _motifs)
         : motifs(_motifs), filter_args(motifs, block_runs, encoded_seq)
     {
         filter_args.filter_char = 'G';

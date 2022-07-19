@@ -27,20 +27,19 @@ struct TriplexMatch
     TScore guanines;
 
     TriplexMatch()
-    {
-        tfoNo = -1;
-        oBegin = -1;
-        oEnd = -1;
-        ttsSeqNo = 0;
-        ttsNo = -1;
-        dBegin = -1;
-        dEnd = -1;
-        mScore = 0;
-        parallel = false;
-        motif = ' ';
-        strand = ' ';
-        guanines = 0;
-    }
+        : tfoNo(-1),
+          oBegin(-1),
+          oEnd(-1),
+          ttsSeqNo(0),
+          ttsNo(-1),
+          dBegin(-1),
+          dEnd(-1),
+          mScore(0),
+          parallel(false),
+          motif(' '),
+          strand(' '),
+          guanines(0)
+    {}
 
     TriplexMatch(TSize _tfoNo,
                  TGPos _oBegin,
@@ -88,22 +87,21 @@ struct TriplexPotential
     TCount count_Y;
     TNorm norm;
 
-    TriplexPotential(TId _key):
-        key(_key)
-    {
-        count_R = 0;
-        count_M = 0;
-        count_Y = 0;
-        norm = 0.;
-    }
+    explicit TriplexPotential(TId _key):
+        key(_key),
+        count_R(0),
+        count_M(0),
+        count_Y(0),
+        norm(0.0)
+    {}
 
     TriplexPotential()
-    {
-        count_R = 0;
-        count_M = 0;
-        count_Y = 0;
-        norm = 0.;
-    }
+        : key(0),
+          count_R(0),
+          count_M(0),
+          count_Y(0),
+          norm(0.0)
+    {}
 
     bool operator==(const TriplexPotential<TId>& b) const;
     bool operator!=(const TriplexPotential<TId>& b) const;

@@ -100,11 +100,11 @@ public:
 		parallel(_parallel_orientation),
 		segment(_host),
 		seqNo(_seqNo),
+		copies(-1),
 		isTFO(_isTFO),
 		motif(_motif)
 	{
 		_updateMaskString();
-		copies = -1;
 	}
 	
 	ModStringTriplex(TSegment _segment,  
@@ -116,11 +116,11 @@ public:
 		parallel(_parallel_orientation),
 		segment(_segment),
 		seqNo(_seqNo),
+		copies(-1),
 		isTFO(_isTFO),
 		motif(_motif)
 	{
 		_updateMaskString();
-		copies = -1;
 	}
 	
 	
@@ -135,11 +135,11 @@ public:
 		parallel(_parallel_orientation),
 		segment(_host, _begin_index, _end_index),
 		seqNo(_seqNo),
+		copies(-1),
 		isTFO(_isTFO),
 		motif(_motif)
 	{
 		_updateMaskString();
-		copies = -1;
 	}
 
 	ModStringTriplex(typename Parameter_<THost>::Type _host, 
@@ -153,9 +153,9 @@ public:
 		parallel(_parallel_orientation),
 		segment(_host, _begin_index, _end_index),
 		seqNo(_seqNo),
+		copies(_copies),
 		isTFO(_isTFO),
-		motif(_motif),
-		copies(_copies)
+		motif(_motif)
 	{
 		_updateMaskString();
 	}
@@ -171,9 +171,9 @@ public:
 		parallel(_parallel_orientation),
 		segment(_host, _begin, _end),
 		seqNo(_seqNo),
+		copies(_copies),
 		isTFO(_isTFO),
-		motif(_motif),
-		copies(_copies)
+		motif(_motif)
 	{
 		_updateMaskString();
 	}
