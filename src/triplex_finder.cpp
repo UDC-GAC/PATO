@@ -2,6 +2,7 @@
 
 #if defined(_OPENMP)
 #define CACHE_LINE_SIZE 64
+
 #include <stdlib.h>
 #include <string.h>
 #endif
@@ -316,11 +317,15 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 
     pair_set_set_t pairs(omp_get_max_threads());
 
-    unsigned int *indices;
+    unsigned int *indices, *are_ready;
     posix_memalign((void **) &indices,
-                   CACHE_LINE_SIZE * 2,
+                   CACHE_LINE_SIZE,
+                   omp_get_max_threads() * sizeof(unsigned int));
+    posix_memalign((void **) &are_ready,
+                   CACHE_LINE_SIZE,
                    omp_get_max_threads() * sizeof(unsigned int));
     memset(indices, 0, omp_get_max_threads() * sizeof(unsigned int));
+    memset(are_ready, 0, omp_get_max_threads() * sizeof(unsigned int));
 #endif
 
     double st = omp_get_wtime();
@@ -337,7 +342,7 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 
     uint64_t tfo_size = static_cast<uint64_t>(tfo_motifs.size());
     uint64_t tts_size = static_cast<uint64_t>(tts_motifs.size());
-#pragma omp for schedule(static) collapse(2)
+#pragma omp for schedule(static) collapse(2) nowait
     for (uint64_t i = 0; i < tfo_size; i++) {
         for (uint64_t j = 0; j < tts_size; j++) {
             search_triplex_pairs(tfo_motifs[i], i, tts_motifs[j], j, tpx_args, opts.min_length);
@@ -350,24 +355,43 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
         search_triplex(tfo_motifs[pair.tfo_id], tts_motifs[pair.tts_id], pair, tpx_args, opts);
     }
 #else
-    int steal_id = tpx_args.thread_id;
-    unsigned int idx;
-    do {
-        while (true) {
-#pragma omp atomic capture
-            idx = indices[steal_id]++;
+#pragma omp atomic write
+    are_ready[tpx_args.thread_id] = 1;
 
-            if (idx >= pairs[steal_id].size()) {
+    int is_ready;
+    int are_finished = 0;
+    int steal_id = tpx_args.thread_id;
+
+    unsigned int idx;
+    while (true) {
+#pragma omp atomic read
+        is_ready = are_ready[steal_id];
+
+        if (is_ready == 0) {
+            are_finished = 0;
+        } else if (is_ready == 2) {
+            if (++are_finished == tpx_args.num_threads) {
                 break;
             }
+        } else {
+            while (true) {
+#pragma omp atomic capture
+                idx = indices[steal_id]++;
+                if (idx >= pairs[steal_id].size()) {
+#pragma omp atomic write
+                    are_ready[steal_id] = 2;
+                    break;
+                }
 
-            auto& pair = pairs[steal_id][idx];
-            search_triplex(tfo_motifs[pair.tfo_id], tts_motifs[pair.tts_id], pair, tpx_args, opts);
+                auto& pair = pairs[steal_id][idx];
+                search_triplex(tfo_motifs[pair.tfo_id], tts_motifs[pair.tts_id], pair, tpx_args, opts);
+            }
         }
 
         steal_id = (steal_id + 1) % tpx_args.num_threads;
-    } while (steal_id != tpx_args.thread_id);
+    }
 
+// TODO: evaluate if using a lock over a shared data structure is faster than this copy
 #pragma omp critical (potential_lock)
 {
     for (auto& potential_entry : tpx_args.potentials) {
@@ -384,6 +408,7 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 
 #if defined(_OPENMP)
     free(indices);
+    free(are_ready);
 #endif
 
     double nd = omp_get_wtime();
