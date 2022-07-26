@@ -342,7 +342,7 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 
     uint64_t tfo_size = static_cast<uint64_t>(tfo_motifs.size());
     uint64_t tts_size = static_cast<uint64_t>(tts_motifs.size());
-#pragma omp for schedule(static) collapse(2) nowait
+#pragma omp for schedule(dynamic, tfo_size) collapse(2) nowait
     for (uint64_t i = 0; i < tfo_size; i++) {
         for (uint64_t j = 0; j < tts_size; j++) {
             search_triplex_pairs(tfo_motifs[i], i, tts_motifs[j], j, tpx_args, opts.min_length);
