@@ -14,6 +14,4 @@ void filter_repeats(repeat_set_t& repeats,
             sequence[i] = 'N';
         }
     }
-
-    repeats.clear();
 }
