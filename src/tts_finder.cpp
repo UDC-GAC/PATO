@@ -16,6 +16,8 @@ struct tts_arguments
     graph_t plus_parser;
     graph_t minus_parser;
 
+    repeat_set_t repeats;
+
 #if !defined(_OPENMP)
     motif_set_t& motifs;
 #else
@@ -118,17 +120,6 @@ bool find_tts_motifs(motif_set_t& motifs,
     double st = omp_get_wtime();
 #pragma omp parallel
 {
-    if (opts.filter_repeats) {
-        repeat_set_t repeats;
-#pragma omp for schedule(dynamic)
-        for (unsigned int i = 0; i < sequences.size(); i++) {
-            filter_repeats(repeats,
-                           sequences[indices[i]],
-                           opts.min_repeat_length,
-                           opts.max_repeat_period);
-        }
-    }
-
 #if !defined(_OPENMP)
     tts_arguments tts_args(motifs);
 #else
@@ -138,6 +129,12 @@ bool find_tts_motifs(motif_set_t& motifs,
 
 #pragma omp for schedule(dynamic) nowait
     for (unsigned int i = 0; i < sequences.size(); i++) {
+        if (opts.filter_repeats) {
+            filter_repeats(tts_args.repeats,
+                           sequences[indices[i]],
+                           opts.min_repeat_length,
+                           opts.max_repeat_period);
+        }
         find_tts_motifs(sequences[indices[i]], indices[i], tts_args, opts);
     }
 
