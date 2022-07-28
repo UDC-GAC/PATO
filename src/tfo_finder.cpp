@@ -72,73 +72,84 @@ void find_tfo_motifs(triplex_t& sequence,
                      tfo_arguments& tfo_args,
                      const options& opts)
 {
-    // TODO: use motifs opts
     // TC motif
-    parse_segments(tfo_args.tc_parser,
-                   tfo_args.segments,
-                   sequence,
-                   opts.max_interruptions,
-                   opts.min_length);
+    if (opts.tc_motif) {
+        parse_segments(tfo_args.tc_parser,
+                    tfo_args.segments,
+                    sequence,
+                    opts.max_interruptions,
+                    opts.min_length);
 
-    tfo_args.filter_args.ornt = orientation::parallel;
+        tfo_args.filter_args.ornt = orientation::parallel;
 
-    for (auto& segment : tfo_args.segments) {
-        motif_t motif(segment, true, id, true, 'Y');
-        filter_guanine_error_rate(motif,
-                                  tfo_args.filter_args,
-                                  pyrimidine_motif_t(),
-                                  opts);
+        for (auto& segment : tfo_args.segments) {
+            motif_t motif(segment, true, id, true, 'Y');
+            filter_guanine_error_rate(motif,
+                                    tfo_args.filter_args,
+                                    pyrimidine_motif_t(),
+                                    opts);
+        }
+        tfo_args.segments.clear();
     }
-    tfo_args.segments.clear();
 
     // GA motif
-    parse_segments(tfo_args.ga_parser,
-                   tfo_args.segments,
-                   sequence,
-                   opts.max_interruptions,
-                   opts.min_length);
+    if (opts.ga_motif) {
+        parse_segments(tfo_args.ga_parser,
+                    tfo_args.segments,
+                    sequence,
+                    opts.max_interruptions,
+                    opts.min_length);
 
-    tfo_args.filter_args.ornt = orientation::antiparallel;
+        tfo_args.filter_args.ornt = orientation::antiparallel;
 
-    for (auto& segment : tfo_args.segments) {
-        motif_t motif(segment, false, id, true, 'R');
-        filter_guanine_error_rate(motif,
-                                  tfo_args.filter_args,
-                                  purine_motif_t(),
-                                  opts);
+        for (auto& segment : tfo_args.segments) {
+            motif_t motif(segment, false, id, true, 'R');
+            filter_guanine_error_rate(motif,
+                                    tfo_args.filter_args,
+                                    purine_motif_t(),
+                                    opts);
+        }
+        tfo_args.segments.clear();
     }
-    tfo_args.segments.clear();
 
     // GT motif
-    parse_segments(tfo_args.gt_parser,
-                   tfo_args.segments,
-                   sequence,
-                   opts.max_interruptions,
-                   opts.min_length);
+    if (opts.gt_a_motif || opts.gt_p_motif) {
+        parse_segments(tfo_args.gt_parser,
+                    tfo_args.segments,
+                    sequence,
+                    opts.max_interruptions,
+                    opts.min_length);
 
-    tfo_args.filter_args.ornt = orientation::both;
+        if (opts.gt_a_motif && opts.gt_p_motif) {
+            tfo_args.filter_args.ornt = orientation::both;
+        } else if (opts.gt_p_motif) {
+            tfo_args.filter_args.ornt = orientation::parallel;
+        } else {
+            tfo_args.filter_args.ornt = orientation::antiparallel;
+        }
 
-    for (auto& segment : tfo_args.segments) {
-        if ((tfo_args.filter_args.ornt == orientation::both
-             || tfo_args.filter_args.ornt == orientation::parallel)
-            && opts.mixed_parallel_max_guanine >= opts.min_guanine_rate) {
-            motif_t motif(segment, true, id, true, 'M');
-            filter_guanine_error_rate(motif,
-                                      tfo_args.filter_args,
-                                      mixed_motif_t(),
-                                      opts);
+        for (auto& segment : tfo_args.segments) {
+            if ((tfo_args.filter_args.ornt == orientation::both
+                 || tfo_args.filter_args.ornt == orientation::parallel)
+                && opts.mixed_parallel_max_guanine >= opts.min_guanine_rate) {
+                motif_t motif(segment, true, id, true, 'M');
+                filter_guanine_error_rate(motif,
+                                        tfo_args.filter_args,
+                                        mixed_motif_t(),
+                                        opts);
+            }
+            if ((tfo_args.filter_args.ornt == orientation::both
+                 || tfo_args.filter_args.ornt == orientation::antiparallel)
+                && opts.mixed_antiparallel_min_guanine <= opts.max_guanine_rate) {
+                motif_t motif(segment, false, id, true, 'M');
+                filter_guanine_error_rate(motif,
+                                        tfo_args.filter_args,
+                                        mixed_motif_t(),
+                                        opts);
+            }
         }
-        if ((tfo_args.filter_args.ornt == orientation::both
-             || tfo_args.filter_args.ornt == orientation::antiparallel)
-            && opts.mixed_antiparallel_min_guanine <= opts.max_guanine_rate) {
-            motif_t motif(segment, false, id, true, 'M');
-            filter_guanine_error_rate(motif,
-                                      tfo_args.filter_args,
-                                      mixed_motif_t(),
-                                      opts);
-        }
+        tfo_args.segments.clear();
     }
-    tfo_args.segments.clear();
 }
 
 bool find_tfo_motifs(motif_set_t& motifs,
