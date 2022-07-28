@@ -1,7 +1,9 @@
 #include "triplex_finder.hpp"
 
 #if defined(_OPENMP)
+#if !defined(CACHE_LINE_SIZE)
 #define CACHE_LINE_SIZE 64
+#endif
 
 #include <stdlib.h>
 #include <string.h>
@@ -25,6 +27,7 @@
 #include "guanine_filter.hpp"
 #include "triplex_pattern.hpp"
 
+#if defined(_OPENMP)
 struct triplex_pair
 {
     unsigned int tfo_id;
@@ -48,7 +51,6 @@ struct triplex_pair
 };
 
 typedef std::vector<triplex_pair> pair_set_t;
-#if defined(_OPENMP)
 typedef std::vector<pair_set_t> pair_set_set_t;
 #endif
 
@@ -63,7 +65,9 @@ struct tpx_arguments
 
     segment_set_t segments;
 
+#if defined(_OPENMP)
     pair_set_t& pairs;
+#endif
 
     match_set_t& matches;
 
@@ -82,12 +86,10 @@ struct tpx_arguments
 #endif
 
 #if !defined(_OPENMP)
-    tpx_arguments(pair_set_t& _pairs,
-                  match_set_t& _matches,
+    tpx_arguments(match_set_t& _matches,
                   potential_set_t& _potentials,
                   const options& opts)
-        : pairs(_pairs),
-          matches(_matches),
+        : matches(_matches),
           potentials(_potentials),
           filter_args(tpx_motifs, block_runs, encoded_seq)
     {
@@ -153,6 +155,134 @@ unsigned int find_tpx_motifs(triplex_t& sequence,
     return matches;
 }
 
+#if !defined(_OPENMP)
+void search_triplex(motif_t& tfo_motif,
+                    unsigned int tfo_id,
+                    motif_t& tts_motif,
+                    unsigned int tts_id,
+                    tpx_arguments& tpx_args,
+                    const options& opts)
+{
+    auto tfo_candidate = seqan::ttsString(tfo_motif);
+    auto tts_candidate = seqan::ttsString(tts_motif);
+
+    int tfo_length = seqan::length(tfo_candidate);
+    int tts_length = seqan::length(tts_candidate);
+
+    for (int diag = -(tts_length - opts.min_length); diag <= tfo_length - opts.min_length; diag++) {
+        int tfo_offset = 0;
+        int tts_offset = 0;
+        if (diag < 0) {
+            tts_offset = -diag;
+        } else {
+            tfo_offset = diag;
+        }
+        int match_length = std::min(tts_length - tts_offset,
+                                    tfo_length - tfo_offset);
+
+        int score = 0;
+        for (int i = 0; i < match_length; i++) {
+            if (tfo_candidate[tfo_offset + i] == tts_candidate[tts_offset + i]) {
+                score++;
+            }
+        }
+        if (score < tpx_args.min_score) {
+            continue;
+        }
+
+        triplex_t tmp_tts(seqan::infix(tts_candidate,
+                                       tts_offset,
+                                       tts_offset + match_length));
+
+        for (int i = 0; i < match_length; i++) {
+            if (tmp_tts[i] != tfo_candidate[tfo_offset + i]) {
+                tmp_tts[i] = 'N';
+            }
+        }
+
+        unsigned int total = find_tpx_motifs(tmp_tts,
+                                             seqan::getSequenceNo(tts_motif),
+                                             tpx_args,
+                                             opts);
+        if (total == 0) {
+            tpx_args.tpx_motifs.clear();
+            continue;
+        }
+
+        char strand;
+        std::size_t tfo_start, tfo_end;
+        std::size_t tts_start, tts_end;
+        for (auto& triplex : tpx_args.tpx_motifs) {
+            int score = 0;
+            int guanines = 0;
+
+            for (unsigned int i = seqan::beginPosition(triplex); i < seqan::endPosition(triplex); i++) {
+                if (tmp_tts[i] != 'N') {
+                    score++;
+                }
+                if (tmp_tts[i] == 'G') {
+                    guanines++;
+                }
+            }
+
+            if (seqan::isParallel(tfo_motif)) {
+                tfo_start = tfo_offset
+                            + seqan::beginPosition(tfo_motif)
+                            + seqan::beginPosition(triplex);
+                tfo_end = tfo_start + seqan::length(triplex);
+            } else {
+                tfo_end = seqan::endPosition(tfo_motif)
+                          - (tfo_offset + seqan::beginPosition(triplex));
+                tfo_start = tfo_end - seqan::length(triplex);
+            }
+
+            if (seqan::getMotif(tts_motif) == '+') {
+                tts_start = tts_offset
+                            + seqan::beginPosition(tts_motif)
+                            + seqan::beginPosition(triplex);
+                tts_end = tts_start + seqan::length(triplex);
+                strand = '+';
+            } else {
+                tts_end = seqan::endPosition(tts_motif)
+                          - (tts_offset + seqan::beginPosition(triplex));
+                tts_start = tts_end - seqan::length(triplex);
+                strand = '-';
+            }
+
+            match_t match(tfo_id,
+                          tfo_start,
+                          tfo_end,
+                          seqan::getSequenceNo(tts_motif),
+                          tts_id,
+                          tts_start,
+                          tts_end,
+                          score,
+                          seqan::isParallel(tfo_motif),
+                          seqan::getMotif(tfo_motif),
+                          strand,
+                          guanines);
+            tpx_args.matches.push_back(std::move(match));
+        }
+        tpx_args.tpx_motifs.clear();
+
+        auto key = std::make_pair<unsigned int, unsigned int>(seqan::getSequenceNo(tfo_motif),
+                                                              seqan::getSequenceNo(tts_motif));
+        auto result_ptr = tpx_args.potentials.find(key);
+        if (result_ptr != tpx_args.potentials.end()) {
+            seqan::addCount(result_ptr->second, total, seqan::getMotif(tfo_motif));
+        } else {
+            potential_t potential(key);
+            seqan::addCount(potential, total, seqan::getMotif(tfo_motif));
+            seqan::setNorm(potential,
+                           seqan::length(seqan::host(tfo_motif)),
+                           seqan::length(seqan::host(tts_motif)),
+                        opts);
+            tpx_args.potentials.insert(std::make_pair<std::pair<unsigned int, unsigned int>,
+                                                      potential_t>(std::move(key), std::move(potential)));
+        }
+    }
+}
+#else
 void search_triplex_pairs(motif_t& tfo_motif,
                           unsigned int tfo_id,
                           motif_t& tts_motif,
@@ -273,7 +403,8 @@ void search_triplex(motif_t& tfo_motif,
                       tts_end,
                       score,
                       seqan::isParallel(tfo_motif),
-                      seqan::getMotif(tfo_motif), strand,
+                      seqan::getMotif(tfo_motif),
+                      strand,
                       guanines);
         tpx_args.matches.push_back(std::move(match));
     }
@@ -295,6 +426,7 @@ void search_triplex(motif_t& tfo_motif,
                                                   potential_t>(std::move(key), std::move(potential)));
     }
 }
+#endif
 
 #if !defined(_OPENMP)
 void match_tfo_tts_motifs(match_set_t& matches,
@@ -310,9 +442,7 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
                           const options& opts)
 #endif
 {
-#if !defined(_OPENMP)
-    pair_set_t pairs;
-#else
+#if defined(_OPENMP)
     matches.resize(omp_get_max_threads());
 
     pair_set_set_t pairs(omp_get_max_threads());
@@ -332,7 +462,7 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
-    tpx_arguments tpx_args(pairs, matches, potentials, opts);
+    tpx_arguments tpx_args(matches, potentials, opts);
 #else
     tpx_arguments tpx_args(pairs[omp_get_thread_num()],
                            matches[omp_get_thread_num()],
@@ -345,16 +475,15 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 #pragma omp for schedule(dynamic, tfo_size) collapse(2) nowait
     for (uint64_t i = 0; i < tfo_size; i++) {
         for (uint64_t j = 0; j < tts_size; j++) {
+#if !defined(_OPENMP)
+            search_triplex(tfo_motifs[i], i, tts_motifs[j], j, tpx_args, opts);
+#else
             search_triplex_pairs(tfo_motifs[i], i, tts_motifs[j], j, tpx_args, opts.min_length);
+#endif
         }
     }
 
-#if !defined(_OPENMP)
-    for (unsigned int i = 0; i < pairs.size(); i++) {
-        auto& pair = pairs[i];
-        search_triplex(tfo_motifs[pair.tfo_id], tts_motifs[pair.tts_id], pair, tpx_args, opts);
-    }
-#else
+#if defined(_OPENMP)
 #pragma omp atomic write
     are_ready[tpx_args.thread_id] = 1;
 
