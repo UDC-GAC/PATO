@@ -76,7 +76,6 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("mrl", "minimum-repeat-length", "Minimum length requirement for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("mrp", "maximum-repeat-period", "Maximum repeat period for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("dc", "duplicate-cutoff", "Disregard feature if it occurs more often than this cutoff (disable with -1).", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("dl", "duplicate-locations", "Report the location of duplicates.", seqan::ArgParseOption::BOOL));
 
     seqan::setDefaultValue(parser, "l", 16);
     seqan::setDefaultValue(parser, "L", 30);
@@ -96,7 +95,6 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::setDefaultValue(parser, "mrl", 10);
     seqan::setDefaultValue(parser, "mrp", 4);
     seqan::setDefaultValue(parser, "dc", -1);
-    seqan::setDefaultValue(parser, "dl", false);
 
     if (seqan::parse(parser, argc, argv) != seqan::ArgumentParser::PARSE_OK) {
         return false;
@@ -122,7 +120,6 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::getOptionValue(opts.duplicate_cutoff, parser, "dc");
 
     opts.all_matches = seqan::isSet(parser, "a");
-    opts.report_duplicate_locations = seqan::isSet(parser, "dl");
 
     auto is_flag_set = [&parser](const std::string& name) -> bool {
         std::string value;

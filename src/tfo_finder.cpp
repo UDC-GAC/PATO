@@ -10,6 +10,7 @@
 #include "guanine_filter.hpp"
 #include "segment_parser.hpp"
 #include "sequence_loader.hpp"
+#include "duplicate_filter.hpp"
 
 struct tfo_arguments
 {
@@ -196,6 +197,14 @@ bool find_tfo_motifs(motif_set_t& motifs,
 } // #pragma omp critical
 #endif
 } // #pragma omp parallel
+
+    if (opts.detect_duplicates != duplicate::off) {
+        count_duplicates(motifs, opts);
+        if (opts.duplicate_cutoff >= 0) {
+            filter_duplicates(motifs, opts.duplicate_cutoff);
+        }
+    }
+
     double nd = omp_get_wtime();
     std::cout << "TFO in: " << nd - st << " seconds (" << motifs.size() << ")\n";
 

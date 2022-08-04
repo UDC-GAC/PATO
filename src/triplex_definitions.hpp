@@ -4,6 +4,7 @@
 #include <vector>
 #include <unordered_map>
 
+#include <seqan/map.h>
 #include <seqan/basic.h>
 #include <seqan/index.h>
 #include <seqan/modifier.h>
@@ -14,12 +15,20 @@
 #include "triplex_pattern.hpp"
 #include "triplex_alphabet.hpp"
 #include "triplex_functors.hpp"
+#include "sequence_position.hpp"
 
 enum orientation
 {
     antiparallel = -1,
     both = 0,
     parallel = 1
+};
+
+enum duplicate
+{
+    off = 0,
+    permissive = 1,
+    strict = 2
 };
 
 struct pair_hash_t
@@ -67,5 +76,13 @@ typedef std::vector<match_set_t> match_set_set_t;
 
 typedef seqan::Graph<seqan::Automaton<seqan::Triplex, seqan::Triplex>> graph_t;
 typedef seqan::VertexDescriptor<graph_t>::Type vertex_descriptor_t;
+
+typedef seqan::StringSet<triplex_t> triplex_string_set_t;
+typedef seqan::Index<triplex_string_set_t> index_t;
+typedef seqan::Finder<index_t> finder_t;
+typedef typename seqan::Position<motif_t>::Type duplicate_pos_t;
+typedef typename seqan::Id<motif_t>::Type duplicate_id_t;
+typedef seqan::SeqPos<duplicate_id_t, duplicate_pos_t> duplicate_t;
+typedef seqan::Map<duplicate_t, seqan::Skiplist<>> duplicate_map_t;
 
 #endif

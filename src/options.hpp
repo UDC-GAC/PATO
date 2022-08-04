@@ -33,7 +33,6 @@ struct options
     bool all_matches;
     bool filter_repeats;
     bool same_sequence_duplicates;
-    bool report_duplicate_locations;
 };
 
 #endif
