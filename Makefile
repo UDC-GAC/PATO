@@ -19,6 +19,7 @@ ldflags.release=-fopenmp -flto
 
 # see file seqan/allocator_interface.h:211
 LDFLAGS+=-Wno-alloc-size-larger-than $(ldflags.$(BUILD))
+LDLIBS+=-lrt
 
 SRCSDIR=src
 OBJSDIR=obj

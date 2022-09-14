@@ -1,6 +1,8 @@
 #ifndef TRIPLEX_PATTERN_HPP
 #define TRIPLEX_PATTERN_HPP
 
+#include <sstream>
+
 #include <seqan/basic.h>
 #include <seqan/modifier.h>
 #include <seqan/sequence.h>

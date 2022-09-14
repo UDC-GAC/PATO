@@ -41,13 +41,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
 
     seqan::setShortDescription(parser, "PArallel TriplexatOr");
     seqan::addUsageLine(parser, "[options] tfo-file tts-file output-file");
-    seqan::addDescription(parser, "PATO is a high performance tool for detectin"
-                                  "g nucleic acid triple helices and triplex fe"
-                                  "atures in nucleotide sequences. PATO is base"
-                                  "d on Triplexator and functions nearly as a d"
-                                  "rop in replacement to accelerate the triplex"
-                                  " analyses in multicore computing clusters an"
-                                  "d supercomputing facilities.");
+    seqan::addDescription(parser, "PATO is a high performance tool for the fast and efficient detection of acid triple helices and triplex features in nucleotide sequences. PATO is based on Triplexator and functions nearly as a drop in replacement to accelerate the triplex analyses in multicore computers.");
 
     seqan::setDate(parser, "July 2022");
     seqan::setVersion(parser, "v0.0.0");
@@ -180,7 +174,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
 
     unsigned int tolerated_error = static_cast<unsigned int>(std::floor(opts.error_rate * opts.min_length));
     if (opts.min_block_run > opts.min_length - 2 * tolerated_error) {
-        std::cerr << "PATO: block match too large given minimum length constraint and error rate.\n";
+        std::cerr << "PATO: block match too large given minimum length constraint and error rate\n";
         return false;
     }
 
