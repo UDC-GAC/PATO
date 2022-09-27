@@ -21,8 +21,8 @@ ldflags.release=-fopenmp -flto
 LDFLAGS+=-Wno-alloc-size-larger-than $(ldflags.$(BUILD))
 
 SRCSDIR=src
-OBJSDIR=obj
-DESTDIR=target
+OBJSDIR=obj/gnu
+DESTDIR=target/gnu
 
 SRCS=$(wildcard $(SRCSDIR)/*.cpp)
 OBJS=$(patsubst $(SRCSDIR)/%.cpp,$(OBJSDIR)/$(BUILD)/%.o,$(SRCS))
@@ -38,5 +38,3 @@ $(OBJSDIR)/$(BUILD)/%.o: $(SRCSDIR)/%.cpp
 	@mkdir -p $(OBJSDIR)/$(BUILD)
 	$(CXX) $(CXXFLAGS) -MMD -MP $(INCLUDES) -c $< -o $@
 
-clean:
-	rm -rf $(OBJSDIR) $(DESTDIR)

@@ -191,8 +191,8 @@
 // Pizza & Chili interface (compressed indices).
 // ----------------------------------------------------------------------------
 
-#include <seqan/index/index_pizzachili.h>
-#include <seqan/index/index_pizzachili_find.h>
+//#include <seqan/index/index_pizzachili.h>
+//#include <seqan/index/index_pizzachili_find.h>
 
 // ----------------------------------------------------------------------------
 // Shawarma interface (suffix array creators).
