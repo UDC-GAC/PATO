@@ -12,6 +12,8 @@ PATO_PAR=../target/gnu/pato.release
 TFO_FILE=input/tfo.fa
 TTS_FILE=input/tts.fa
 
+FAILED=0
+
 echo -e "\033[0;31m!! Warning:\033[0m tests run using the GNU flavour of the tool"
 
 # Test 0
@@ -42,6 +44,7 @@ then
     printf "\033[0;32mOK\033[0m\n"
 else
     printf "\033[0;31mFAILED\033[0m\n"
+    FAILED=$((FAILED + 1))
 fi
 
 # Test 1
@@ -72,6 +75,7 @@ then
     printf "\033[0;32mOK\033[0m\n"
 else
     printf "\033[0;31mFAILED\033[0m\n"
+    FAILED=$((FAILED + 1))
 fi
 
 # Test 2
@@ -102,6 +106,7 @@ then
     printf "\033[0;32mOK\033[0m\n"
 else
     printf "\033[0;31mFAILED\033[0m\n"
+    FAILED=$((FAILED + 1))
 fi
 
 # Test 3
@@ -132,8 +137,15 @@ then
     printf "\033[0;32mOK\033[0m\n"
 else
     printf "\033[0;31mFAILED\033[0m\n"
+    FAILED=$((FAILED + 1))
 fi
 
 # Clean up
 rm -rf output
 
+# Check if failed
+if [[ $FAILED -gt 0 ]]
+then
+    exit 1
+fi
+exit 0
