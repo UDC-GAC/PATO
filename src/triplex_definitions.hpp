@@ -31,6 +31,20 @@ enum duplicate
     strict = 2
 };
 
+enum error_reference
+{
+    watson_strand = 0,
+    purine_strand = 1,
+    third_strand = 2
+};
+
+enum output_format
+{
+    bed = 0,
+    triplex = 1,
+    summary = 2
+};
+
 struct pair_hash_t
 {
     template <class T1, class T2>

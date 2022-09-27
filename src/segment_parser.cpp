@@ -54,7 +54,7 @@ void parse_segments(graph_t& parser,
 
         unsigned int size = std::max(run_it - run_it, run_it - it);
         if (static_cast<int>(size) >= min_length) {
-            segments.push_back(std::move(seqan::infix(sequence, it, run_it)));
+            segments.push_back(seqan::infix(sequence, it, run_it));
         }
 
         run_it += shift + 1;
@@ -67,6 +67,6 @@ void parse_segments(graph_t& parser,
 
     unsigned int size = std::max(end_it - end_it, end_it - it);
     if (static_cast<int>(size) >= min_length) {
-        segments.push_back(std::move(seqan::infix(sequence, it, end_it)));
+        segments.push_back(seqan::infix(sequence, it, end_it));
     }
 }

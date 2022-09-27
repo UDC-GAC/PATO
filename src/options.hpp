@@ -21,6 +21,8 @@ struct options
     int duplicate_cutoff;
 
     unsigned int min_block_run;
+    unsigned int output_format;
+    unsigned int error_reference;
     unsigned int min_repeat_length;
     unsigned int max_repeat_period;
     unsigned int max_interruptions;

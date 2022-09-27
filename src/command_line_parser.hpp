@@ -70,6 +70,8 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("mrl", "minimum-repeat-length", "Minimum length requirement for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("mrp", "maximum-repeat-period", "Maximum repeat period for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("dc", "duplicate-cutoff", "Disregard feature if it occurs more often than this cutoff (disable with -1).", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("er", "error-reference", "Reference to which the error should correspond", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("of", "output-format", "Set output format", seqan::ArgParseOption::INTEGER));
 
     seqan::setDefaultValue(parser, "l", 16);
     seqan::setDefaultValue(parser, "L", 30);
@@ -89,6 +91,8 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::setDefaultValue(parser, "mrl", 10);
     seqan::setDefaultValue(parser, "mrp", 4);
     seqan::setDefaultValue(parser, "dc", -1);
+    seqan::setDefaultValue(parser, "er", 0);
+    seqan::setDefaultValue(parser, "of", 0);
 
     if (seqan::parse(parser, argc, argv) != seqan::ArgumentParser::PARSE_OK) {
         return false;
@@ -112,6 +116,8 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::getOptionValue(opts.min_repeat_length, parser, "mrl");
     seqan::getOptionValue(opts.max_repeat_period, parser, "mrp");
     seqan::getOptionValue(opts.duplicate_cutoff, parser, "dc");
+    seqan::getOptionValue(opts.error_reference, parser, "er");
+    seqan::getOptionValue(opts.output_format, parser, "of");
 
     opts.all_matches = seqan::isSet(parser, "a");
 
@@ -169,6 +175,14 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     }
     if (opts.duplicate_cutoff >= 0 && opts.detect_duplicates == 0) {
         std::cerr << "PATO: duplicate filtering with the specified cutoff value requires duplicate detection mode to be enabled\n";
+        return false;
+    }
+    if (opts.error_reference > 2) {
+        std::cerr << "PATO: error reference not known\n";
+        return false;
+    }
+    if (opts.output_format > 2) {
+        std::cerr << "PATO: output format not known\n";
         return false;
     }
 
