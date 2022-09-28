@@ -46,8 +46,17 @@ void count_duplicates(motif_set_t& motifs, const options& opts)
                 break;
             }
         }
-
         seqan::duplicates(motif, copies);
+
+        if (opts.report_duplicate_locations
+            && opts.duplicate_cutoff >= 0
+            && copies <= opts.duplicate_cutoff) {
+            for (auto& duplicate : duplicates) {
+                seqan::addDuplicate(motif,
+                                    seqan::getSequenceNo(duplicate),
+                                    seqan::getPosition(duplicate));
+            }
+        }
     }
 }
 

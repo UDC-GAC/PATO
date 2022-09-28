@@ -4,6 +4,10 @@
 #include "options.hpp"
 #include "triplex_definitions.hpp"
 
+void print_tfo_motifs(motif_set_t& tfo_motifs,
+                      name_set_t& tfo_names,
+                      const options& opts);
+
 #if !defined(_OPENMP)
 void print_triplex_pairs(match_set_t& matches,
                          motif_set_t& tfo_motifs,

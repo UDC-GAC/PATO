@@ -21,8 +21,8 @@ echo -e "\033[0;31m!! Warning:\033[0m tests run using the GNU flavour of the too
 
 # Test 0
 printf "Test #0 -- Default run... "
-$PATO $TFO_FILE $TTS_FILE output/foo0 1> /dev/null
-$PATO_PAR $TFO_FILE $TTS_FILE output/bar0 1> /dev/null
+$PATO -ss $TFO_FILE -ds $TTS_FILE -o output/foo0 1> /dev/null
+$PATO_PAR -ss $TFO_FILE -ds $TTS_FILE -o output/bar0 1> /dev/null
 
 sort output/foo0.out > output/fuu0.out
 sort output/bar0.out > output/ber0.out

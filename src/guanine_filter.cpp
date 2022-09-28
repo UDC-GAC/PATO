@@ -40,7 +40,7 @@ bool motif_specific_constraint(double filter_rate,
         && filter_rate >= opts.mixed_antiparallel_min_guanine) {
         return true;
     } else if (ornt != orientation::antiparallel
-               && filter_rate >= opts.mixed_parallel_max_guanine) {
+               && filter_rate <= opts.mixed_parallel_max_guanine) {
         return true;
     }
     return false;
@@ -64,9 +64,9 @@ void add_match(motif_set_t& motifs,
                       seqan::getSequenceNo(motif),
                       seqan::isTFO(motif),
                       seqan::getMotif(motif));
-    seqan::setScore(motif, end - start - errors);
+    seqan::setScore(tmp_motif, end - start - errors);
 
-    motifs.push_back(std::move(tmp_motif));
+    motifs.push_back(tmp_motif);
 }
 
 void add_match(motif_set_t& motifs,
@@ -117,7 +117,7 @@ void add_match(motif_set_t& motifs,
                       seqan::getSequenceNo(motif),
                       seqan::isTFO(motif),
                       seqan::getMotif(motif));
-    seqan::setScore(motif, end - start - errors);
+    seqan::setScore(tmp_motif, end - start - errors);
 
-    motifs.push_back(std::move(tmp_motif));
+    motifs.push_back(tmp_motif);
 }

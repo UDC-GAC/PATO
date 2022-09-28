@@ -20,6 +20,7 @@ struct options
     int maximal_error;
     int duplicate_cutoff;
 
+    unsigned int run_mode;
     unsigned int min_block_run;
     unsigned int output_format;
     unsigned int error_reference;
@@ -33,8 +34,11 @@ struct options
     bool gt_p_motif;
     bool gt_a_motif;
     bool all_matches;
+    bool pretty_output;
     bool filter_repeats;
+    bool merge_features;
     bool same_sequence_duplicates;
+    bool report_duplicate_locations;
 };
 
 #endif

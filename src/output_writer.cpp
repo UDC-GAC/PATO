@@ -194,6 +194,63 @@ seqan::CharString triplex_error_string(match_t& match,
     return errors.str();
 }
 
+void print_tfo_motifs(motif_set_t& tfo_motifs,
+                      name_set_t& tfo_names,
+                      const options& opts)
+{
+    if (opts.output_format == output_format::summary) {
+        return;
+    }
+
+    seqan::CharString output_file_name;
+    seqan::append(output_file_name, opts.output_file);
+    seqan::append(output_file_name, ".out");
+
+    std::ofstream output_file(seqan::toCString(output_file_name),
+                              std::ios_base::out);
+    if (!output_file) {
+        std::cerr << "PATO: error opening output file '"
+                  << seqan::toCString(output_file_name) << "'\n";
+        return;
+    }
+
+    if (opts.output_format == output_format::bed) {
+        output_file << "# Sequence-ID\tStart\tEnd\tScore\tMotif\tError-rate\tEr"
+                       "rors\tGuanine-rate\tDuplicates\tTFO\tDuplicate location"
+                       "s\n";
+    }
+
+    // TODO: FASTA format
+    for (auto& tfo : tfo_motifs) {
+        if (opts.output_format == output_format::bed && tfo.motif == '-') {
+            continue;
+        }
+
+        output_file << tfo_names[seqan::getSequenceNo(tfo)] << "\t"
+                    << seqan::beginPosition(tfo) << "\t"
+                    << seqan::endPosition(tfo) << "\t"
+                    << seqan::score(tfo) << "\t"
+                    << tfo.motif << "\t"
+                    << std::setprecision(2) << 1.0 - seqan::score(tfo) / (seqan::endPosition(tfo) - seqan::beginPosition(tfo)) << "\t"
+                    << seqan::errorString(tfo) << "\t"
+                    << seqan::guanineRate(tfo) << "\t"
+                    << seqan::duplicates(tfo) << "\t"
+                    << (opts.pretty_output ? seqan::prettyString(tfo) : seqan::outputString(tfo)) << "\t";
+        if (!opts.report_duplicate_locations
+            || seqan::duplicates(tfo) < 1
+            || opts.duplicate_cutoff <= seqan::duplicates(tfo)) {
+            output_file << "-";
+        } else {
+            for (int d = 0; d < seqan::duplicates(tfo); d++) {
+                output_file << tfo_names[seqan::getDuplicateAt(tfo, d).i1] << ":"
+                            << seqan::getDuplicateAt(tfo, d).i2 << "-"
+                            << seqan::getDuplicateAt(tfo, d).i2 + seqan::length(tfo) << ";";
+            }
+        }
+        output_file << "\n";
+    }
+}
+
 #if !defined(_OPENMP)
 void print_triplex_pairs(match_set_t& matches,
                          motif_set_t& tfo_motifs,

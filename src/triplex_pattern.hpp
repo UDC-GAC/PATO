@@ -809,11 +809,12 @@ template <typename THost, typename TString>
 inline CharString
 outputString(ModStringTriplex<THost, TString> & me)
 {
-	typedef ModifiedString<THost, ModView< FunctorTTSMotifOutput > >  TttsMotifOutput;
-	typedef ModifiedString< ModifiedString<THost, ModView< FunctorTTSMotifComplOutput > >, ModReverse>	TttsMotifRevCompOutput;
-	typedef ModifiedString<THost, ModView< FunctorTCMotifOutput > >  TtcMotifOutput;
-	typedef ModifiedString<THost, ModView< FunctorGTMotifOutput > >  TgtMotifOutput;
-	typedef ModifiedString<THost, ModView< FunctorGAMotifOutput > >  TgaMotifOutput;
+	typedef typename Infix<THost>::Type	TSegment;
+	typedef ModifiedString<TSegment, ModView< FunctorTTSMotifOutput > >  TttsMotifOutput;
+	typedef ModifiedString< ModifiedString<TSegment, ModView< FunctorTTSMotifComplOutput > >, ModReverse>	TttsMotifRevCompOutput;
+	typedef ModifiedString<TSegment, ModView< FunctorTCMotifOutput > >  TtcMotifOutput;
+	typedef ModifiedString<TSegment, ModView< FunctorGTMotifOutput > >  TgtMotifOutput;
+	typedef ModifiedString<TSegment, ModView< FunctorGAMotifOutput > >  TgaMotifOutput;
 	
 	if (!me.isTFO){
 		if (me.motif == '+'){
@@ -836,11 +837,12 @@ template <typename THost, typename TString>
 inline CharString const
 outputString(ModStringTriplex<THost, TString> const & me)
 {
-	typedef ModifiedString<THost, ModView< FunctorTTSMotifOutput > >  TttsMotifOutput;
-	typedef ModifiedString< ModifiedString<THost, ModView< FunctorTTSMotifComplOutput > >, ModReverse>	TttsMotifRevCompOutput;
-	typedef ModifiedString<THost, ModView< FunctorTCMotifOutput > >  TtcMotifOutput;
-	typedef ModifiedString<THost, ModView< FunctorGTMotifOutput > >  TgtMotifOutput;
-	typedef ModifiedString<THost, ModView< FunctorGAMotifOutput > >  TgaMotifOutput;
+	typedef typename Infix<THost>::Type	TSegment;
+	typedef ModifiedString<TSegment, ModView< FunctorTTSMotifOutput > >  TttsMotifOutput;
+	typedef ModifiedString< ModifiedString<TSegment, ModView< FunctorTTSMotifComplOutput > >, ModReverse>	TttsMotifRevCompOutput;
+	typedef ModifiedString<TSegment, ModView< FunctorTCMotifOutput > >  TtcMotifOutput;
+	typedef ModifiedString<TSegment, ModView< FunctorGTMotifOutput > >  TgtMotifOutput;
+	typedef ModifiedString<TSegment, ModView< FunctorGAMotifOutput > >  TgaMotifOutput;
 	
 	if (!me.isTFO){
 		if (me.motif == '+'){
