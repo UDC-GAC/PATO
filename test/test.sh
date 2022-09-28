@@ -1,20 +1,23 @@
 #!/bin/bash
 
 export OMP_NUM_THREADS=4
+FLAVOUR=gnu
 
 # Set up
 rm -rf output
 mkdir output
 
-PATO=../target/gnu/pato.serial
-PATO_PAR=../target/gnu/pato.release
+[ $# -gt 0 ] && FLAVOUR=$1
+
+PATO=../target/$FLAVOUR/pato.serial
+PATO_PAR=../target/$FLAVOUR/pato.release
 
 TFO_FILE=input/tfo.fa
 TTS_FILE=input/tts.fa
 
 FAILED=0
 
-echo -e "\033[0;31m!! Warning:\033[0m tests run using the GNU flavour of the tool"
+echo -e "\033[0;31m!! Warning:\033[0m tests run using the GNU flavour of the tool by default"
 
 # Test 0
 printf "Test #0 -- Default run... "
