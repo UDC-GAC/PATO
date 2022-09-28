@@ -52,8 +52,8 @@ fi
 
 # Test 1
 printf "Test #1 -- Default run + Triplex extended format... "
-$PATO -of 1 $TFO_FILE $TTS_FILE output/foo1 1> /dev/null
-$PATO_PAR -of 1 $TFO_FILE $TTS_FILE output/bar1 1> /dev/null
+$PATO -of 1 -ss $TFO_FILE -ds $TTS_FILE -o output/foo1 1> /dev/null
+$PATO_PAR -of 1 -ss $TFO_FILE -ds $TTS_FILE -o output/bar1 1> /dev/null
 
 sort output/foo1.out > output/fuu1.out
 sort output/bar1.out > output/ber1.out
@@ -83,8 +83,8 @@ fi
 
 # Test 2
 printf "Test #2 -- Default run + Purine strand error reference format... "
-$PATO -er 1 $TFO_FILE $TTS_FILE output/foo2 1> /dev/null
-$PATO_PAR -er 1 $TFO_FILE $TTS_FILE output/bar2 1> /dev/null
+$PATO -er 1 -ss $TFO_FILE -ds $TTS_FILE -o output/foo2 1> /dev/null
+$PATO_PAR -er 1 -ss $TFO_FILE -ds $TTS_FILE -o output/bar2 1> /dev/null
 
 sort output/foo2.out > output/fuu2.out
 sort output/bar2.out > output/ber2.out
@@ -114,8 +114,8 @@ fi
 
 # Test 3
 printf "Test #3 -- Default run + Third strand error reference format... "
-$PATO -er 2 $TFO_FILE $TTS_FILE output/foo3 1> /dev/null
-$PATO_PAR -er 2 $TFO_FILE $TTS_FILE output/bar3 1> /dev/null
+$PATO -er 2 -ss $TFO_FILE -ds $TTS_FILE -o output/foo3 1> /dev/null
+$PATO_PAR -er 2 -ss $TFO_FILE -ds $TTS_FILE -o output/bar3 1> /dev/null
 
 sort output/foo3.out > output/fuu3.out
 sort output/bar3.out > output/ber3.out
