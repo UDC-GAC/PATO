@@ -1,150 +1,69 @@
 #!/bin/bash
 
-export OMP_NUM_THREADS=4
-FLAVOUR=gnu
-
 # Set up
-rm -rf output
-mkdir output
+exec 2> /dev/null
 
-[ $# -gt 0 ] && FLAVOUR=$1
+dir=$(dirname -- "$( readlink -f -- "$0"; )";)
 
-PATO=../target/$FLAVOUR/pato.serial
-PATO_PAR=../target/$FLAVOUR/pato.release
+flavour=gnu
+[ $# -gt 0 ] && flavour=$1
 
-TFO_FILE=input/tfo.fa
-TTS_FILE=input/tts.fa
+rm -rf $dir/output
+mkdir $dir/output
 
-FAILED=0
+pato=$dir/../target/$flavour/pato.serial
+pato_par=$dir/../target/$flavour/pato.release
 
-echo -e "\033[0;31m!! Warning:\033[0m tests run using the GNU flavour of the tool by default"
+tfo_file=$dir/input/tfo.fa
+tts_file=$dir/input/tts.fa
 
-# Test 0
-printf "Test #0 -- Default run... "
-$PATO -ss $TFO_FILE -ds $TTS_FILE -o output/foo0 1> /dev/null
-$PATO_PAR -ss $TFO_FILE -ds $TTS_FILE -o output/bar0 1> /dev/null
+failed=0
+counter=0
 
-sort output/foo0.out > output/fuu0.out
-sort output/bar0.out > output/ber0.out
-sort output/foo0.summary > output/fuu0.summary
-sort output/bar0.summary > output/ber0.summary
-sort ref/0.ref.out > output/0.out
-sort ref/0.ref.summary > output/0.summary
+# TFO tests
+declare -a tfo_opts=("" "-l 14 -e 9" "-l 14 -e 10 -g 50 -G 50" "-l 14 -e 0 -m R" "-l 14 -e 0 -m Y" "-l 14 -e 0 -m M" "-e 10 -dl true -dd 1 -dc 2" "-e 10 -dl true -dd 2 -dc 2" "-e 10 -dl true -dd 1 -dc 2 -ssd off")
+declare -a tfo_flags=("" "-po true " "-mf true ")
 
-diff output/fuu0.out output/0.out > output/0.diff
-diff output/ber0.out output/0.out > output/1.diff
-diff output/fuu0.summary output/0.summary > output/2.diff
-diff output/ber0.summary output/0.summary > output/3.diff
+printf "Run mode: TFO search\n"
+for opts in "${tfo_opts[@]}"; do
+    for flags in "${tfo_flags[@]}"; do
+        printf " [      ] Test #${counter} ${flags}${opts}"
 
-RESULT=0
-for i in 0 1 2 3; do
-    NUM_DIFFS=$(wc -l < output/$i.diff)
-    RESULT=$(($RESULT + $NUM_DIFFS))
+        sort $dir/ref/tfo${counter}.out > $dir/output/tfo${counter}.ref.sorted.out
+        sort $dir/ref/tfo${counter}.summary > $dir/output/tfo${counter}.ref.sorted.summary
+
+        $pato $opts $flags -ss $tfo_file -o $dir/output/tfo${counter}.seq 1> /dev/null
+        sort $dir/output/tfo${counter}.seq.out > $dir/output/tfo${counter}.seq.sorted.out
+        sort $dir/output/tfo${counter}.seq.summary > $dir/output/tfo${counter}.seq.sorted.summary
+
+        $pato_par $opts $flags -ss $tfo_file -o $dir/output/tfo${counter}.par 1> /dev/null
+        sort $dir/output/tfo${counter}.par.out > $dir/output/tfo${counter}.par.sorted.out
+        sort $dir/output/tfo${counter}.par.summary > $dir/output/tfo${counter}.par.sorted.summary
+
+        diff $dir/output/tfo${counter}.seq.sorted.out $dir/output/tfo${counter}.ref.sorted.out > $dir/output/tfo${counter}.seq.diff.out
+        diff $dir/output/tfo${counter}.par.sorted.out $dir/output/tfo${counter}.ref.sorted.out > $dir/output/tfo${counter}.par.diff.out
+        diff $dir/output/tfo${counter}.seq.sorted.summary $dir/output/tfo${counter}.ref.sorted.summary > $dir/output/tfo${counter}.seq.diff.summary
+        diff $dir/output/tfo${counter}.par.sorted.summary $dir/output/tfo${counter}.ref.sorted.summary > $dir/output/tfo${counter}.par.diff.summary
+
+        result=0
+        result=$(($result + $(wc -l < $dir/output/tfo${counter}.seq.diff.out)))
+        result=$(($result + $(wc -l < $dir/output/tfo${counter}.par.diff.out)))
+        result=$(($result + $(wc -l < $dir/output/tfo${counter}.seq.diff.summary)))
+        result=$(($result + $(wc -l < $dir/output/tfo${counter}.par.diff.summary)))
+
+        if [[ $result -eq 0 ]]; then
+            printf "\r [  \033[0;32mOK\033[0m  ]\n"
+        else
+            printf "\r [ \033[0;31mFAIL\033[0m ]\n"
+            failed=$(($failed + 1))
+        fi
+
+        counter=$(($counter + 1))
+    done
 done
-
-if [[ $RESULT -eq 0 ]]
-then
-    printf "\033[0;32mOK\033[0m\n"
-else
-    printf "\033[0;31mFAILED\033[0m\n"
-    FAILED=$((FAILED + 1))
-fi
-
-# Test 1
-printf "Test #1 -- Default run + Triplex extended format... "
-$PATO -of 1 -ss $TFO_FILE -ds $TTS_FILE -o output/foo1 1> /dev/null
-$PATO_PAR -of 1 -ss $TFO_FILE -ds $TTS_FILE -o output/bar1 1> /dev/null
-
-sort output/foo1.out > output/fuu1.out
-sort output/bar1.out > output/ber1.out
-sort output/foo1.summary > output/fuu1.summary
-sort output/bar1.summary > output/ber1.summary
-sort ref/1.ref.out > output/1.out
-sort ref/1.ref.summary > output/1.summary
-
-diff output/fuu1.out output/1.out > output/0.diff
-diff output/ber1.out output/1.out > output/1.diff
-diff output/fuu1.summary output/1.summary > output/2.diff
-diff output/ber1.summary output/1.summary > output/3.diff
-
-RESULT=0
-for i in 0 1 2 3; do
-    NUM_DIFFS=$(wc -l < output/$i.diff)
-    RESULT=$(($RESULT + $NUM_DIFFS))
-done
-
-if [[ $RESULT -eq 0 ]]
-then
-    printf "\033[0;32mOK\033[0m\n"
-else
-    printf "\033[0;31mFAILED\033[0m\n"
-    FAILED=$((FAILED + 1))
-fi
-
-# Test 2
-printf "Test #2 -- Default run + Purine strand error reference format... "
-$PATO -er 1 -ss $TFO_FILE -ds $TTS_FILE -o output/foo2 1> /dev/null
-$PATO_PAR -er 1 -ss $TFO_FILE -ds $TTS_FILE -o output/bar2 1> /dev/null
-
-sort output/foo2.out > output/fuu2.out
-sort output/bar2.out > output/ber2.out
-sort output/foo2.summary > output/fuu2.summary
-sort output/bar2.summary > output/ber2.summary
-sort ref/2.ref.out > output/2.out
-sort ref/2.ref.summary > output/2.summary
-
-diff output/fuu2.out output/2.out > output/0.diff
-diff output/ber2.out output/2.out > output/1.diff
-diff output/fuu2.summary output/2.summary > output/2.diff
-diff output/ber2.summary output/2.summary > output/3.diff
-
-RESULT=0
-for i in 0 1 2 3; do
-    NUM_DIFFS=$(wc -l < output/$i.diff)
-    RESULT=$(($RESULT + $NUM_DIFFS))
-done
-
-if [[ $RESULT -eq 0 ]]
-then
-    printf "\033[0;32mOK\033[0m\n"
-else
-    printf "\033[0;31mFAILED\033[0m\n"
-    FAILED=$((FAILED + 1))
-fi
-
-# Test 3
-printf "Test #3 -- Default run + Third strand error reference format... "
-$PATO -er 2 -ss $TFO_FILE -ds $TTS_FILE -o output/foo3 1> /dev/null
-$PATO_PAR -er 2 -ss $TFO_FILE -ds $TTS_FILE -o output/bar3 1> /dev/null
-
-sort output/foo3.out > output/fuu3.out
-sort output/bar3.out > output/ber3.out
-sort output/foo3.summary > output/fuu3.summary
-sort output/bar3.summary > output/ber3.summary
-sort ref/3.ref.out > output/3.out
-sort ref/3.ref.summary > output/3.summary
-
-diff output/fuu3.out output/3.out > output/0.diff
-diff output/ber3.out output/3.out > output/1.diff
-diff output/fuu3.summary output/3.summary > output/2.diff
-diff output/ber3.summary output/3.summary > output/3.diff
-
-RESULT=0
-for i in 0 1 2 3; do
-    NUM_DIFFS=$(wc -l < output/$i.diff)
-    RESULT=$(($RESULT + $NUM_DIFFS))
-done
-
-if [[ $RESULT -eq 0 ]]
-then
-    printf "\033[0;32mOK\033[0m\n"
-else
-    printf "\033[0;31mFAILED\033[0m\n"
-    FAILED=$((FAILED + 1))
-fi
 
 # Clean up
-rm -rf output
+rm -rf $dir/output
 
 # Check if failed
 if [[ $FAILED -gt 0 ]]
