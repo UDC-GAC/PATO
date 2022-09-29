@@ -14,5 +14,5 @@ jobs:
           run: make clang BUILD=serial LDLIBS="-lrt" -j 4 && make clang BUILD=release LDLIBS="-lrt" -j 4
           working-directory: ${{ github.workspace }}
         - name: run tests
-          run: bash test.sh clang
+          run: bash test.bash clang
           working-directory: ${{ github.workspace }}/test

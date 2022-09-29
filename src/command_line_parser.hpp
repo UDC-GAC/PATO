@@ -66,9 +66,9 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("b", "minimum-block-run", "Required number of consecutive matches.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("a", "all-matches", "Process and report all sub-matches in addition to the longest match.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("dd", "detect-duplicates", "Indicates whether and how duplicates should be detected [0,1,2].", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("ssd", "same-sequence-duplicates", "Whether to count a feature copy in the same sequence as duplicate or not.", seqan::ArgParseOption::STRING));
+    seqan::addOption(parser, seqan::ArgParseOption("ssd", "same-sequence-duplicates", "Whether to count a feature copy in the same sequence as duplicate or not.", seqan::ArgParseOption::BOOL));
     seqan::addSection(parser, "Filtering options");
-    seqan::addOption(parser, seqan::ArgParseOption("fr", "filter-repeats", "Disregards repeated and low-complex regions if enabled.", seqan::ArgParseOption::STRING));
+    seqan::addOption(parser, seqan::ArgParseOption("fr", "filter-repeats", "Disregards repeated and low-complex regions if enabled.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("mrl", "minimum-repeat-length", "Minimum length requirement for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("mrp", "maximum-repeat-period", "Maximum repeat period for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("dc", "duplicate-cutoff", "Disregard feature if it occurs more often than this cutoff (disable with -1).", seqan::ArgParseOption::INTEGER));
@@ -95,8 +95,8 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::setDefaultValue(parser, "b", 1);
     seqan::setDefaultValue(parser, "a", false);
     seqan::setDefaultValue(parser, "dd", 0);
-    seqan::setDefaultValue(parser, "ssd", "on");
-    seqan::setDefaultValue(parser, "fr", "on");
+    seqan::setDefaultValue(parser, "ssd", true);
+    seqan::setDefaultValue(parser, "fr", true);
     seqan::setDefaultValue(parser, "mrl", 10);
     seqan::setDefaultValue(parser, "mrp", 4);
     seqan::setDefaultValue(parser, "dc", -1);
@@ -123,28 +123,19 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::getOptionValue(opts.mixed_parallel_max_guanine, parser, "mpmg");
     seqan::getOptionValue(opts.mixed_antiparallel_min_guanine, parser, "mamg");
     seqan::getOptionValue(opts.min_block_run, parser, "b");
+    seqan::getOptionValue(opts.all_matches, parser, "a");
     seqan::getOptionValue(opts.detect_duplicates, parser, "dd");
+    seqan::getOptionValue(opts.same_sequence_duplicates, parser, "ssd");
+    seqan::getOptionValue(opts.filter_repeats, parser, "fr");
     seqan::getOptionValue(opts.min_repeat_length, parser, "mrl");
     seqan::getOptionValue(opts.max_repeat_period, parser, "mrp");
     seqan::getOptionValue(opts.duplicate_cutoff, parser, "dc");
     seqan::getOptionValue(opts.output_file, parser, "o");
     seqan::getOptionValue(opts.error_reference, parser, "er");
     seqan::getOptionValue(opts.output_format, parser, "of");
-
-    opts.all_matches = seqan::isSet(parser, "a");
-    opts.pretty_output = seqan::isSet(parser, "po");
-    opts.report_duplicate_locations = seqan::isSet(parser, "dl");
-    opts.merge_features = seqan::isSet(parser, "mf");
-
-    auto is_flag_set = [&parser](const std::string& name) -> bool {
-        std::string value;
-        seqan::getOptionValue(value, parser, name);
-        return value == "on" || value == "yes" || value == "ON" || value == "1"
-               || value == "YES" || value == "true" || value == "TRUE";
-    };
-
-    opts.filter_repeats = is_flag_set("fr");
-    opts.same_sequence_duplicates = is_flag_set("ssd");
+    seqan::getOptionValue(opts.pretty_output, parser, "po");
+    seqan::getOptionValue(opts.report_duplicate_locations, parser, "dl");
+    seqan::getOptionValue(opts.merge_features, parser, "mf");
 
     // motifs
     std::string motifs;
