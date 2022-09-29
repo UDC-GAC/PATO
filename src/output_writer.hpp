@@ -7,6 +7,9 @@
 void print_tfo_motifs(motif_set_t& tfo_motifs,
                       name_set_t& tfo_names,
                       const options& opts);
+void print_tfo_potentials(motif_potential_set_t& tfo_potentials,
+                          name_set_t& tfo_names,
+                          const options& opts);
 
 #if !defined(_OPENMP)
 void print_triplex_pairs(match_set_t& matches,

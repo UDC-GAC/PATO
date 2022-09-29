@@ -303,7 +303,8 @@ void find_triplexes(const options& opts)
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
-    if (!find_tfo_motifs(tfo_motifs, tfo_sequences, tfo_names, opts)) {
+    motif_potential_set_t tfo_potentials;
+    if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
 

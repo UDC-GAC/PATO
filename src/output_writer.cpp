@@ -280,6 +280,40 @@ void print_tfo_motifs(motif_set_t& tfo_motifs,
     }
 }
 
+void print_tfo_potentials(motif_potential_set_t& tfo_potentials,
+                          name_set_t& tfo_names,
+                          const options& opts)
+{
+    seqan::CharString output_file_name;
+    seqan::append(output_file_name, opts.output_file);
+    seqan::append(output_file_name, ".summary");
+
+    std::ofstream output_file(seqan::toCString(output_file_name),
+                              std::ios_base::out);
+    if (!output_file) {
+        std::cerr << "PATO: error opening output file '"
+                  << seqan::toCString(output_file_name) << "'\n";
+        return;
+    }
+
+    output_file << "# Sequence-ID\tTFOs (abs)\tTFOs (rel)\tGA (abs)\tGA (rel)\t"
+                   "TC (abs)\tTC (rel)\tGT (abs)\tGT (rel)\n";
+    for (auto& potential : tfo_potentials) {
+        if (seqan::hasCount(potential)) {
+            output_file << tfo_names[seqan::getKey(potential)] << "\t"
+                        << seqan::getCounts(potential) << "\t"
+                        << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential) << "\t"
+                        << seqan::getCount(potential, 'R') << "\t"
+                        << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
+                        << seqan::getCount(potential, 'Y') << "\t"
+                        << std::setprecision(3) << seqan::getCount(potential, 'Y') / seqan::getNorm(potential) << "\t"
+                        << seqan::getCount(potential, 'M') << "\t"
+                        << std::setprecision(3) << seqan::getCount(potential, 'M') /seqan:: getNorm(potential) << "\t"
+                        << "\n";
+        }
+    }
+}
+
 #if !defined(_OPENMP)
 void print_triplex_pairs(match_set_t& matches,
                          motif_set_t& tfo_motifs,

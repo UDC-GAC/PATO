@@ -72,6 +72,7 @@ typedef typename seqan::Infix<triplex_t>::Type segment_t;
 typedef seqan::ModifiedString<motif_t, seqan::ModView<seqan::FunctorRYFilter>> filter_t;
 typedef seqan::TriplexMatch<seqan::Difference<seqan::TriplexString>::Type, unsigned int, double> match_t;
 typedef seqan::TriplexPotential<std::pair<unsigned int, unsigned int>> potential_t;
+typedef seqan::TriplexPotential<unsigned int> motif_potential_t;
 
 typedef std::vector<triplex_t> triplex_set_t;
 typedef std::vector<seqan::CharString> name_set_t;
@@ -82,6 +83,7 @@ typedef std::vector<char> char_set_t;
 typedef std::vector<char_set_t> char_set_set_t;
 typedef std::vector<match_t> match_set_t;
 typedef std::vector<unsigned int> index_set_t;
+typedef std::vector<motif_potential_t> motif_potential_set_t;
 typedef std::unordered_map<std::pair<unsigned int, unsigned int>, potential_t, pair_hash_t> potential_set_t;
 
 #if defined(_OPENMP)

@@ -6,6 +6,7 @@
 
 #include <seqan/parallel/parallel_macros.h>
 
+#include "triplex_match.hpp"
 #include "output_writer.hpp"
 #include "repeat_filter.hpp"
 #include "guanine_filter.hpp"
@@ -23,8 +24,10 @@ struct tfo_arguments
 
 #if !defined(_OPENMP)
     motif_set_t& motifs;
+    motif_potential_set_t& potentials;
 #else
     motif_set_t motifs;
+    motif_potential_set_t potentials;
 #endif
 
     char_set_set_t block_runs;
@@ -35,8 +38,11 @@ struct tfo_arguments
     filter_arguments filter_args;
 
 #if !defined(_OPENMP)
-    explicit tfo_arguments(motif_set_t& _motifs)
-        : motifs(_motifs), filter_args(motifs, block_runs, encoded_seq)
+    explicit tfo_arguments(motif_set_t& _motifs,
+                           motif_potential_set_t& _potentials)
+        : motifs(_motifs),
+          potentials(_potentials),
+          filter_args(motifs, block_runs, encoded_seq)
     {
         filter_args.filter_char = 'G';
         filter_args.interrupt_char = 'N';
@@ -74,6 +80,11 @@ void find_tfo_motifs(triplex_t& sequence,
                      tfo_arguments& tfo_args,
                      const options& opts)
 {
+    motif_potential_t potential(id);
+
+    unsigned int matches_y, matches_r, matches_m;
+    matches_y = matches_r = matches_m = 0;
+
     // TC motif
     if (opts.tc_motif) {
         parse_segments(tfo_args.tc_parser,
@@ -86,10 +97,10 @@ void find_tfo_motifs(triplex_t& sequence,
 
         for (auto& segment : tfo_args.segments) {
             motif_t motif(segment, true, id, true, 'Y');
-            filter_guanine_error_rate(motif,
-                                      tfo_args.filter_args,
-                                      pyrimidine_motif_t(),
-                                      opts);
+            matches_y += filter_guanine_error_rate(motif,
+                                                   tfo_args.filter_args,
+                                                   pyrimidine_motif_t(),
+                                                   opts);
         }
         tfo_args.segments.clear();
     }
@@ -106,10 +117,10 @@ void find_tfo_motifs(triplex_t& sequence,
 
         for (auto& segment : tfo_args.segments) {
             motif_t motif(segment, false, id, true, 'R');
-            filter_guanine_error_rate(motif,
-                                      tfo_args.filter_args,
-                                      purine_motif_t(),
-                                      opts);
+            matches_r += filter_guanine_error_rate(motif,
+                                                   tfo_args.filter_args,
+                                                   purine_motif_t(),
+                                                   opts);
         }
         tfo_args.segments.clear();
     }
@@ -135,10 +146,10 @@ void find_tfo_motifs(triplex_t& sequence,
                  || tfo_args.filter_args.ornt == orientation::parallel)
                 && opts.mixed_parallel_max_guanine >= opts.min_guanine_rate) {
                 motif_t motif(segment, true, id, true, 'M');
-                filter_guanine_error_rate(motif,
-                                          tfo_args.filter_args,
-                                          mixed_motif_t(),
-                                          opts);
+                matches_m += filter_guanine_error_rate(motif,
+                                                       tfo_args.filter_args,
+                                                       mixed_motif_t(),
+                                                       opts);
             }
             if ((tfo_args.filter_args.ornt == orientation::both
                  || tfo_args.filter_args.ornt == orientation::antiparallel)
@@ -152,9 +163,20 @@ void find_tfo_motifs(triplex_t& sequence,
         }
         tfo_args.segments.clear();
     }
+
+    if (opts.run_mode == 0) {
+        seqan::addCount(potential, matches_y, 'Y');
+        seqan::addCount(potential, matches_r, 'R');
+        seqan::addCount(potential, matches_m, 'M');
+
+        seqan::setNorm(potential, seqan::length(sequence), opts);
+
+        tfo_args.potentials.push_back(potential);
+    }
 }
 
 bool find_tfo_motifs(motif_set_t& motifs,
+                     motif_potential_set_t& potentials,
                      triplex_set_t& sequences,
                      name_set_t& names,
                      const options& opts)
@@ -173,7 +195,7 @@ bool find_tfo_motifs(motif_set_t& motifs,
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
-    tfo_arguments tfo_args(motifs);
+    tfo_arguments tfo_args(motifs, potentials);
 #else
     tfo_arguments tfo_args;
 #endif
@@ -195,11 +217,18 @@ bool find_tfo_motifs(motif_set_t& motifs,
     }
 
 #if defined(_OPENMP)
-#pragma omp critical
+#pragma omp critical (motifs)
 {
     motifs.reserve(motifs.size() + tfo_args.motifs.size());
     std::move(tfo_args.motifs.begin(), tfo_args.motifs.end(), std::back_inserter(motifs));
 } // #pragma omp critical
+    if (opts.run_mode == 0) {
+#pragma omp critical (potentials)
+{
+        potentials.reserve(potentials.size() + tfo_args.potentials.size());
+        std::move(tfo_args.potentials.begin(), tfo_args.potentials.end(), std::back_inserter(potentials));
+} // #pragma omp critical
+    }
 #endif
 } // #pragma omp parallel
 
@@ -221,9 +250,11 @@ void find_tfos(const options& opts)
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
-    if (!find_tfo_motifs(tfo_motifs, tfo_sequences, tfo_names, opts)) {
+    motif_potential_set_t tfo_potentials;
+    if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
 
     print_tfo_motifs(tfo_motifs, tfo_names, opts);
+    print_tfo_potentials(tfo_potentials, tfo_names, opts);
 }
