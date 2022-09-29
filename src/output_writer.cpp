@@ -220,34 +220,63 @@ void print_tfo_motifs(motif_set_t& tfo_motifs,
                        "s\n";
     }
 
-    // TODO: FASTA format
+    unsigned int counter = 1;
     for (auto& tfo : tfo_motifs) {
-        if (opts.output_format == output_format::bed && tfo.motif == '-') {
-            continue;
+        switch (opts.output_format) {
+            case output_format::bed:
+                if (tfo.motif == '-') {
+                    continue;
+                }
+                output_file << tfo_names[seqan::getSequenceNo(tfo)] << "\t"
+                            << seqan::beginPosition(tfo) << "\t"
+                            << seqan::endPosition(tfo) << "\t"
+                            << seqan::score(tfo) << "\t"
+                            << tfo.motif << "\t"
+                            << std::setprecision(2) << 1.0 - seqan::score(tfo) / (seqan::endPosition(tfo) - seqan::beginPosition(tfo)) << "\t"
+                            << seqan::errorString(tfo) << "\t"
+                            << seqan::guanineRate(tfo) << "\t"
+                            << seqan::duplicates(tfo) << "\t"
+                            << (opts.pretty_output ? seqan::prettyString(tfo) : seqan::outputString(tfo)) << "\t";
+                if (!opts.report_duplicate_locations
+                    || seqan::duplicates(tfo) < 1
+                    || opts.duplicate_cutoff <= seqan::duplicates(tfo)) {
+                    output_file << "-";
+                } else {
+                    for (int d = 0; d < seqan::duplicates(tfo); d++) {
+                        output_file << tfo_names[seqan::getDuplicateAt(tfo, d).i1] << ":"
+                                    << seqan::getDuplicateAt(tfo, d).i2 << "-"
+                                    << seqan::getDuplicateAt(tfo, d).i2 + seqan::length(tfo) << ";";
+                    }
+                }
+                output_file << "\n";
+                break;
+            case output_format::triplex:
+                output_file << ">"
+                            << tfo_names[seqan::getSequenceNo(tfo)] << "_"
+                            << counter++ << "\t"
+                            << seqan::beginPosition(tfo) << "-"
+                            << seqan::endPosition(tfo) << " "
+                            << tfo.motif << "\t"
+                            << seqan::score(tfo) << "\t"
+                            << seqan::errorString(tfo) << "\t"
+                            << seqan::duplicates(tfo) << "\t"
+                            << seqan::guanineRate(tfo) << "\t";
+                if (!opts.report_duplicate_locations
+                    || seqan::duplicates(tfo) < 1
+                    || opts.duplicate_cutoff <= seqan::duplicates(tfo)) {
+                    output_file << "-";
+                } else {
+                    for (int d = 0; d < seqan::duplicates(tfo); d++) {
+                        output_file << tfo_names[seqan::getDuplicateAt(tfo, d).i1] << ":"
+                                    << seqan::getDuplicateAt(tfo, d).i2 << "-"
+                                    << seqan::getDuplicateAt(tfo, d).i2 + seqan::length(tfo) << ";";
+                    }
+                }
+                output_file << "\n"
+                            << (opts.pretty_output ? seqan::prettyString(tfo) : seqan::outputString(tfo))
+                            << "\n";
+                break;
         }
-
-        output_file << tfo_names[seqan::getSequenceNo(tfo)] << "\t"
-                    << seqan::beginPosition(tfo) << "\t"
-                    << seqan::endPosition(tfo) << "\t"
-                    << seqan::score(tfo) << "\t"
-                    << tfo.motif << "\t"
-                    << std::setprecision(2) << 1.0 - seqan::score(tfo) / (seqan::endPosition(tfo) - seqan::beginPosition(tfo)) << "\t"
-                    << seqan::errorString(tfo) << "\t"
-                    << seqan::guanineRate(tfo) << "\t"
-                    << seqan::duplicates(tfo) << "\t"
-                    << (opts.pretty_output ? seqan::prettyString(tfo) : seqan::outputString(tfo)) << "\t";
-        if (!opts.report_duplicate_locations
-            || seqan::duplicates(tfo) < 1
-            || opts.duplicate_cutoff <= seqan::duplicates(tfo)) {
-            output_file << "-";
-        } else {
-            for (int d = 0; d < seqan::duplicates(tfo); d++) {
-                output_file << tfo_names[seqan::getDuplicateAt(tfo, d).i1] << ":"
-                            << seqan::getDuplicateAt(tfo, d).i2 << "-"
-                            << seqan::getDuplicateAt(tfo, d).i2 + seqan::length(tfo) << ";";
-            }
-        }
-        output_file << "\n";
     }
 }
 
