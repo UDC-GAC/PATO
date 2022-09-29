@@ -224,9 +224,6 @@ void print_tfo_motifs(motif_set_t& tfo_motifs,
     for (auto& tfo : tfo_motifs) {
         switch (opts.output_format) {
             case output_format::bed:
-                if (tfo.motif == '-') {
-                    continue;
-                }
                 output_file << tfo_names[seqan::getSequenceNo(tfo)] << "\t"
                             << seqan::beginPosition(tfo) << "\t"
                             << seqan::endPosition(tfo) << "\t"
