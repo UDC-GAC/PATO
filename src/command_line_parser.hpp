@@ -80,8 +80,8 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("dl", "duplicate-locations", "Report the location of duplicates", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("mf", "merge-features", "Merge overlapping features into a cluster and report the spanning region.", seqan::ArgParseOption::BOOL));
 
-    seqan::setDefaultValue(parser, "ss", "");
-    seqan::setDefaultValue(parser, "ds", "");
+    seqan::setDefaultValue(parser, "ss", "(null)");
+    seqan::setDefaultValue(parser, "ds", "(null)");
     seqan::setDefaultValue(parser, "l", 16);
     seqan::setDefaultValue(parser, "L", 30);
     seqan::setDefaultValue(parser, "e", 5.0);
@@ -143,7 +143,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     parse_motifs(opts, motifs);
 
     // check options
-    if (seqan::empty(opts.tfo_file) && seqan::empty(opts.tts_file)) {
+    if (opts.tfo_file == "(null)" && opts.tts_file == "(null)") {
         std::cerr << "PATO: at least one type of input file has to be supplied\n";
         return false;
     }
@@ -203,9 +203,9 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     }
 
     // prepare options
-    if (seqan::empty(opts.tts_file)) {
+    if (opts.tts_file == "(null)") {
         opts.run_mode = 0;
-    } else if (seqan::empty(opts.tfo_file)) {
+    } else if (opts.tfo_file == "(null)") {
         opts.run_mode = 1;
     } else {
         opts.run_mode = 2;

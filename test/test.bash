@@ -23,8 +23,8 @@ total=0
 printf "\e[1mPATO: PArallel TriplexatOr\e[0m -- Test suite\n\n"
 
 # TFO tests
-declare -a tfo_opts=("" "-l 14 -e 9" "-l 14 -e 10 -g 50 -G 50" "-l 14 -e 0 -m R" "-l 14 -e 0 -m Y" "-l 14 -e 0 -m M" "-e 10 -dl true -dd 1 -dc 2" "-e 10 -dl true -dd 2 -dc 2" "-e 10 -dl true -dd 1 -dc 2 -ssd false")
-declare -a tfo_flags=("" "-po true " "-mf true ")
+declare -a tfo_opts=("" "-l 12 -L 34" "-l 12 -L 34 -e 10" "-l 14 -L 28 -e 9 -E 5" "-c 3 -g 5 -G 50" "-b 3" "-a true" "-e 2 -mrl 4" "-e 2 -mrl 7 -mrp 1" "-e 10 -dd 1 -dc 2" "-e 10 -dd 2 -dc 2" "-e 10 -dd 1 -dc 2 -dl true" "-e 10 -dd 2 -dc 2 -dl true")
+declare -a tfo_flags=("" "-po true " "-mf true " "-fr false " "-mf true -fr false " "-ssd off ")
 
 fails=0
 counter=0
@@ -70,8 +70,8 @@ total=$(($total + $counter))
 printf "         \e[1mRun:\e[0m ${counter} \e[1mOK\e[0m: $(($counter - $fails)) \e[1mFAIL:\e[0m ${fails}\n\n"
 
 # TTS tests
-declare -a tts_opts=("" "-l 14 -e 9" "-e 10 -dd 1 -dc 0" "-l 14 -e 20 -mrl 4 -mrp 1" "-e 10 -dl true -dd 1 -dc 2 -ssd false" "-e 10 -dl true -dd 2 -dc 2")
-declare -a tts_flags=("" "-po true " "-mf true ")
+declare -a tts_opts=("" "-l 12 -L 34" "-l 12 -L 34 -e 10" "-l 14 -L 28 -e 9 -E 5" "-c 3 -g 5 -G 50" "-b 3" "-a true" "-e 2 -mrl 4" "-e 2 -mrl 7 -mrp 1" "-e 10 -dd 1 -dc 2" "-e 10 -dd 2 -dc 2" "-e 10 -dd 1 -dc 2 -dl true" "-e 10 -dd 2 -dc 2 -dl true")
+declare -a tts_flags=("" "-po true " "-mf true " "-fr off " "-mf true -fr off " "-ssd off ")
 
 fails=0
 counter=0
@@ -118,7 +118,7 @@ printf "         \e[1mRun:\e[0m ${counter} \e[1mOK\e[0m: $(($counter - $fails)) 
 
 # TPX tests
 declare -a tpx_opts=("" "-er 0" "-er 1" "-er 2" "-dd 1 -dc 2" "-e 10 -dd 2 -dc 3") 
-declare -a tpx_flags=("" "-po true " "-of 1 " "-po true -of 1 ")
+declare -a tpx_flags=("" "-po true " "-of 1 " "-po true -of 1 " "-fr false " "-ssd false ")
 
 fails=0
 counter=0
