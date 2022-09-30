@@ -69,6 +69,53 @@ done
 total=$(($total + $counter))
 printf "         \e[1mRun:\e[0m ${counter} \e[1mOK\e[0m: $(($counter - $fails)) \e[1mFAIL:\e[0m ${fails}\n\n"
 
+# TTS tests
+declare -a tts_opts=("" "-l 14 -e 9" "-e 10 -dd 1 -dc 0" "-l 14 -e 20 -mrl 4 -mrp 1" "-e 10 -dl true -dd 1 -dc 2 -ssd false" "-e 10 -dl true -dd 2 -dc 2")
+declare -a tts_flags=("" "-po true " "-mf true ")
+
+fails=0
+counter=0
+printf "         \e[1mTTS search\e[0m\n"
+for opts in "${tts_opts[@]}"; do
+    for flags in "${tts_flags[@]}"; do
+        printf "\e[1m[  --  ]\e[0m Test #${counter} ${flags}${opts}"
+
+        sort $dir/ref/tts${counter}.out > $dir/output/tts${counter}.ref.sorted.out
+        sort $dir/ref/tts${counter}.summary > $dir/output/tts${counter}.ref.sorted.summary
+
+        $pato $opts $flags -ds $tts_file -o $dir/output/tts${counter}.seq 1> /dev/null
+        sort $dir/output/tts${counter}.seq.out > $dir/output/tts${counter}.seq.sorted.out
+        sort $dir/output/tts${counter}.seq.summary > $dir/output/tts${counter}.seq.sorted.summary
+
+        $pato_par $opts $flags -ds $tts_file -o $dir/output/tts${counter}.par 1> /dev/null
+        sort $dir/output/tts${counter}.par.out > $dir/output/tts${counter}.par.sorted.out
+        sort $dir/output/tts${counter}.par.summary > $dir/output/tts${counter}.par.sorted.summary
+
+        diff $dir/output/tts${counter}.seq.sorted.out $dir/output/tts${counter}.ref.sorted.out > $dir/output/tts${counter}.seq.diff.out
+        diff $dir/output/tts${counter}.par.sorted.out $dir/output/tts${counter}.ref.sorted.out > $dir/output/tts${counter}.par.diff.out
+        diff $dir/output/tts${counter}.seq.sorted.summary $dir/output/tts${counter}.ref.sorted.summary > $dir/output/tts${counter}.seq.diff.summary
+        diff $dir/output/tts${counter}.par.sorted.summary $dir/output/tts${counter}.ref.sorted.summary > $dir/output/tts${counter}.par.diff.summary
+
+        result=0
+        result=$(($result + $(wc -l < $dir/output/tts${counter}.seq.diff.out)))
+        result=$(($result + $(wc -l < $dir/output/tts${counter}.par.diff.out)))
+        result=$(($result + $(wc -l < $dir/output/tts${counter}.seq.diff.summary)))
+        result=$(($result + $(wc -l < $dir/output/tts${counter}.par.diff.summary)))
+
+        if [[ $result -eq 0 ]]; then
+            printf "\r\e[1m[  \033[0;32mOK\033[0m  \e[1m]\e[0m\n"
+        else
+            printf "\r\e[1m[ \033[0;31mFAIL\033[0m \e[1m]\e[0m\n"
+            failed=$(($failed + 1))
+            fails=$((fails + 1))
+        fi
+
+        counter=$(($counter + 1))
+    done
+done
+total=$(($total + $counter))
+printf "         \e[1mRun:\e[0m ${counter} \e[1mOK\e[0m: $(($counter - $fails)) \e[1mFAIL:\e[0m ${fails}\n\n"
+
 # TPX tests
 declare -a tpx_opts=("" "-er 0" "-er 1" "-er 2" "-dd 1 -dc 2" "-e 10 -dd 2 -dc 3") 
 declare -a tpx_flags=("" "-po true " "-of 1 " "-po true -of 1 ")
