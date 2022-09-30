@@ -100,5 +100,9 @@ typedef typename seqan::Position<motif_t>::Type duplicate_pos_t;
 typedef typename seqan::Id<motif_t>::Type duplicate_id_t;
 typedef seqan::SeqPos<duplicate_id_t, duplicate_pos_t> duplicate_t;
 typedef seqan::Map<duplicate_t, seqan::Skiplist<>> duplicate_map_t;
+typedef typename seqan::Host<motif_t>::Type host_t;
+typedef typename seqan::Infix<host_t>::Type host_infix_t;
+typedef typename seqan::Value<motif_t>::Type host_value_t;
+typedef seqan::ModifiedString<seqan::ModifiedString<host_infix_t, seqan::ModView<seqan::FunctorComplement<host_value_t>>>, seqan::ModReverse> mod_rev_t;
 
 #endif

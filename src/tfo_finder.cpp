@@ -80,8 +80,6 @@ void find_tfo_motifs(triplex_t& sequence,
                      tfo_arguments& tfo_args,
                      const options& opts)
 {
-    motif_potential_t potential(id);
-
     unsigned int matches_y, matches_r, matches_m;
     matches_y = matches_r = matches_m = 0;
 
@@ -165,6 +163,8 @@ void find_tfo_motifs(triplex_t& sequence,
     }
 
     if (opts.run_mode == 0) {
+        motif_potential_t potential(id);
+
         seqan::addCount(potential, matches_y, 'Y');
         seqan::addCount(potential, matches_r, 'R');
         seqan::addCount(potential, matches_m, 'M');
@@ -245,7 +245,7 @@ bool find_tfo_motifs(motif_set_t& motifs,
     return true;
 }
 
-void find_tfos(const options& opts)
+void find_tfo_motifs(const options& opts)
 {
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
@@ -255,6 +255,6 @@ void find_tfos(const options& opts)
         return;
     }
 
-    print_tfo_motifs(tfo_motifs, tfo_names, opts);
-    print_tfo_potentials(tfo_potentials, tfo_names, opts);
+    print_motifs(tfo_motifs, tfo_names, opts);
+    print_summary(tfo_potentials, tfo_names, opts);
 }

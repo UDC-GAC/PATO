@@ -194,9 +194,9 @@ seqan::CharString triplex_error_string(match_t& match,
     return errors.str();
 }
 
-void print_tfo_motifs(motif_set_t& tfo_motifs,
-                      name_set_t& tfo_names,
-                      const options& opts)
+void print_motifs(motif_set_t& motifs,
+                  name_set_t& names,
+                  const options& opts)
 {
     if (opts.output_format == output_format::summary) {
         return;
@@ -215,71 +215,78 @@ void print_tfo_motifs(motif_set_t& tfo_motifs,
     }
 
     if (opts.output_format == output_format::bed) {
-        output_file << "# Sequence-ID\tStart\tEnd\tScore\tMotif\tError-rate\tEr"
-                       "rors\tGuanine-rate\tDuplicates\tTFO\tDuplicate location"
-                       "s\n";
+        if (opts.run_mode == 0) {
+            output_file << "# Sequence-ID\tStart\tEnd\tScore\tMotif\tError-rate"
+                           "\tErrors\tGuanine-rate\tDuplicates\tTFO\tDuplicate "
+                           "locations\n";
+        } else {
+            output_file << "# Duplex-ID\tStart\tEnd\tScore\tStrand\tError-rate"
+                           "\tErrors\tGuanine-rate\tDuplicates\tTTS\tDuplicate "
+                           "locations\n";
+        }
+
     }
 
     unsigned int counter = 1;
-    for (auto& tfo : tfo_motifs) {
+    for (auto& m : motifs) {
         switch (opts.output_format) {
             case output_format::bed:
-                output_file << tfo_names[seqan::getSequenceNo(tfo)] << "\t"
-                            << seqan::beginPosition(tfo) << "\t"
-                            << seqan::endPosition(tfo) << "\t"
-                            << seqan::score(tfo) << "\t"
-                            << tfo.motif << "\t"
-                            << std::setprecision(2) << 1.0 - seqan::score(tfo) / (seqan::endPosition(tfo) - seqan::beginPosition(tfo)) << "\t"
-                            << seqan::errorString(tfo) << "\t"
-                            << seqan::guanineRate(tfo) << "\t"
-                            << seqan::duplicates(tfo) << "\t"
-                            << (opts.pretty_output ? seqan::prettyString(tfo) : seqan::outputString(tfo)) << "\t";
+                output_file << names[seqan::getSequenceNo(m)] << "\t"
+                            << seqan::beginPosition(m) << "\t"
+                            << seqan::endPosition(m) << "\t"
+                            << seqan::score(m) << "\t"
+                            << m.motif << "\t"
+                            << std::setprecision(2) << 1.0 - seqan::score(m) / (seqan::endPosition(m) - seqan::beginPosition(m)) << "\t"
+                            << seqan::errorString(m) << "\t"
+                            << seqan::guanineRate(m) << "\t"
+                            << seqan::duplicates(m) << "\t"
+                            << (opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m)) << "\t";
                 if (!opts.report_duplicate_locations
-                    || seqan::duplicates(tfo) < 1
-                    || opts.duplicate_cutoff <= seqan::duplicates(tfo)) {
+                    || seqan::duplicates(m) < 1
+                    || opts.duplicate_cutoff <= seqan::duplicates(m)) {
                     output_file << "-";
                 } else {
-                    for (int d = 0; d < seqan::duplicates(tfo); d++) {
-                        output_file << tfo_names[seqan::getDuplicateAt(tfo, d).i1] << ":"
-                                    << seqan::getDuplicateAt(tfo, d).i2 << "-"
-                                    << seqan::getDuplicateAt(tfo, d).i2 + seqan::length(tfo) << ";";
+                    for (int d = 0; d < seqan::duplicates(m); d++) {
+                        output_file << names[seqan::getDuplicateAt(m, d).i1] << ":"
+                                    << seqan::getDuplicateAt(m, d).i2 << "-"
+                                    << seqan::getDuplicateAt(m, d).i2 + seqan::length(m) << ";";
                     }
                 }
                 output_file << "\n";
                 break;
             case output_format::triplex:
                 output_file << ">"
-                            << tfo_names[seqan::getSequenceNo(tfo)] << "_"
+                            << names[seqan::getSequenceNo(m)] << "_"
                             << counter++ << "\t"
-                            << seqan::beginPosition(tfo) << "-"
-                            << seqan::endPosition(tfo) << " "
-                            << tfo.motif << "\t"
-                            << seqan::score(tfo) << "\t"
-                            << seqan::errorString(tfo) << "\t"
-                            << seqan::duplicates(tfo) << "\t"
-                            << seqan::guanineRate(tfo) << "\t";
+                            << seqan::beginPosition(m) << "-"
+                            << seqan::endPosition(m) << " "
+                            << m.motif << "\t"
+                            << seqan::score(m) << "\t"
+                            << seqan::errorString(m) << "\t"
+                            << seqan::duplicates(m) << "\t"
+                            << seqan::guanineRate(m) << "\t";
                 if (!opts.report_duplicate_locations
-                    || seqan::duplicates(tfo) < 1
-                    || opts.duplicate_cutoff <= seqan::duplicates(tfo)) {
+                    || seqan::duplicates(m) < 1
+                    || opts.duplicate_cutoff <= seqan::duplicates(m)) {
                     output_file << "-";
                 } else {
-                    for (int d = 0; d < seqan::duplicates(tfo); d++) {
-                        output_file << tfo_names[seqan::getDuplicateAt(tfo, d).i1] << ":"
-                                    << seqan::getDuplicateAt(tfo, d).i2 << "-"
-                                    << seqan::getDuplicateAt(tfo, d).i2 + seqan::length(tfo) << ";";
+                    for (int d = 0; d < seqan::duplicates(m); d++) {
+                        output_file << names[seqan::getDuplicateAt(m, d).i1] << ":"
+                                    << seqan::getDuplicateAt(m, d).i2 << "-"
+                                    << seqan::getDuplicateAt(m, d).i2 + seqan::length(m) << ";";
                     }
                 }
                 output_file << "\n"
-                            << (opts.pretty_output ? seqan::prettyString(tfo) : seqan::outputString(tfo))
+                            << (opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m))
                             << "\n";
                 break;
         }
     }
 }
 
-void print_tfo_potentials(motif_potential_set_t& tfo_potentials,
-                          name_set_t& tfo_names,
-                          const options& opts)
+void print_summary(motif_potential_set_t& potentials,
+                   name_set_t& names,
+                   const options& opts)
 {
     seqan::CharString output_file_name;
     seqan::append(output_file_name, opts.output_file);
@@ -293,20 +300,27 @@ void print_tfo_potentials(motif_potential_set_t& tfo_potentials,
         return;
     }
 
-    output_file << "# Sequence-ID\tTFOs (abs)\tTFOs (rel)\tGA (abs)\tGA (rel)\t"
-                   "TC (abs)\tTC (rel)\tGT (abs)\tGT (rel)\n";
-    for (auto& potential : tfo_potentials) {
+    if (opts.run_mode == 0) {
+        output_file << "# Sequence-ID\tTFOs (abs)\tTFOs (rel)\tGA (abs)\tGA (rel)\t"
+                    "TC (abs)\tTC (rel)\tGT (abs)\tGT (rel)\n";
+    } else {
+        output_file << "# Duplex-ID\tTTSs (abs)\tTTSs (rel)\n";
+    }
+
+    for (auto& potential : potentials) {
         if (seqan::hasCount(potential)) {
-            output_file << tfo_names[seqan::getKey(potential)] << "\t"
+            output_file << names[seqan::getKey(potential)] << "\t"
                         << seqan::getCounts(potential) << "\t"
-                        << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential) << "\t"
-                        << seqan::getCount(potential, 'R') << "\t"
-                        << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
-                        << seqan::getCount(potential, 'Y') << "\t"
-                        << std::setprecision(3) << seqan::getCount(potential, 'Y') / seqan::getNorm(potential) << "\t"
-                        << seqan::getCount(potential, 'M') << "\t"
-                        << std::setprecision(3) << seqan::getCount(potential, 'M') /seqan:: getNorm(potential) << "\t"
-                        << "\n";
+                        << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential);
+            if (opts.run_mode == 0) {
+                output_file << "\t" << seqan::getCount(potential, 'R') << "\t"
+                            << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
+                            << seqan::getCount(potential, 'Y') << "\t"
+                            << std::setprecision(3) << seqan::getCount(potential, 'Y') / seqan::getNorm(potential) << "\t"
+                            << seqan::getCount(potential, 'M') << "\t"
+                            << std::setprecision(3) << seqan::getCount(potential, 'M') /seqan:: getNorm(potential) << "\t";
+            }
+            output_file << "\n";
         }
     }
 }

@@ -9,6 +9,6 @@ bool find_tfo_motifs(motif_set_t& motifs,
                      triplex_set_t& sequences,
                      name_set_t& names,
                      const options& opts);
-void find_tfos(const options& opts);
+void find_tfo_motifs(const options& opts);
 
 #endif

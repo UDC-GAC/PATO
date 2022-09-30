@@ -4,15 +4,26 @@
 
 #include <seqan/map.h>
 #include <seqan/index.h>
+#include <seqan/sequence.h>
+
+#include "triplex_pattern.hpp"
 
 void count_duplicates(motif_set_t& motifs, const options& opts)
 {
     triplex_string_set_t strings;
-    for (auto& motif : motifs) {
-        if (opts.detect_duplicates == duplicate::permissive) {
-            seqan::appendValue(strings, seqan::tfoString(motif));
-        } else {
-            seqan::appendValue(strings, seqan::ttsString(motif));
+    if (opts.run_mode == 1 && opts.detect_duplicates == duplicate::permissive) {
+        for (auto& motif : motifs) {
+            if (seqan::getMotif(motif) == '+') {
+                seqan::appendValue(strings, seqan::getSegment(motif));
+            } else {
+                seqan::appendValue(strings, mod_rev_t(seqan::getSegment(motif)));
+            }
+        }
+    } else {
+        for (auto& motif : motifs) {
+            seqan::appendValue(strings, opts.detect_duplicates == duplicate::permissive
+                                        ? seqan::tfoString(motif)
+                                        : seqan::ttsString(motif));
         }
     }
     index_t index(strings);
@@ -24,10 +35,21 @@ void count_duplicates(motif_set_t& motifs, const options& opts)
 
         int copies = 0;
         finder_t finder(index);
-        while (seqan::find(finder,
-                           opts.detect_duplicates == duplicate::permissive
-                           ? seqan::tfoString(motif)
-                           : seqan::ttsString(motif))) {
+
+        triplex_t pattern;
+        if (opts.run_mode == 1 && opts.detect_duplicates == duplicate::permissive) {
+            if (seqan::getMotif(motif) == '+') {
+                pattern = seqan::getSegment(motif);
+            } else {
+                pattern = mod_rev_t(seqan::getSegment(motif));
+            }
+        } else {
+            pattern = opts.detect_duplicates == duplicate::permissive
+                      ? seqan::tfoString(motif)
+                      : seqan::ttsString(motif);
+        }
+
+        while (seqan::find(finder, pattern)) {
             auto& tmp_motif = motifs[seqan::position(finder).i1];
 
             if (!opts.same_sequence_duplicates
@@ -35,8 +57,10 @@ void count_duplicates(motif_set_t& motifs, const options& opts)
                 continue;
             }
 
-            duplicate_t pos(seqan::getSequenceNo(tmp_motif),
-                            seqan::beginPosition(tmp_motif) + seqan::position(finder).i2);
+            duplicate_pos_t pos_value = seqan::getMotif(tmp_motif) == '-'
+                                        ? seqan::endPosition(tmp_motif) - seqan::position(finder).i2 - seqan::length(motif)
+                                        : seqan::beginPosition(tmp_motif) + seqan::position(finder).i2;
+            duplicate_t pos(seqan::getSequenceNo(tmp_motif), pos_value);
             if (pos != identity && !seqan::hasKey(duplicates, pos)) {
                 copies++;
                 seqan::add(duplicates, pos);

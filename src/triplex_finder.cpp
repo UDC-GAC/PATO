@@ -311,7 +311,8 @@ void find_triplexes(const options& opts)
     name_set_t tts_names;
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
-    if (!find_tts_motifs(tts_motifs, tts_sequences, tts_names, opts)) {
+    motif_potential_set_t tts_potentials;
+    if (!find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts)) {
         return;
     }
 
