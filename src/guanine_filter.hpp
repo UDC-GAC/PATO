@@ -5,6 +5,7 @@
 #include <algorithm>
 
 #include "options.hpp"
+#include "triplex_enums.hpp"
 #include "triplex_pattern.hpp"
 #include "motif_set_reducer.hpp"
 #include "triplex_definitions.hpp"
@@ -16,7 +17,7 @@ struct filter_arguments
     char_set_set_t& block_runs;
     char_set_set_t& encoded_seq;
 
-    orientation ornt;
+    orientation_t ornt;
 
     bool reduce_set;
 
@@ -97,7 +98,7 @@ bool is_interrupt_char(char_set_set_t& encoded_seq, unsigned int pos);
 
 template <typename tag_t>
 bool motif_specific_constraint(__attribute__((unused)) double filter_rate,
-                               __attribute__((unused)) orientation ornt,
+                               __attribute__((unused)) orientation_t ornt,
                                __attribute__((unused)) const tag_t& tag,
                                __attribute__((unused)) const options& opts)
 {
@@ -105,7 +106,7 @@ bool motif_specific_constraint(__attribute__((unused)) double filter_rate,
 }
 
 bool motif_specific_constraint(double filter_rate,
-                               orientation ornt,
+                               orientation_t ornt,
                                const mixed_motif_t& tag,
                                const options& opts);
 

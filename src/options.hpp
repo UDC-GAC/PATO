@@ -3,6 +3,8 @@
 
 #include <seqan/sequence.h>
 
+#include "triplex_enums.hpp"
+
 struct options
 {
     seqan::CharString tfo_file;
@@ -20,14 +22,15 @@ struct options
     int maximal_error;
     int duplicate_cutoff;
 
-    unsigned int run_mode;
     unsigned int min_block_run;
-    unsigned int output_format;
-    unsigned int error_reference;
     unsigned int min_repeat_length;
     unsigned int max_repeat_period;
     unsigned int max_interruptions;
-    unsigned int detect_duplicates;
+
+    run_mode_t run_mode;
+    output_format_t output_format;
+    error_reference_t error_reference;
+    detect_duplicates_t detect_duplicates;
 
     bool tc_motif;
     bool ga_motif;

@@ -6,12 +6,14 @@
 #include <seqan/index.h>
 #include <seqan/sequence.h>
 
+#include "triplex_enums.hpp"
 #include "triplex_pattern.hpp"
 
 void count_duplicates(motif_set_t& motifs, const options& opts)
 {
     triplex_string_set_t strings;
-    if (opts.run_mode == 1 && opts.detect_duplicates == duplicate::permissive) {
+    if (opts.run_mode == run_mode_t::tts_search
+        && opts.detect_duplicates == detect_duplicates_t::permissive) {
         for (auto& motif : motifs) {
             if (seqan::getMotif(motif) == '+') {
                 seqan::appendValue(strings, seqan::getSegment(motif));
@@ -21,7 +23,7 @@ void count_duplicates(motif_set_t& motifs, const options& opts)
         }
     } else {
         for (auto& motif : motifs) {
-            seqan::appendValue(strings, opts.detect_duplicates == duplicate::permissive
+            seqan::appendValue(strings, opts.detect_duplicates == detect_duplicates_t::permissive
                                         ? seqan::tfoString(motif)
                                         : seqan::ttsString(motif));
         }
@@ -37,14 +39,15 @@ void count_duplicates(motif_set_t& motifs, const options& opts)
         finder_t finder(index);
 
         triplex_t pattern;
-        if (opts.run_mode == 1 && opts.detect_duplicates == duplicate::permissive) {
+        if (opts.run_mode == run_mode_t::tts_search
+            && opts.detect_duplicates == detect_duplicates_t::permissive) {
             if (seqan::getMotif(motif) == '+') {
                 pattern = seqan::getSegment(motif);
             } else {
                 pattern = mod_rev_t(seqan::getSegment(motif));
             }
         } else {
-            pattern = opts.detect_duplicates == duplicate::permissive
+            pattern = opts.detect_duplicates == detect_duplicates_t::permissive
                       ? seqan::tfoString(motif)
                       : seqan::ttsString(motif);
         }
@@ -73,6 +76,7 @@ void count_duplicates(motif_set_t& motifs, const options& opts)
         seqan::duplicates(motif, copies);
 
         if (opts.report_duplicate_locations
+            && opts.run_mode != run_mode_t::tpx_search
             && opts.duplicate_cutoff >= 0
             && copies <= opts.duplicate_cutoff) {
             for (auto& duplicate : duplicates) {

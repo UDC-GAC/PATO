@@ -6,6 +6,7 @@
 
 #include <seqan/parallel/parallel_macros.h>
 
+#include "triplex_enums.hpp"
 #include "triplex_match.hpp"
 #include "output_writer.hpp"
 #include "repeat_filter.hpp"
@@ -43,7 +44,7 @@ struct tts_arguments
           potentials(_potentials),
           filter_args(motifs, block_runs, encoded_seq)
     {
-        filter_args.ornt = orientation::both;
+        filter_args.ornt = orientation_t::both;
         filter_args.filter_char = 'G';
         filter_args.interrupt_char = 'Y';
         filter_args.reduce_set = true;
@@ -51,7 +52,7 @@ struct tts_arguments
 #else
     tts_arguments() : filter_args(motifs, block_runs, encoded_seq)
     {
-        filter_args.ornt = orientation::both;
+        filter_args.ornt = orientation_t::both;
         filter_args.filter_char = 'G';
         filter_args.interrupt_char = 'Y';
         filter_args.reduce_set = true;
@@ -112,7 +113,7 @@ void find_tts_motifs(triplex_t& sequence,
     }
     tts_args.segments.clear();
 
-    if (opts.run_mode == 1) {
+    if (opts.run_mode == run_mode_t::tts_search) {
         motif_potential_t potential(id);
 
         seqan::addCount(potential, matches_plus, '+');
@@ -148,7 +149,7 @@ bool find_tts_motifs(motif_set_t& motifs,
 #else
     tts_arguments tts_args;
 #endif
-    if (opts.run_mode == 1) {
+    if (opts.run_mode == run_mode_t::tts_search) {
         tts_args.filter_args.reduce_set = opts.merge_features;
     }
 
@@ -171,7 +172,7 @@ bool find_tts_motifs(motif_set_t& motifs,
     motifs.reserve(motifs.size() + tts_args.motifs.size());
     std::move(tts_args.motifs.begin(), tts_args.motifs.end(), std::back_inserter(motifs));
 } // #pragma omp critical
-    if (opts.run_mode == 1) {
+    if (opts.run_mode == run_mode_t::tts_search) {
 #pragma omp critical (potentials)
 {
         potentials.reserve(potentials.size() + tts_args.potentials.size());
@@ -181,7 +182,8 @@ bool find_tts_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    if (opts.run_mode == 1 && opts.detect_duplicates != duplicate::off) {
+    if (opts.run_mode == run_mode_t::tts_search
+        && opts.detect_duplicates != detect_duplicates_t::off) {
         count_duplicates(motifs, opts);
         if (opts.duplicate_cutoff >= 0) {
             filter_duplicates(motifs, opts.duplicate_cutoff);

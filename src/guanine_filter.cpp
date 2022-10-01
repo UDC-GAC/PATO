@@ -32,14 +32,14 @@ bool is_interrupt_char(char_set_set_t& encoded_seq, unsigned int pos)
 }
 
 bool motif_specific_constraint(double filter_rate,
-                               orientation ornt,
+                               orientation_t ornt,
                                const mixed_motif_t& tag,
                                const options& opts)
 {
-    if (ornt != orientation::parallel
+    if (ornt != orientation_t::parallel
         && filter_rate >= opts.mixed_antiparallel_min_guanine) {
         return true;
-    } else if (ornt != orientation::antiparallel
+    } else if (ornt != orientation_t::antiparallel
                && filter_rate <= opts.mixed_parallel_max_guanine) {
         return true;
     }

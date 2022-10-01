@@ -9,6 +9,7 @@
 #include <seqan/modifier.h>
 #include <seqan/sequence.h>
 
+#include "triplex_enums.hpp"
 #include "triplex_match.hpp"
 #include "triplex_pattern.hpp"
 
@@ -124,11 +125,11 @@ seqan::CharString triplex_error_string(match_t& match,
     seqan::CharString tfo_ps = seqan::prettyString(tfo_motif);
     seqan::CharString tts_ps = seqan::prettyString(tts_motif);
 
-    if (opts.error_reference == error_reference::purine_strand) {
+    if (opts.error_reference == error_reference_t::purine_strand) {
         if (!tfo_motifs[match.tfoNo].parallel) {
             seqan::reverse(tfo_ps);
         }
-    } else if (opts.error_reference == error_reference::third_strand) {
+    } else if (opts.error_reference == error_reference_t::third_strand) {
         if (!tfo_motifs[match.tfoNo].parallel) {
             seqan::reverse(tts_ps);
         }
@@ -151,9 +152,9 @@ seqan::CharString triplex_error_string(match_t& match,
     auto tfo_end = seqan::end(tfo_motif);
     unsigned int i = 0;
 
-    if (opts.error_reference == error_reference::purine_strand
-        || (opts.error_reference == error_reference::watson_strand && match.strand == '+')
-        || (opts.error_reference == error_reference::third_strand && tfo_motifs[match.tfoNo].parallel)) {
+    if (opts.error_reference == error_reference_t::purine_strand
+        || (opts.error_reference == error_reference_t::watson_strand && match.strand == '+')
+        || (opts.error_reference == error_reference_t::third_strand && tfo_motifs[match.tfoNo].parallel)) {
         while (tts_it != tts_end && tfo_it != tfo_end) {
             if (*tts_it != *tfo_it) {
                 if (!isupper(seqan::value(tts_ps, i))
@@ -198,7 +199,7 @@ void print_motifs(motif_set_t& motifs,
                   name_set_t& names,
                   const options& opts)
 {
-    if (opts.output_format == output_format::summary) {
+    if (opts.output_format == output_format_t::summary) {
         return;
     }
 
@@ -214,8 +215,8 @@ void print_motifs(motif_set_t& motifs,
         return;
     }
 
-    if (opts.output_format == output_format::bed) {
-        if (opts.run_mode == 0) {
+    if (opts.output_format == output_format_t::bed) {
+        if (opts.run_mode == run_mode_t::tfo_search) {
             output_file << "# Sequence-ID\tStart\tEnd\tScore\tMotif\tError-rate"
                            "\tErrors\tGuanine-rate\tDuplicates\tTFO\tDuplicate "
                            "locations\n";
@@ -230,7 +231,7 @@ void print_motifs(motif_set_t& motifs,
     unsigned int counter = 1;
     for (auto& m : motifs) {
         switch (opts.output_format) {
-            case output_format::bed:
+            case output_format_t::bed:
                 output_file << names[seqan::getSequenceNo(m)] << "\t"
                             << seqan::beginPosition(m) << "\t"
                             << seqan::endPosition(m) << "\t"
@@ -254,7 +255,7 @@ void print_motifs(motif_set_t& motifs,
                 }
                 output_file << "\n";
                 break;
-            case output_format::triplex:
+            case output_format_t::triplex:
                 output_file << ">"
                             << names[seqan::getSequenceNo(m)] << "_"
                             << counter++ << "\t"
@@ -280,6 +281,8 @@ void print_motifs(motif_set_t& motifs,
                             << (opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m))
                             << "\n";
                 break;
+            default:
+                break;
         }
     }
 }
@@ -300,7 +303,7 @@ void print_summary(motif_potential_set_t& potentials,
         return;
     }
 
-    if (opts.run_mode == 0) {
+    if (opts.run_mode == run_mode_t::tfo_search) {
         output_file << "# Sequence-ID\tTFOs (abs)\tTFOs (rel)\tGA (abs)\tGA (rel)\t"
                     "TC (abs)\tTC (rel)\tGT (abs)\tGT (rel)\n";
     } else {
@@ -312,7 +315,7 @@ void print_summary(motif_potential_set_t& potentials,
             output_file << names[seqan::getKey(potential)] << "\t"
                         << seqan::getCounts(potential) << "\t"
                         << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential);
-            if (opts.run_mode == 0) {
+            if (opts.run_mode == run_mode_t::tfo_search) {
                 output_file << "\t" << seqan::getCount(potential, 'R') << "\t"
                             << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
                             << seqan::getCount(potential, 'Y') << "\t"
@@ -341,7 +344,7 @@ void print_triplex_pairs(match_set_set_t& matches,
                          const options& opts)
 #endif
 {
-    if (opts.output_format == output_format::summary) {
+    if (opts.output_format == output_format_t::summary) {
         return;
     }
 
@@ -382,7 +385,7 @@ void print_triplex_pairs(match_set_set_t& matches,
                         << match.strand << "\t"
                         << (match.parallel ? 'P' : 'A') << "\t"
                         << match.guanines / (match.dEnd - match.dBegin);
-            if (opts.output_format == output_format::triplex) {
+            if (opts.output_format == output_format_t::triplex) {
                 output_file << triplex_alignment_string(match, tfo_motifs, tts_motifs);
             }
             output_file << "\n";

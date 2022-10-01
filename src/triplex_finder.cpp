@@ -10,6 +10,7 @@
 
 #include "tfo_finder.hpp"
 #include "tts_finder.hpp"
+#include "triplex_enums.hpp"
 #include "output_writer.hpp"
 #include "segment_parser.hpp"
 #include "guanine_filter.hpp"
@@ -46,7 +47,7 @@ struct tpx_arguments
           potentials(_potentials),
           filter_args(tpx_motifs, block_runs, encoded_seq)
     {
-        filter_args.ornt = orientation::both;
+        filter_args.ornt = orientation_t::both;
         filter_args.filter_char = 'G';
         filter_args.interrupt_char = 'Y';
         filter_args.reduce_set = false;
@@ -60,7 +61,7 @@ struct tpx_arguments
                   const options& opts)
         : matches(_matches), filter_args(tpx_motifs, block_runs, encoded_seq)
     {
-        filter_args.ornt = orientation::both;
+        filter_args.ornt = orientation_t::both;
         filter_args.filter_char = 'G';
         filter_args.interrupt_char = 'Y';
         filter_args.reduce_set = false;

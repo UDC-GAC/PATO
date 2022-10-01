@@ -6,6 +6,7 @@
 
 #include <seqan/parallel/parallel_macros.h>
 
+#include "triplex_enums.hpp"
 #include "triplex_match.hpp"
 #include "output_writer.hpp"
 #include "repeat_filter.hpp"
@@ -91,7 +92,7 @@ void find_tfo_motifs(triplex_t& sequence,
                        opts.max_interruptions,
                        opts.min_length);
 
-        tfo_args.filter_args.ornt = orientation::parallel;
+        tfo_args.filter_args.ornt = orientation_t::parallel;
 
         for (auto& segment : tfo_args.segments) {
             motif_t motif(segment, true, id, true, 'Y');
@@ -111,7 +112,7 @@ void find_tfo_motifs(triplex_t& sequence,
                        opts.max_interruptions,
                        opts.min_length);
 
-        tfo_args.filter_args.ornt = orientation::antiparallel;
+        tfo_args.filter_args.ornt = orientation_t::antiparallel;
 
         for (auto& segment : tfo_args.segments) {
             motif_t motif(segment, false, id, true, 'R');
@@ -131,17 +132,18 @@ void find_tfo_motifs(triplex_t& sequence,
                        opts.max_interruptions,
                        opts.min_length);
 
-        if (opts.gt_a_motif && opts.gt_p_motif && opts.run_mode != 0) {
-            tfo_args.filter_args.ornt = orientation::both;
-        } else if (opts.gt_p_motif || opts.run_mode == 0) {
-            tfo_args.filter_args.ornt = orientation::parallel;
+        if (opts.gt_a_motif && opts.gt_p_motif
+            && opts.run_mode != run_mode_t::tfo_search) {
+            tfo_args.filter_args.ornt = orientation_t::both;
+        } else if (opts.gt_p_motif || opts.run_mode == run_mode_t::tfo_search) {
+            tfo_args.filter_args.ornt = orientation_t::parallel;
         } else {
-            tfo_args.filter_args.ornt = orientation::antiparallel;
+            tfo_args.filter_args.ornt = orientation_t::antiparallel;
         }
 
         for (auto& segment : tfo_args.segments) {
-            if ((tfo_args.filter_args.ornt == orientation::both
-                 || tfo_args.filter_args.ornt == orientation::parallel)
+            if ((tfo_args.filter_args.ornt == orientation_t::both
+                 || tfo_args.filter_args.ornt == orientation_t::parallel)
                 && opts.mixed_parallel_max_guanine >= opts.min_guanine_rate) {
                 motif_t motif(segment, true, id, true, 'M');
                 matches_m += filter_guanine_error_rate(motif,
@@ -149,8 +151,8 @@ void find_tfo_motifs(triplex_t& sequence,
                                                        mixed_motif_t(),
                                                        opts);
             }
-            if ((tfo_args.filter_args.ornt == orientation::both
-                 || tfo_args.filter_args.ornt == orientation::antiparallel)
+            if ((tfo_args.filter_args.ornt == orientation_t::both
+                 || tfo_args.filter_args.ornt == orientation_t::antiparallel)
                 && opts.mixed_antiparallel_min_guanine <= opts.max_guanine_rate) {
                 motif_t motif(segment, false, id, true, 'M');
                 filter_guanine_error_rate(motif,
@@ -162,7 +164,7 @@ void find_tfo_motifs(triplex_t& sequence,
         tfo_args.segments.clear();
     }
 
-    if (opts.run_mode == 0) {
+    if (opts.run_mode == run_mode_t::tfo_search) {
         motif_potential_t potential(id);
 
         seqan::addCount(potential, matches_y, 'Y');
@@ -199,7 +201,7 @@ bool find_tfo_motifs(motif_set_t& motifs,
 #else
     tfo_arguments tfo_args;
 #endif
-    if (opts.run_mode == 0) {
+    if (opts.run_mode == run_mode_t::tfo_search) {
         tfo_args.filter_args.reduce_set = opts.merge_features;
     }
 
@@ -222,7 +224,7 @@ bool find_tfo_motifs(motif_set_t& motifs,
     motifs.reserve(motifs.size() + tfo_args.motifs.size());
     std::move(tfo_args.motifs.begin(), tfo_args.motifs.end(), std::back_inserter(motifs));
 } // #pragma omp critical
-    if (opts.run_mode == 0) {
+    if (opts.run_mode == run_mode_t::tfo_search) {
 #pragma omp critical (potentials)
 {
         potentials.reserve(potentials.size() + tfo_args.potentials.size());
@@ -232,7 +234,7 @@ bool find_tfo_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    if (opts.detect_duplicates != duplicate::off) {
+    if (opts.detect_duplicates != detect_duplicates_t::off) {
         count_duplicates(motifs, opts);
         if (opts.duplicate_cutoff >= 0) {
             filter_duplicates(motifs, opts.duplicate_cutoff);
