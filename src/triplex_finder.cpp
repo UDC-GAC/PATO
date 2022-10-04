@@ -128,13 +128,13 @@ void search_triplex(motif_t& tfo_motif,
         int match_length = std::min(tts_length - tts_offset,
                                     tfo_length - tfo_offset);
 
-        int score = 0;
+        int match_score = 0;
         for (int i = 0; i < match_length; i++) {
             if (tfo_candidate[tfo_offset + i] == tts_candidate[tts_offset + i]) {
-                score++;
+                match_score++;
             }
         }
-        if (score < tpx_args.min_score) {
+        if (match_score < tpx_args.min_score) {
             continue;
         }
 

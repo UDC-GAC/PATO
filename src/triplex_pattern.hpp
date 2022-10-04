@@ -61,7 +61,6 @@ public:
 	TDuplicates duplicates;
 	
 	void _updateMaskString(){
-		
 		if (!isTFO){
 			if (motif == '+')
 				mask_string = TttsMotif(segment);
@@ -85,14 +84,6 @@ public:
 //____________________________________________________________________________
 
 public:
-
-	ModStringTriplex():
-		mask_string(""),
-		segment()
-	{
-	}
-	
-	
 	ModStringTriplex(typename Parameter_<THost>::Type _host, 
 					 bool _parallel_orientation, 
 					 unsigned _seqNo, 
@@ -104,7 +95,8 @@ public:
 		seqNo(_seqNo),
 		copies(-1),
 		isTFO(_isTFO),
-		motif(_motif)
+		motif(_motif),
+		score(0.0)
 	{
 		_updateMaskString();
 	}
@@ -120,7 +112,8 @@ public:
 		seqNo(_seqNo),
 		copies(-1),
 		isTFO(_isTFO),
-		motif(_motif)
+		motif(_motif),
+		score(0.0)
 	{
 		_updateMaskString();
 	}
@@ -139,7 +132,8 @@ public:
 		seqNo(_seqNo),
 		copies(-1),
 		isTFO(_isTFO),
-		motif(_motif)
+		motif(_motif),
+		score(0.0)
 	{
 		_updateMaskString();
 	}
@@ -157,7 +151,8 @@ public:
 		seqNo(_seqNo),
 		copies(_copies),
 		isTFO(_isTFO),
-		motif(_motif)
+		motif(_motif),
+		score(0.0)
 	{
 		_updateMaskString();
 	}
@@ -175,7 +170,8 @@ public:
 		seqNo(_seqNo),
 		copies(_copies),
 		isTFO(_isTFO),
-		motif(_motif)
+		motif(_motif),
+		score(0.0)
 	{
 		_updateMaskString();
 	}
