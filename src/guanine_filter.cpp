@@ -66,7 +66,7 @@ void add_match(motif_set_t& motifs,
                       seqan::getMotif(motif));
     seqan::setScore(tmp_motif, end - start - errors);
 
-    motifs.push_back(tmp_motif);
+    motifs.push_back(std::move(tmp_motif));
 }
 
 void add_match(motif_set_t& motifs,
@@ -119,5 +119,5 @@ void add_match(motif_set_t& motifs,
                       seqan::getMotif(motif));
     seqan::setScore(tmp_motif, end - start - errors);
 
-    motifs.push_back(tmp_motif);
+    motifs.push_back(std::move(tmp_motif));
 }
