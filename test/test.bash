@@ -24,7 +24,7 @@ failed=0
 printf "\e[1mPATO: PArallel TriplexatOr\e[0m -- Test suite\n\n"
 
 # tfo tests
-declare -a tfo_length_args=("" "-l 10 -L 14" "-l 10 -L -1")
+declare -a tfo_length_args=("" "-l 10 -L 14")
 declare -a tfo_error_args=("" "-e 8 -E 10 -c 3 -g 50 -G 70")
 declare -a tfo_match_args=("" "-b 3 -a on")
 declare -a tfo_filter_args=("" "-fr off")
@@ -90,7 +90,7 @@ total=$(($total + $counter))
 failed=$(($failed + $fails))
 
 # tts tests
-declare -a tts_length_args=("" "-l 10 -L 14" "-l 10 -L -1")
+declare -a tts_length_args=("" "-l 10 -L 14")
 declare -a tts_error_args=("" "-e 8 -E 10 -c 3 -g 50 -G 70")
 declare -a tts_match_args=("" "-b 3 -a on")
 declare -a tts_filter_args=("" "-fr off")
@@ -156,13 +156,13 @@ total=$(($total + $counter))
 failed=$(($failed + $fails))
 
 # tpx tests
-declare -a tpx_length_args=("" "-l 10 -L 14" "-l 10 -L -1")
+declare -a tpx_length_args=("" "-l 10 -L 14")
 declare -a tpx_error_args=("" "-e 8 -E 10 -c 3 -g 50 -G 70")
 declare -a tpx_match_args=("" "-b 3 -a on")
 declare -a tpx_filter_args=("" "-fr off")
 declare -a tpx_duplicate_args=("" "-dd 1 -dc 2" "-dd 2 -dc 2 -ssd off")
-declare -a tpx_merge_args=("" "-e 1" "-e 2")
-declare -a tpx_output_args=("" "-po on" "-of 1" "-po on -of 1")
+declare -a tpx_merge_args=("" "-er 1" "-er 2")
+declare -a tpx_output_args=("" "-of 1")
 
 fails=0
 counter=0
