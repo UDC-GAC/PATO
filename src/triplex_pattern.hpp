@@ -95,8 +95,7 @@ public:
 		seqNo(_seqNo),
 		copies(-1),
 		isTFO(_isTFO),
-		motif(_motif),
-		score(0.0)
+		motif(_motif)
 	{
 		_updateMaskString();
 	}
@@ -112,8 +111,7 @@ public:
 		seqNo(_seqNo),
 		copies(-1),
 		isTFO(_isTFO),
-		motif(_motif),
-		score(0.0)
+		motif(_motif)
 	{
 		_updateMaskString();
 	}
@@ -132,8 +130,7 @@ public:
 		seqNo(_seqNo),
 		copies(-1),
 		isTFO(_isTFO),
-		motif(_motif),
-		score(0.0)
+		motif(_motif)
 	{
 		_updateMaskString();
 	}
@@ -151,8 +148,7 @@ public:
 		seqNo(_seqNo),
 		copies(_copies),
 		isTFO(_isTFO),
-		motif(_motif),
-		score(0.0)
+		motif(_motif)
 	{
 		_updateMaskString();
 	}
@@ -170,14 +166,9 @@ public:
 		seqNo(_seqNo),
 		copies(_copies),
 		isTFO(_isTFO),
-		motif(_motif),
-		score(0.0)
+		motif(_motif)
 	{
 		_updateMaskString();
-	}
-
-	~ ModStringTriplex()
-	{
 	}
 
 	template <typename TSource>
