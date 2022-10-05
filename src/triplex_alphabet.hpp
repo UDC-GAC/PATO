@@ -1,3 +1,37 @@
+// ==========================================================================
+//                                triplexator
+// ==========================================================================
+// Copyright (c) 2011,2012, Fabian Buske, UQ
+// All rights reserved.
+//
+// Redistribution and use in source and binary forms, with or without
+// modification, are permitted provided that the following conditions are met:
+//
+//     * Redistributions of source code must retain the above copyright
+//       notice, this list of conditions and the following disclaimer.
+//     * Redistributions in binary form must reproduce the above copyright
+//       notice, this list of conditions and the following disclaimer in the
+//       documentation and/or other materials provided with the distribution.
+//     * Neither the name of Fabian Buske or the University of Queensland nor 
+//       the names of its contributors may be used to endorse or promote products 
+//       derived from this software without specific prior written permission.
+//
+// THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+// AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+// IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+// ARE DISCLAIMED. IN NO EVENT SHALL KNUT REINERT OR THE FU BERLIN BE LIABLE
+// FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+// DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+// SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+// CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+// LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+// OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
+// DAMAGE.
+//
+// ==========================================================================
+// Author: Fabian Buske <fbuske@uq.edu.au>
+// ==========================================================================
+
 #ifndef TRIPLEX_ALPHABET_HPP
 #define TRIPLEX_ALPHABET_HPP
 
@@ -19,8 +53,6 @@ struct TranslateTableTriplex2Ascii_
 template <typename T>
 char const TranslateTableTriplex2Ascii_<T>::VALUE[9] = {'A', 'C', 'G', 'T', 'R', 'Y', 'K', 'M', 'N'};
 
-
-//____________________________________________________________________________
 template <typename T = void>
 struct TranslateTableDna2Triplex_
 {
@@ -34,8 +66,6 @@ char const TranslateTableDna2Triplex_<T>::VALUE[4] =
 	'2', //'G'
 	'3'  //'T'
 };
-
-//____________________________________________________________________________
 
 template <typename T = void>
 struct TranslateTableDna52Triplex_
@@ -51,8 +81,6 @@ char const TranslateTableDna52Triplex_<T>::VALUE[5] =
 	'3', //'T'
 	'8'  //'N'
 };
-
-//____________________________________________________________________________
 
 template <typename T = void>
 struct TranslateTableIupac2Triplex_
@@ -79,9 +107,6 @@ char const TranslateTableIupac2Triplex_<T>::VALUE[16] =
 	8, //'V' = non-T
 	8  //'N' = any
 };
-
-//____________________________________________________________________________
-
 
 template <typename T = void>
 struct TranslateTableAscii2Triplex_
@@ -118,8 +143,6 @@ char const TranslateTableAscii2Triplex_<T>::VALUE[256] =
 	8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8  //15
 };
 
-//____________________________________________________________________________
-
 template <typename T = void>
 struct TranslateTableByte2Triplex_
 {
@@ -145,11 +168,6 @@ template <typename T>
 	8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8,   8  //15
 };
 
-//____________________________________________________________________________
-
-
-//____________________________________________________________________________
-
 template <typename T = void>
 struct TranslateTableDnaRY2Ascii_
 {
@@ -158,7 +176,6 @@ struct TranslateTableDnaRY2Ascii_
 template <typename T>
 	char const TranslateTableDnaRY2Ascii_<T>::VALUE[3] = {'R', 'Y', 'N'};
 
-//____________________________________________________________________________
 template <typename T = void>
 struct TranslateTableDna2DnaRY_
 {
@@ -172,8 +189,6 @@ template <typename T>
 	'0', //'G'
 	'1'  //'T'
 };
-
-//____________________________________________________________________________
 
 template <typename T = void>
 struct TranslateTableDna52DnaRY_
@@ -189,8 +204,6 @@ template <typename T>
 	'1', //'T'
 	'2'  //'N'
 };
-
-//____________________________________________________________________________
 
 template <typename T = void>
 struct TranslateTableIupac2DnaRY_
@@ -217,9 +230,6 @@ template <typename T>
 	2, //'V' = non-T
 	2  //'N' = any
 };
-
-//____________________________________________________________________________
-
 
 template <typename T = void>
 struct TranslateTableAscii2DnaRY_
@@ -256,9 +266,6 @@ template <typename T>
 	2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2  //15
 };
 
-//____________________________________________________________________________
-
-
 template <typename T = void>
 struct TranslateTableByte2DnaRY_
 {
@@ -284,8 +291,6 @@ template <typename T>
 	2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   4  //15
 };
 
-//____________________________________________________________________________
-
 template <typename T = void>
 struct TranslateTableDnaKM2Ascii_
 {
@@ -293,8 +298,6 @@ struct TranslateTableDnaKM2Ascii_
 };
 template <typename T>
 	char const TranslateTableDnaKM2Ascii_<T>::VALUE[3] = {'K', 'M', 'N'};
-
-//____________________________________________________________________________
 
 template <typename T = void>
 struct TranslateTableDna2DnaKM_
@@ -310,8 +313,6 @@ template <typename T>
 	'0'  //'T'
 };
 
-//____________________________________________________________________________
-
 template <typename T = void>
 struct TranslateTableDna52DnaKM_
 {
@@ -326,8 +327,6 @@ template <typename T>
 	'0', //'T'
 	'2'  //'N'
 };
-
-//____________________________________________________________________________
 
 template <typename T = void>
 struct TranslateTableIupac2DnaKM_
@@ -354,9 +353,6 @@ template <typename T>
 	2, //'V' = non-T
 	2  //'N' = any
 };
-
-//____________________________________________________________________________
-
 
 template <typename T = void>
 struct TranslateTableAscii2DnaKM_
@@ -393,9 +389,6 @@ template <typename T>
 	2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2  //15
 };
 
-//____________________________________________________________________________
-
-
 template <typename T = void>
 struct TranslateTableByte2DnaKM_
 {
@@ -421,26 +414,6 @@ template <typename T>
 	2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   2,   4  //15
 };
 
-
-//////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////
-
-/**
-.Spec.Triplex:
-..cat:Alphabets
-..summary:Alphabet for DNA (shortened version of Iupac format) with purines (R), pyrimidines (Y) and GT (K), AC (M)  and  'N' character.
-..general:Class.SimpleType
-..signature:DnaRY
-..remarks:
-...text:The @Metafunction.ValueSize@ of $DnaRY$ is 9.
-The nucleotides are enumerated this way: $'A' = 0, 'C' = 1, 'G' = 2, 'T' = 3, 'R' = 4, 'Y' = 5, 'K' = 6, 'M' = 7$.
-The 'N' character ("unkown nucleotide") is encoded by 8.
-...text:Objects of type $Triplex$ can be converted from various other types.
-An object that has a value not in ${'A','C','G','T','R','Y','K','M'}$ is converted to $'N'$.
-...text:$Triplex$ is typedef for $SimpleType<char,Triplex_>$, while $Triplex_$ is a helper
-specialization tag class.
-..see:Metafunction.ValueSize
-*/
 struct Triplex_ {};
 typedef SimpleType<unsigned char, Triplex_> Triplex;
 
@@ -453,24 +426,6 @@ template <> struct BitsPerValue< Triplex > {
     static const Type VALUE = 4;
 };
 
-//____________________________________________________________________________
-
-/**
-.Spec.DnaRY:
-..cat:Alphabets
-..summary:Alphabet for DNA grouped in purines (R) and pyrimidines (Y) including 'N' character.
-..general:Class.SimpleType
-..signature:DnaRY
-..remarks:
-...text:The @Metafunction.ValueSize@ of $DnaRY$ is 3.
-The nucleotides are enumerated this way: $'R' = 0, 'Y' = 1$.
-The 'N' character ("unkown nucleotide") is encoded by 2.
-...text:Objects of type $DnaRY$ can be converted from various other types.
-An object that has a value not in ${'R', 'Y'}$ is converted to $'N'$.
-...text:$DnaRY$ is typedef for $SimpleType<char,DnaRY_>$, while $DnaRY_$ is a helper
-specialization tag class.
-..see:Metafunction.ValueSize
-*/
 struct DnaRY_ {};
 typedef SimpleType<unsigned char, DnaRY_> DnaRY;
 
@@ -483,25 +438,6 @@ template <> struct BitsPerValue< DnaRY > {
     static const Type VALUE = 2;
 };
 
-//____________________________________________________________________________
-
-
-/**
-.Spec.DnaKM:
-..cat:Alphabets
-..summary:Alphabet for DNA grouped in G and T (K) and A and C (M) including 'N' character.
-..general:Class.SimpleType
-..signature:DnaKM
-..remarks:
-...text:The @Metafunction.ValueSize@ of $DnaKM$ is 3.
-The nucleotides are enumerated this way: $'K' = 0, 'M' = 1$.
-The 'N' character ("unkown nucleotide") is encoded by 2.
-...text:Objects of type $DnaKM$ can be converted from various other types.
-An object that has a value not in ${'K', 'M'}$ is converted to $'N'$.
-...text:$DnaKM$ is typedef for $SimpleType<char,DnaKM_>$, while $DnaKM_$ is a helper
-specialization tag class.
-..see:Metafunction.ValueSize
-*/
 struct DnaKM_ {};
 typedef SimpleType<unsigned char, DnaKM_> DnaKM;
 
@@ -514,21 +450,17 @@ template <> struct BitsPerValue< DnaKM > {
     static const Type VALUE = 2;
 };
 
-//////////////////////////////////////////////////////////////////////////////
-//ASCII
-
 inline void assign(Ascii & c_target,
 				   Triplex const & source)
 {
 	c_target = TranslateTableTriplex2Ascii_<>::VALUE[source.value];
 }
-//____________________________________________________________________________
+
 inline void assign(Ascii & c_target,
 				   DnaRY const & source)
 {
 	c_target = TranslateTableDnaRY2Ascii_<>::VALUE[source.value];
 }
-//____________________________________________________________________________
 
 inline void assign(Ascii & c_target,
 				   DnaKM const & source)
@@ -536,16 +468,12 @@ inline void assign(Ascii & c_target,
 	c_target = TranslateTableDnaKM2Ascii_<>::VALUE[source.value];
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//Triplex (3 letters)
-
 template <>
 struct CompareType<Triplex, uint8_t> { typedef Triplex Type; };
 inline void assign(Triplex & target, uint8_t c_source)
 {
 	target.value = TranslateTableByte2Triplex_<>::VALUE[c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<Triplex, Ascii> { typedef Triplex Type; };
@@ -553,7 +481,6 @@ inline void assign(Triplex & target, Ascii c_source)
 {
 	target.value = TranslateTableAscii2Triplex_<>::VALUE[(unsigned char)c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<Triplex, Unicode> { typedef Triplex Type; };
@@ -561,7 +488,6 @@ inline void assign(Triplex & target, Unicode c_source)
 {
 	target.value = TranslateTableAscii2Triplex_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<Triplex, Dna> { typedef Triplex Type; };
@@ -569,7 +495,6 @@ inline void assign(Triplex & target, Dna const & c_source)
 {
 	target.value = TranslateTableDna2Triplex_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<Triplex, Dna5> { typedef Triplex Type; };
@@ -577,7 +502,6 @@ inline void assign(Triplex & target, Dna5 const & c_source)
 {
 	target.value = TranslateTableDna52Triplex_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<Triplex, Iupac> { typedef Triplex Type; };
@@ -586,16 +510,12 @@ inline void assign(Triplex & target, Iupac const & source)
 	target.value = TranslateTableIupac2Triplex_<>::VALUE[source.value];
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//DnaRY (3 letters)
-
 template <>
 struct CompareType<DnaRY, uint8_t> { typedef DnaRY Type; };
 inline void assign(DnaRY & target, uint8_t c_source)
 {
 	target.value = TranslateTableByte2DnaRY_<>::VALUE[c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaRY, Ascii> { typedef DnaRY Type; };
@@ -603,7 +523,6 @@ inline void assign(DnaRY & target, Ascii c_source)
 {
 	target.value = TranslateTableAscii2DnaRY_<>::VALUE[(unsigned char)c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaRY, Unicode> { typedef DnaRY Type; };
@@ -611,7 +530,6 @@ inline void assign(DnaRY & target, Unicode c_source)
 {
 	target.value = TranslateTableAscii2DnaRY_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaRY, Dna> { typedef DnaRY Type; };
@@ -619,7 +537,6 @@ inline void assign(DnaRY & target, Dna const & c_source)
 {
 	target.value = TranslateTableDna2DnaRY_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaRY, Dna5> { typedef DnaRY Type; };
@@ -627,7 +544,6 @@ inline void assign(DnaRY & target, Dna5 const & c_source)
 {
 	target.value = TranslateTableDna52DnaRY_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaRY, Iupac> { typedef DnaRY Type; };
@@ -636,16 +552,12 @@ inline void assign(DnaRY & target, Iupac const & source)
 	target.value = TranslateTableIupac2DnaRY_<>::VALUE[source.value];
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//DnaKM (3 letters)
-
 template <>
 struct CompareType<DnaKM, uint8_t> { typedef DnaKM Type; };
 inline void assign(DnaKM & target, uint8_t c_source)
 {
 	target.value = TranslateTableByte2DnaKM_<>::VALUE[c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaKM, Ascii> { typedef DnaKM Type; };
@@ -653,7 +565,6 @@ inline void assign(DnaKM & target, Ascii c_source)
 {
 	target.value = TranslateTableAscii2DnaKM_<>::VALUE[(unsigned char)c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaKM, Unicode> { typedef DnaKM Type; };
@@ -661,7 +572,6 @@ inline void assign(DnaKM & target, Unicode c_source)
 {
 	target.value = TranslateTableAscii2DnaKM_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaKM, Dna> { typedef DnaKM Type; };
@@ -669,7 +579,6 @@ inline void assign(DnaKM & target, Dna const & c_source)
 {
 	target.value = TranslateTableDna2DnaKM_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaKM, Dna5> { typedef DnaKM Type; };
@@ -677,7 +586,6 @@ inline void assign(DnaKM & target, Dna5 const & c_source)
 {
 	target.value = TranslateTableDna52DnaKM_<>::VALUE[(unsigned char) c_source];
 }
-//____________________________________________________________________________
 
 template <>
 struct CompareType<DnaKM, Iupac> { typedef DnaKM Type; };
@@ -685,9 +593,6 @@ inline void assign(DnaKM & target, Iupac const & source)
 {
 	target.value = TranslateTableIupac2DnaKM_<>::VALUE[source.value];
 }
-
-//////////////////////////////////////////////////////////////////////////////
-//Complement Functor
 
 template <typename T = void>
 struct TranslateTableTriplex2TriplexComplement_
@@ -697,7 +602,6 @@ struct TranslateTableTriplex2TriplexComplement_
 template <typename T>
 	char const TranslateTableTriplex2TriplexComplement_<T>::VALUE[9] = {'T', 'G', 'C', 'A', 'Y', 'R', 'M', 'K'};
 
-//____________________________________________________________________________
 template <typename T = void>
 struct TranslateTableDnaRY2DnaRYComplement_
 {
@@ -705,8 +609,6 @@ struct TranslateTableDnaRY2DnaRYComplement_
 };
 template <typename T>
 	char const TranslateTableDnaRY2DnaRYComplement_<T>::VALUE[3] = {'Y', 'R', 'N'};
-
-//____________________________________________________________________________
 
 template <typename T = void>
 struct TranslateTableDnaKM2DnaKMComplement_
@@ -716,9 +618,6 @@ struct TranslateTableDnaKM2DnaKMComplement_
 template <typename T>
 	char const TranslateTableDnaKM2DnaKMComplement_<T>::VALUE[3] = {'M', 'K', 'N'};
 
-
-//////////////////////////////////////////////////////////////////////////////
-//test for match (Ns never match)
 inline bool isMatch(Triplex val1, Triplex val2)
 {
 	if (val1.value == 8 || val2.value == 8) // 'N'
@@ -738,9 +637,6 @@ inline bool isMatch(TAlphabet val1, TAlphabet val2)
 		return false;
 }
 
-//////////////////////////////////////////////////////////////////////////////
-//Repeat mask
-
 inline bool _repeatMaskValue(Triplex const &val) 
 {
 	return val == unknownValue<Triplex>(); // 'N'
@@ -755,9 +651,6 @@ inline bool _repeatMaskValue(DnaKM const &val)
 {
 	return val == unknownValue<DnaKM>(); // 'N'
 }
-	
-//////////////////////////////////////////////////////////////////////////////
-//typedefs
 
 typedef String<Triplex, Alloc<void> > TriplexString;
 typedef String<DnaRY, Alloc<void> > DnaRYString;
@@ -786,7 +679,6 @@ typedef ModifiedString<
 			ModReverse
 		>	DnaKMStringReverseComplement;
 
-
 template <>
 struct FunctorComplement<Triplex> : public ::std::unary_function<Triplex,Triplex>
 {
@@ -802,7 +694,6 @@ struct FunctorComplement<DnaRY> : public ::std::unary_function<DnaRY,DnaRY>
 		return TranslateTableDnaRY2DnaRYComplement_<>::VALUE[x.value];
 	}
 };
-
 
 template <>
 struct FunctorComplement<DnaKM> : public ::std::unary_function<DnaKM,DnaKM>
