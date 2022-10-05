@@ -38,6 +38,7 @@
 #include "output_writer.hpp"
 #include "segment_parser.hpp"
 #include "guanine_filter.hpp"
+#include "sequence_loader.hpp"
 #include "triplex_pattern.hpp"
 
 struct tpx_arguments
@@ -325,10 +326,21 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 
 void find_triplexes(const options& opts)
 {
+    if (!file_exists(seqan::toCString(opts.tfo_file))
+        || !file_exists(seqan::toCString(opts.tts_file))) {
+        std::cerr << "PATO: error opening input files\n";
+        return;
+    }
+    create_output_files(opts);
+
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
+
+    if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
+        return;
+    }
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
@@ -337,9 +349,7 @@ void find_triplexes(const options& opts)
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    if (!find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts)) {
-        return;
-    }
+    sequence_loader_state_t tts_file_state;
 
 #if !defined(_OPENMP)
     match_set_t matches;
@@ -347,8 +357,24 @@ void find_triplexes(const options& opts)
     match_set_set_t matches;
 #endif
     potential_set_t potentials;
-    match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
 
-    print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, opts);
+    unsigned int offset = 0;
+    while (load_sequences(tts_sequences, tts_names, tts_file_state, opts)) {
+        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
+        match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
+        print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, opts);
+
+        offset += opts.chunk_size;
+
+        tts_motifs.clear();
+        tts_sequences.clear();
+#if !defined(_OPENMP)
+        matches.clear();
+#else
+        for (auto& local_matches : matches) {
+            local_matches.clear();
+        }
+#endif
+    }
     print_triplex_summary(potentials, tfo_names, tts_names, opts);
 }

@@ -37,7 +37,6 @@
 #include "guanine_filter.hpp"
 #include "segment_parser.hpp"
 #include "sequence_loader.hpp"
-#include "duplicate_filter.hpp"
 
 struct tts_arguments
 {
@@ -153,12 +152,9 @@ bool find_tts_motifs(motif_set_t& motifs,
                      motif_potential_set_t& potentials,
                      triplex_set_t& sequences,
                      name_set_t& names,
-                     const options& opts)
+                     const options& opts,
+                     unsigned int offset)
 {
-    if (!load_sequences(sequences, names, seqan::toCString(opts.tts_file))) {
-        return false;
-    }
-
     index_set_t indices(sequences.size(), 0);
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&](unsigned int i, unsigned int j) -> bool {
@@ -187,7 +183,7 @@ bool find_tts_motifs(motif_set_t& motifs,
                            opts.min_repeat_length,
                            opts.max_repeat_period);
         }
-        find_tts_motifs(sequences[indices[i]], indices[i], tts_args, opts);
+        find_tts_motifs(sequences[indices[i]], offset + indices[i], tts_args, opts);
     }
 
 #if defined(_OPENMP)
@@ -206,14 +202,6 @@ bool find_tts_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    if (opts.run_mode == run_mode_t::tts_search
-        && opts.detect_duplicates != detect_duplicates_t::off) {
-        count_duplicates(motifs, opts);
-        if (opts.duplicate_cutoff >= 0) {
-            filter_duplicates(motifs, opts.duplicate_cutoff);
-        }
-    }
-
     double nd = omp_get_wtime();
     std::cout << "TTS in: " << nd - st << " seconds (" << motifs.size() << ")\n";
 
@@ -222,14 +210,30 @@ bool find_tts_motifs(motif_set_t& motifs,
 
 void find_tts_motifs(const options& opts)
 {
+    if (!file_exists(seqan::toCString(opts.tts_file))) {
+        std::cerr << "PATO: error opening TTS file '" << opts.tts_file << "'\n";
+        return;
+    }
+    create_output_files(opts);
+
     name_set_t tts_names;
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    if (!find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts)) {
-        return;
-    }
+    sequence_loader_state_t tts_file_state;
 
-    print_motifs(tts_motifs, tts_names, opts);
-    print_summary(tts_potentials, tts_names, opts);
+    unsigned int offset = 0;
+    unsigned int counter = 1;
+    while (load_sequences(tts_sequences, tts_names, tts_file_state, opts)) {
+        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
+        print_motifs(tts_motifs, tts_names, opts, counter);
+        print_summary(tts_potentials, tts_names, opts);
+
+        offset += opts.chunk_size;
+        counter += tts_motifs.size();
+
+        tts_motifs.clear();
+        tts_sequences.clear();
+        tts_potentials.clear();
+    }
 }

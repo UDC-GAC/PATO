@@ -28,9 +28,12 @@
 #include "options.hpp"
 #include "triplex_definitions.hpp"
 
+bool create_output_files(const options& opts);
+
 void print_motifs(motif_set_t& motifs,
                   name_set_t& names,
-                  const options& opts);
+                  const options& opts,
+                  unsigned int counter = 1);
 void print_summary(motif_potential_set_t& potentials,
                    name_set_t& names,
                    const options& opts);

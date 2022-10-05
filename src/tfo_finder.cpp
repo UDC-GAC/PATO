@@ -37,7 +37,6 @@
 #include "guanine_filter.hpp"
 #include "segment_parser.hpp"
 #include "sequence_loader.hpp"
-#include "duplicate_filter.hpp"
 
 struct tfo_arguments
 {
@@ -207,10 +206,6 @@ bool find_tfo_motifs(motif_set_t& motifs,
                      name_set_t& names,
                      const options& opts)
 {
-    if (!load_sequences(sequences, names, seqan::toCString(opts.tfo_file))) {
-        return false;
-    }
-
     index_set_t indices(sequences.size(), 0);
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&](unsigned int i, unsigned int j) -> bool {
@@ -258,13 +253,6 @@ bool find_tfo_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    if (opts.detect_duplicates != detect_duplicates_t::off) {
-        count_duplicates(motifs, opts);
-        if (opts.duplicate_cutoff >= 0) {
-            filter_duplicates(motifs, opts.duplicate_cutoff);
-        }
-    }
-
     double nd = omp_get_wtime();
     std::cout << "TFO in: " << nd - st << " seconds (" << motifs.size() << ")\n";
 
@@ -273,10 +261,20 @@ bool find_tfo_motifs(motif_set_t& motifs,
 
 void find_tfo_motifs(const options& opts)
 {
+    if (!file_exists(seqan::toCString(opts.tfo_file))) {
+        std::cerr << "PATO: error opening TFO file '" << opts.tfo_file << "'\n";
+        return;
+    }
+    create_output_files(opts);
+
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
+
+    if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
+        return;
+    }
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }

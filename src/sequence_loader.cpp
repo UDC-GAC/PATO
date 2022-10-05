@@ -28,8 +28,21 @@
 #include <iostream>
 #include <algorithm>
 
-#include <seqan/seq_io.h>
 #include <seqan/stream.h>
+#include <seqan/sequence.h>
+
+void crop_sequence_name(seqan::CharString& name)
+{
+    std::string tmp_name(name.data_begin, seqan::length(name));
+    std::size_t num_chars = std::min(tmp_name.find_first_of(' '), tmp_name.size());
+    name = tmp_name.substr(0, num_chars);
+}
+
+bool file_exists(const char *file_name)
+{
+    seqan::SeqFileIn fasta_file;
+    return seqan::open(fasta_file, file_name);
+}
 
 bool load_sequences(triplex_set_t& sequences,
                     name_set_t& names,
@@ -43,12 +56,30 @@ bool load_sequences(triplex_set_t& sequences,
     }
     seqan::readRecords(names, sequences, fasta_file);
 
-    // crop sequence name
+    // crop sequences names
     for (auto& name : names) {
-        std::string tmp_name(name.data_begin, seqan::length(name));
-        std::size_t num_chars = std::min(tmp_name.find_first_of(' '),
-                                         tmp_name.size());
-        name = tmp_name.substr(0, num_chars);
+        crop_sequence_name(name);
+    }
+
+    return sequences.size() > 0;
+}
+
+bool load_sequences(triplex_set_t& sequences,
+                    name_set_t& names,
+                    sequence_loader_state_t& state,
+                    const options& opts)
+{
+    if (!seqan::isOpen(state.fasta_file)) {
+        if (!seqan::open(state.fasta_file, seqan::toCString(opts.tts_file))) {
+            std::cerr << "PATO: error opening input file '" << opts.tts_file << "'\n";
+            return false;
+        }
+    }
+    seqan::readRecords(names, sequences, state.fasta_file, opts.chunk_size);
+
+    // crop sequences names
+    for (auto& name : names) {
+        crop_sequence_name(name);
     }
 
     return sequences.size() > 0;
