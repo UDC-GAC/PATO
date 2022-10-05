@@ -1,6 +1,6 @@
 # PATO: PArallel TriplexatOr
-[![compile and test gnu](https://github.com/amatria/pato/actions/workflows/compile-and-test-gnu.yml/badge.svg?branch=master)](https://github.com/amatria/pato/actions/workflows/compile-and-test-gnu.yml)
-[![compile and test clang](https://github.com/amatria/pato/actions/workflows/compile-and-test-clang.yml/badge.svg?branch=master)](https://github.com/amatria/pato/actions/workflows/compile-and-test-clang.yml)
+[![compile and test gnu](https://github.com/amatria/pato/actions/workflows/compile-and-test-gnu.yml/badge.svg)](https://github.com/amatria/pato/actions/workflows/compile-and-test-gnu.yml)
+[![compile and test clang](https://github.com/amatria/pato/actions/workflows/compile-and-test-clang.yml/badge.svg)](https://github.com/amatria/pato/actions/workflows/compile-and-test-clang.yml)
 
 PATO: PArallel TriplexatOr is a high performance tool for the fast and efficient detection of acid triple helices and triplex features in nucleotide sequences. PATO: PArallel TriplexatOr is based on [Triplexator](https://github.com/Gurado/triplexator) and functions nearly as a drop in replacement to accelerate the triplex analyses in multicore computers.
 
