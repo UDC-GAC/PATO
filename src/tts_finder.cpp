@@ -161,7 +161,6 @@ bool find_tts_motifs(motif_set_t& motifs,
         return seqan::length(sequences[i]) > seqan::length(sequences[j]);
     });
 
-    double st = omp_get_wtime();
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
@@ -202,9 +201,6 @@ bool find_tts_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    double nd = omp_get_wtime();
-    std::cout << "TTS in: " << nd - st << " seconds (" << motifs.size() << ")\n";
-
     return true;
 }
 
@@ -224,8 +220,14 @@ void find_tts_motifs(const options& opts)
 
     unsigned int offset = 0;
     unsigned int counter = 1;
+    double wall_compute = 0;
+    double wall_st = omp_get_wtime();
     while (load_sequences(tts_sequences, tts_names, tts_file_state, opts)) {
+        double compute_st = omp_get_wtime();
         find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
+        double compute_nd = omp_get_wtime();
+        wall_compute += (compute_nd - compute_st);
+
         print_motifs(tts_motifs, tts_names, opts, counter);
         print_summary(tts_potentials, tts_names, opts);
 
@@ -236,4 +238,8 @@ void find_tts_motifs(const options& opts)
         tts_sequences.clear();
         tts_potentials.clear();
     }
+    double wall_nd = omp_get_wtime();
+
+    std::cout << "TTS compute time: " << wall_compute << "\n";
+    std::cout << "TTS total time: " << wall_nd - wall_st << "\n";
 }
