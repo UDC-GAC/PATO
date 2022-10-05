@@ -103,7 +103,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("po", "pretty-output", "Indicate matching/mismatching characters with upper/lower case.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("er", "error-reference", "Reference to which the error should correspond [0,1,2].", seqan::ArgParseOption::INTEGER));
     seqan::addSection(parser, "Performance options");
-    seqan::addOption(parser, seqan::ArgParseOption("cs", "chunk-size", "Lorem ipsum dolor", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("cs", "chunk-size", "TTSs window size. Lower window size equals less memory usage but more overhead.", seqan::ArgParseOption::INTEGER));
 
     // input options
     seqan::setDefaultValue(parser, "ss", "(null)");
