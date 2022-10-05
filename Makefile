@@ -1,37 +1,12 @@
-BUILD=release
+gnu:
+	$(MAKE) -f Makefile.gnu
 
-INCLUDES+=-I include
+clang:
+	$(MAKE) -f Makefile.clang
 
-CXX=g++
-CXXFLAGS+=-std=c++17
-
-cxxflags.release=-O3 -march=native -DNDEBUG
-
-CXXFLAGS+=$(cxxflags.$(BUILD))
-
-LD=g++
-
-ldflags.release=
-
-LDFLAGS+=$(ldflags.$(BUILD))
-
-SRCSDIR=src
-OBJSDIR=obj
-DESTDIR=target
-
-SRCS=$(wildcard $(SRCSDIR)/*.cpp)
-OBJS=$(patsubst $(SRCSDIR)/%.cpp,$(OBJSDIR)/$(BUILD)/%.o,$(SRCS))
-DEPS=$(patsubst $(SRCSDIR)/%.cpp,$(OBJSDIR)/$(BUILD)/%.d,$(SRCS))
-
-pato.$(BUILD): $(OBJS)
-	@mkdir -p $(DESTDIR)
-	$(LD) $(LDFLAGS) -o $(DESTDIR)/$@ $^ $(LDLIBS)
-
--include $(DEPS)
-
-$(OBJSDIR)/$(BUILD)/%.o: $(SRCSDIR)/%.cpp
-	@mkdir -p $(OBJSDIR)/$(BUILD)
-	$(CXX) $(CXXFLAGS) -MMD -MP $(INCLUDES) -c $< -o $@
+intel:
+	$(MAKE) -f Makefile.intel
 
 clean:
-	rm -rf $(OBJSDIR) $(DESTDIR)
+	rm -rf obj target
+

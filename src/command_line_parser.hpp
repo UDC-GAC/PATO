@@ -1,11 +1,15 @@
-#ifndef _COMMAND_LINE_PARSER_HPP_
-#define _COMMAND_LINE_PARSER_HPP_
+#ifndef COMMAND_LINE_PARSER_HPP
+#define COMMAND_LINE_PARSER_HPP
 
+#include <cmath>
 #include <string>
 #include <iostream>
+#include <algorithm>
 
-#include "seqan.hpp"
-#include "options.hpp"
+#include <seqan/sequence.h>
+#include <seqan/arg_parse.h>
+
+#include "triplex_enums.hpp"
 
 void parse_motifs(options& opts, const std::string& motifs)
 {
@@ -34,29 +38,23 @@ void parse_motifs(options& opts, const std::string& motifs)
     }
 }
 
-bool parse_command_line(options& opts, int argc, const char *argv[])
+bool parse_command_line(options& opts, int argc, char *argv[])
 {
     seqan::ArgumentParser parser("PATO");
 
     seqan::setShortDescription(parser, "PArallel TriplexatOr");
-    seqan::addUsageLine(parser, "[options] tfo-file tts-file output-file");
-    seqan::addDescription(parser, "PATO is a high performance tool for detectin"
-                                  "g nucleic acid triple helices and triplex fe"
-                                  "atures in nucleotide sequences. PATO is base"
-                                  "d on Triplexator and functions nearly as a d"
-                                  "rop in replacement to accelerate the triplex"
-                                  " analyses in multicore computing clusters an"
-                                  "d supercomputing facilities.");
+    seqan::addUsageLine(parser, "[options] {-ss tfo_file | -ds tts_file | -ss tfo_file -ds tts_file}");
+    seqan::addDescription(parser, "PATO is a high performance tool for the fast and efficient detection of acid triple helices and triplex features in nucleotide sequences. PATO is based on Triplexator and functions nearly as a drop in replacement to accelerate the triplex analyses in multicore computers.");
 
-    seqan::setDate(parser, "June 2022");
+    seqan::setDate(parser, "October 2022");
     seqan::setVersion(parser, "v0.0.0");
     seqan::setUrl(parser, "https://github.com/amatria/pato");
     seqan::setShortCopyright(parser, "2022 Iñaki Amatria-Barral.");
 
-    seqan::addArgument(parser, seqan::ArgParseArgument(seqan::ArgParseArgument::INPUT_FILE, "tfo-file"));
-    seqan::addArgument(parser, seqan::ArgParseArgument(seqan::ArgParseArgument::INPUT_FILE, "tts-file"));
-    seqan::addArgument(parser, seqan::ArgParseArgument(seqan::ArgParseArgument::OUTPUT_FILE, "output-file"));
-
+    seqan::addSection(parser, "Input options");
+    seqan::addOption(parser, seqan::ArgParseOption("ss", "single-strand-file", "File in FASTA format that is searched for TFOs (e.g. RNA or DNA).", seqan::ArgParseOption::STRING));
+    seqan::addOption(parser, seqan::ArgParseOption("ds", "duplex-file", "File in FASTA format that is searched for TTSs (e.g. DNA).", seqan::ArgParseOption::STRING));
+    seqan::addSection(parser, "Main options");
     seqan::addOption(parser, seqan::ArgParseOption("l", "lower-length-bound", "Minimum triplex feature length required.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("L", "upper-length-bound", "Maximum triplex feature length permitted (disable with -1).", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("e", "error-rate", "Set the maximal error rate tolerated in %.", seqan::ArgParseOption::DOUBLE));
@@ -69,14 +67,26 @@ bool parse_command_line(options& opts, int argc, const char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("mamg", "mixed-antiparallel-min-guanine", "Minimum guanine content to consider anti-parallel binding in a mixed-motif in %.", seqan::ArgParseOption::DOUBLE));
     seqan::addOption(parser, seqan::ArgParseOption("b", "minimum-block-run", "Required number of consecutive matches.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("a", "all-matches", "Process and report all sub-matches in addition to the longest match.", seqan::ArgParseOption::BOOL));
-    seqan::addOption(parser, seqan::ArgParseOption("dd", "detect-duplicates", "Indicates whether and how duplicates should be detected.", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("ssd", "same-sequence-duplicates", "Whether to count a feature copy in the same sequence as duplicate or not.", seqan::ArgParseOption::STRING));
-    seqan::addOption(parser, seqan::ArgParseOption("fr", "filter-repeats", "Disregards repeated and low-complex regions if enabled.", seqan::ArgParseOption::STRING));
+    seqan::addSection(parser, "Filtering options");
+    seqan::addOption(parser, seqan::ArgParseOption("fr", "filter-repeats", "Disregards repeated and low-complex regions if enabled.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("mrl", "minimum-repeat-length", "Minimum length requirement for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("mrp", "maximum-repeat-period", "Maximum repeat period for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("dd", "detect-duplicates", "Indicates whether and how duplicates should be detected [0,1,2].", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("dc", "duplicate-cutoff", "Disregard feature if it occurs more often than this cutoff (disable with -1).", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("dl", "duplicate-locations", "Report the location of duplicates.", seqan::ArgParseOption::BOOL));
+    seqan::addOption(parser, seqan::ArgParseOption("ssd", "same-sequence-duplicates", "Whether to count a feature copy in the same sequence as duplicate or not.", seqan::ArgParseOption::BOOL));
+    seqan::addOption(parser, seqan::ArgParseOption("mf", "merge-features", "Merge overlapping features into a cluster and report the spanning region.", seqan::ArgParseOption::BOOL));
+    seqan::addSection(parser, "Output options");
+    seqan::addOption(parser, seqan::ArgParseOption("o", "output", "Output file name", seqan::ArgParseOption::STRING));
+    seqan::addOption(parser, seqan::ArgParseOption("of", "output-format", "Set output format [0,1,2].", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("po", "pretty-output", "Indicate matching/mismatching characters with upper/lower case.", seqan::ArgParseOption::BOOL));
+    seqan::addOption(parser, seqan::ArgParseOption("er", "error-reference", "Reference to which the error should correspond [0,1,2].", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("dl", "duplicate-locations", "Report the location of duplicates", seqan::ArgParseOption::BOOL));
 
+    // input options
+    seqan::setDefaultValue(parser, "ss", "(null)");
+    seqan::setDefaultValue(parser, "ds", "(null)");
+
+    // main options
     seqan::setDefaultValue(parser, "l", 16);
     seqan::setDefaultValue(parser, "L", 30);
     seqan::setDefaultValue(parser, "e", 5.0);
@@ -89,22 +99,32 @@ bool parse_command_line(options& opts, int argc, const char *argv[])
     seqan::setDefaultValue(parser, "mamg", 0.0);
     seqan::setDefaultValue(parser, "b", 1);
     seqan::setDefaultValue(parser, "a", false);
-    seqan::setDefaultValue(parser, "dd", 0);
-    seqan::setDefaultValue(parser, "ssd", "on");
-    seqan::setDefaultValue(parser, "fr", "on");
+
+    // filtering options
+    seqan::setDefaultValue(parser, "fr", true);
     seqan::setDefaultValue(parser, "mrl", 10);
     seqan::setDefaultValue(parser, "mrp", 4);
+    seqan::setDefaultValue(parser, "dd", static_cast<unsigned int>(detect_duplicates_t::off));
     seqan::setDefaultValue(parser, "dc", -1);
+    seqan::setDefaultValue(parser, "ssd", true);
+    seqan::setDefaultValue(parser, "mf", false);
+
+    // output options
+    seqan::setDefaultValue(parser, "o", "pato");
+    seqan::setDefaultValue(parser, "of", static_cast<unsigned int>(output_format_t::bed));
+    seqan::setDefaultValue(parser, "po", false);
+    seqan::setDefaultValue(parser, "er", static_cast<unsigned int>(error_reference_t::watson_strand));
     seqan::setDefaultValue(parser, "dl", false);
 
     if (seqan::parse(parser, argc, argv) != seqan::ArgumentParser::PARSE_OK) {
         return false;
     }
 
-    opts.tfo_file = seqan::getArgumentValue(seqan::getArgument(parser, 0));
-    opts.tts_file = seqan::getArgumentValue(seqan::getArgument(parser, 1));
-    opts.output_file = seqan::getArgumentValue(seqan::getArgument(parser, 2));
+    // input options
+    seqan::getOptionValue(opts.tfo_file, parser, "ss");
+    seqan::getOptionValue(opts.tts_file, parser, "ds");
 
+    // main options
     seqan::getOptionValue(opts.min_length, parser, "l");
     seqan::getOptionValue(opts.max_length, parser, "L");
     seqan::getOptionValue(opts.error_rate, parser, "e");
@@ -115,30 +135,39 @@ bool parse_command_line(options& opts, int argc, const char *argv[])
     seqan::getOptionValue(opts.mixed_parallel_max_guanine, parser, "mpmg");
     seqan::getOptionValue(opts.mixed_antiparallel_min_guanine, parser, "mamg");
     seqan::getOptionValue(opts.min_block_run, parser, "b");
-    seqan::getOptionValue(opts.detect_duplicates, parser, "dd");
-    seqan::getOptionValue(opts.min_repeat_length, parser, "mrl");
-    seqan::getOptionValue(opts.max_repeat_period, parser, "mrp");
-    seqan::getOptionValue(opts.duplicate_cutoff, parser, "dc");
+    seqan::getOptionValue(opts.all_matches, parser, "a");
 
-    opts.all_matches = seqan::isSet(parser, "a");
-    opts.report_duplicate_locations = seqan::isSet(parser, "dl");
-
-    auto is_flag_set = [&parser](const std::string& name) -> bool {
-        std::string value;
-        seqan::getOptionValue(value, parser, name);
-        return value == "on" || value == "yes" || value == "ON" || value == "1"
-               || value == "YES" || value == "true" || value == "TRUE";
-    };
-
-    opts.filter_repeats = is_flag_set("fr");
-    opts.same_sequence_duplicates = is_flag_set("ssd");
-
-    // motifs
     std::string motifs;
     seqan::getOptionValue(motifs, parser, "m");
     parse_motifs(opts, motifs);
 
+    // filtering options
+    seqan::getOptionValue(opts.filter_repeats, parser, "fr");
+    seqan::getOptionValue(opts.min_repeat_length, parser, "mrl");
+    seqan::getOptionValue(opts.max_repeat_period, parser, "mrp");
+    seqan::getOptionValue(opts.duplicate_cutoff, parser, "dc");
+    seqan::getOptionValue(opts.same_sequence_duplicates, parser, "ssd");
+    seqan::getOptionValue(opts.merge_features, parser, "mf");
+
+    unsigned int tmp;
+    seqan::getOptionValue(tmp, parser, "dd");
+    opts.detect_duplicates = detect_duplicates_t(tmp);
+
+    // output options
+    seqan::getOptionValue(opts.output_file, parser, "o");
+    seqan::getOptionValue(opts.pretty_output, parser, "po");
+    seqan::getOptionValue(opts.report_duplicate_locations, parser, "dl");
+
+    seqan::getOptionValue(tmp, parser, "of");
+    opts.output_format = output_format_t(tmp);
+    seqan::getOptionValue(tmp, parser, "er");
+    opts.error_reference = error_reference_t(tmp);
+
     // check options
+    if (opts.tfo_file == "(null)" && opts.tts_file == "(null)") {
+        std::cerr << "PATO: at least one type of input file has to be supplied\n";
+        return false;
+    }
     if (opts.min_length < 10) {
         std::cerr << "PATO: the minimum triplex length must be greater or equal to 10\n";
         return false;
@@ -175,18 +204,38 @@ bool parse_command_line(options& opts, int argc, const char *argv[])
         std::cerr << "PATO: the minimum guanine proportion in an anti-parallel mixed motif must be a value between 0 and 100\n";
         return false;
     }
-    if (opts.duplicate_cutoff >= 0 && opts.detect_duplicates == 0) {
+    if (opts.detect_duplicates >= detect_duplicates_t::last) {
+        std::cerr << "PATO: detect duplicates not known\n";
+        return false;
+    }
+    if (opts.duplicate_cutoff >= 0 && opts.detect_duplicates == detect_duplicates_t::off) {
         std::cerr << "PATO: duplicate filtering with the specified cutoff value requires duplicate detection mode to be enabled\n";
+        return false;
+    }
+    if (opts.error_reference >= error_reference_t::last) {
+        std::cerr << "PATO: error reference not known\n";
+        return false;
+    }
+    if (opts.output_format >= output_format_t::last) {
+        std::cerr << "PATO: output format not known\n";
         return false;
     }
 
     unsigned int tolerated_error = static_cast<unsigned int>(std::floor(opts.error_rate * opts.min_length));
     if (opts.min_block_run > opts.min_length - 2 * tolerated_error) {
-        std::cerr << "PATO: block match too large given minimum length constraint and error rate.\n";
+        std::cerr << "PATO: block match too large given minimum length constraint and error rate\n";
         return false;
     }
 
     // prepare options
+    if (opts.tts_file == "(null)") {
+        opts.run_mode = run_mode_t::tfo_search;
+    } else if (opts.tfo_file == "(null)") {
+        opts.run_mode = run_mode_t::tts_search;
+    } else {
+        opts.run_mode = run_mode_t::tpx_search;
+    }
+
     opts.error_rate /= 100.0;
     opts.min_guanine_rate /= 100.0;
     opts.max_guanine_rate /= 100.0;

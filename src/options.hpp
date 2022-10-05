@@ -1,7 +1,9 @@
-#ifndef _OPTIONS_HPP_
-#define _OPTIONS_HPP_
+#ifndef OPTIONS_HPP
+#define OPTIONS_HPP
 
-#include "seqan.hpp"
+#include <seqan/sequence.h>
+
+#include "triplex_enums.hpp"
 
 struct options
 {
@@ -24,14 +26,20 @@ struct options
     unsigned int min_repeat_length;
     unsigned int max_repeat_period;
     unsigned int max_interruptions;
-    unsigned int detect_duplicates;
+
+    run_mode_t run_mode;
+    output_format_t output_format;
+    error_reference_t error_reference;
+    detect_duplicates_t detect_duplicates;
 
     bool tc_motif;
     bool ga_motif;
     bool gt_p_motif;
     bool gt_a_motif;
     bool all_matches;
+    bool pretty_output;
     bool filter_repeats;
+    bool merge_features;
     bool same_sequence_duplicates;
     bool report_duplicate_locations;
 };

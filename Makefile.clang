@@ -1,0 +1,38 @@
+BUILD=release
+
+INCLUDES+=-Iinclude
+
+CXX=clang++
+CXXFLAGS+=-std=c++17 -Wall
+
+cxxflags.serial=-flto -O3 -march=native
+cxxflags.release=-fopenmp -flto -O3 -march=native
+
+CXXFLAGS+=$(cxxflags.$(BUILD)) -DNDEBUG -DSEQAN_DISABLE_VERSION_CHECK -DSEQAN_ENABLE_PARALLELISM=0
+
+LD=clang++
+
+ldflags.serial=-flto
+ldflags.release=-fopenmp -flto
+
+# see file seqan/allocator_interface.h:211
+LDFLAGS+=-Wno-alloc-size-larger-than $(ldflags.$(BUILD))
+
+SRCSDIR=src
+OBJSDIR=obj/clang
+DESTDIR=target/clang
+
+SRCS=$(wildcard $(SRCSDIR)/*.cpp)
+OBJS=$(patsubst $(SRCSDIR)/%.cpp,$(OBJSDIR)/$(BUILD)/%.o,$(SRCS))
+DEPS=$(patsubst $(SRCSDIR)/%.cpp,$(OBJSDIR)/$(BUILD)/%.d,$(SRCS))
+
+pato.$(BUILD): $(OBJS)
+	@mkdir -p $(DESTDIR)
+	$(LD) $(LDFLAGS) -o $(DESTDIR)/$@ $^ $(LDLIBS)
+
+-include $(DEPS)
+
+$(OBJSDIR)/$(BUILD)/%.o: $(SRCSDIR)/%.cpp
+	@mkdir -p $(OBJSDIR)/$(BUILD)
+	$(CXX) $(CXXFLAGS) -MMD -MP $(INCLUDES) -c $< -o $@
+
