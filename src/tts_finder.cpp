@@ -210,26 +210,37 @@ void find_tts_motifs(const options& opts)
         std::cerr << "PATO: error opening TTS file '" << opts.tts_file << "'\n";
         return;
     }
-    create_output_files(opts);
+
+    output_writer_state_t tts_output_file_state;
+    create_output_state(tts_output_file_state, opts);
 
     name_set_t tts_names;
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    sequence_loader_state_t tts_file_state;
+    sequence_loader_state_t tts_input_file_state;
 
     unsigned int offset = 0;
     unsigned int counter = 1;
-    double wall_compute = 0;
-    double wall_st = omp_get_wtime();
-    while (load_sequences(tts_sequences, tts_names, tts_file_state, opts)) {
-        double compute_st = omp_get_wtime();
-        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
-        double compute_nd = omp_get_wtime();
-        wall_compute += (compute_nd - compute_st);
 
-        print_motifs(tts_motifs, tts_names, opts, counter);
-        print_summary(tts_potentials, tts_names, opts);
+    double total_load = 0;
+    double total_comp = 0;
+    double total_writ = 0;
+    double total_loop = 0;
+
+    double wall_st = omp_get_wtime();
+    while (true) {
+        double load_st = omp_get_wtime();
+        if (!load_sequences(tts_sequences, tts_names, tts_input_file_state, opts)) {
+            break;
+        }
+        double comp_st = omp_get_wtime();
+        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
+
+        double writ_st = omp_get_wtime();
+        print_motifs(tts_motifs, tts_names, tts_output_file_state, opts, counter);
+        print_summary(tts_potentials, tts_names, tts_output_file_state, opts);
+        double writ_nd = omp_get_wtime();
 
         offset += opts.chunk_size;
         counter += tts_motifs.size();
@@ -237,9 +248,19 @@ void find_tts_motifs(const options& opts)
         tts_motifs.clear();
         tts_sequences.clear();
         tts_potentials.clear();
+        double loop_nd = omp_get_wtime();
+
+        total_load += comp_st - load_st;
+        total_comp += writ_st - comp_st;
+        total_writ += writ_nd - writ_st;
+        total_loop += loop_nd - writ_nd;
     }
     double wall_nd = omp_get_wtime();
 
-    std::cout << "TTS compute time: " << wall_compute << "\n";
-    std::cout << "TTS total time: " << wall_nd - wall_st << "\n";
+    std::cout << "    Load: " << total_load << "s\n";
+    std::cout << " Compute: " << total_comp << "s\n";
+    std::cout << "   Clear: " << total_loop << "s\n";
+    std::cout << "   Write: " << total_writ << "s\n";
+    std::cout << "=========\n";
+    std::cout << "TTS time: " << wall_nd - wall_st << "s\n";
 }

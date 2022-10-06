@@ -26,7 +26,6 @@
 
 #include <cctype>
 #include <iomanip>
-#include <fstream>
 #include <sstream>
 #include <iostream>
 
@@ -219,30 +218,30 @@ seqan::CharString triplex_error_string(match_t& match,
     return errors.str();
 }
 
-bool create_output_files(const options& opts)
+bool create_output_state(output_writer_state_t& state, const options& opts)
 {
     {
         seqan::CharString output_file_name;
         seqan::append(output_file_name, opts.output_file);
         seqan::append(output_file_name, ".summary");
 
-        std::ofstream output_file(seqan::toCString(output_file_name),
-                                std::ios_base::out);
-        if (!output_file) {
+        state.summary_file = std::ofstream(seqan::toCString(output_file_name),
+                                           std::ios_base::out);
+        if (!state.summary_file) {
             std::cerr << "PATO: error opening output file '"
                       << output_file_name << "'\n";
             return false;
         }
 
         if (opts.run_mode == run_mode_t::tfo_search) {
-            output_file << "# Sequence-ID\tTFOs (abs)\tTFOs (rel)\tGA (abs)\tGA"
-                           " (rel)\tTC (abs)\tTC (rel)\tGT (abs)\tGT (rel)\n";
+            state.summary_file << "# Sequence-ID\tTFOs (abs)\tTFOs (rel)\tGA (abs)\tGA"
+                                  " (rel)\tTC (abs)\tTC (rel)\tGT (abs)\tGT (rel)\n";
         } else if (opts.run_mode == run_mode_t::tts_search) {
-            output_file << "# Duplex-ID\tTTSs (abs)\tTTSs (rel)\n";
+            state.summary_file << "# Duplex-ID\tTTSs (abs)\tTTSs (rel)\n";
         } else {
-            output_file << "# Duplex-ID\tSequence-ID\tTotal (abs)\tTotal (rel)"
-                           "\tGA (abs)\tGA (rel)\tTC (abs)\tTC (rel)\tGT (abs)"
-                           "\tGT (rel)\n";
+            state.summary_file << "# Duplex-ID\tSequence-ID\tTotal (abs)\tTotal (rel)"
+                                  "\tGA (abs)\tGA (rel)\tTC (abs)\tTC (rel)\tGT (abs)"
+                                  "\tGT (rel)\n";
         }
     }
 
@@ -255,28 +254,28 @@ bool create_output_files(const options& opts)
         seqan::append(output_file_name, opts.output_file);
         seqan::append(output_file_name, ".out");
 
-        std::ofstream output_file(seqan::toCString(output_file_name),
-                                std::ios_base::out);
-        if (!output_file) {
+        state.output_file = std::ofstream(seqan::toCString(output_file_name),
+                                          std::ios_base::out);
+        if (!state.output_file) {
             std::cerr << "PATO: error opening output file '"
                       << output_file_name << "'\n";
             return false;
         }
 
         if (opts.run_mode == run_mode_t::tpx_search) {
-            output_file << "# Sequence-ID\tTFO start\tTFO end\tDuplex-ID\tTTS s"
-                           "tart\tTTS end\tScore\tError-rate\tErrors\tMotif\tSt"
-                           "rand\tOrientation\tGuanine-rate\n";
+            state.output_file << "# Sequence-ID\tTFO start\tTFO end\tDuplex-ID\tTTS s"
+                                 "tart\tTTS end\tScore\tError-rate\tErrors\tMotif\tSt"
+                                 "rand\tOrientation\tGuanine-rate\n";
         } else {
             if (opts.output_format == output_format_t::bed) {
                 if (opts.run_mode == run_mode_t::tfo_search) {
-                    output_file << "# Sequence-ID\tStart\tEnd\tScore\tMotif\tEr"
-                                   "ror-rate\tErrors\tGuanine-rate\tDuplicates"
-                                   "\tTFO\tDuplicate locations\n";
+                    state.output_file << "# Sequence-ID\tStart\tEnd\tScore\tMotif\tEr"
+                                         "ror-rate\tErrors\tGuanine-rate\tDuplicates"
+                                         "\tTFO\tDuplicate locations\n";
                 } else {
-                    output_file << "# Duplex-ID\tStart\tEnd\tScore\tStrand\tErr"
-                                   "or-rate\tErrors\tGuanine-rate\tDuplicates\t"
-                                   "TTS\tDuplicate locations\n";
+                    state.output_file << "# Duplex-ID\tStart\tEnd\tScore\tStrand\tErr"
+                                         "or-rate\tErrors\tGuanine-rate\tDuplicates\t"
+                                         "TTS\tDuplicate locations\n";
                 }
             }
         }
@@ -287,6 +286,7 @@ bool create_output_files(const options& opts)
 
 void print_motifs(motif_set_t& motifs,
                   name_set_t& names,
+                  output_writer_state_t& state,
                   const options& opts,
                   unsigned int counter)
 {
@@ -294,47 +294,35 @@ void print_motifs(motif_set_t& motifs,
         return;
     }
 
-    seqan::CharString output_file_name;
-    seqan::append(output_file_name, opts.output_file);
-    seqan::append(output_file_name, ".out");
-
-    std::ofstream output_file(seqan::toCString(output_file_name),
-                              std::ios_base::out | std::ios_base::app);
-    if (!output_file) {
-        std::cerr << "PATO: error opening output file '"
-                  << output_file_name << "'\n";
-        return;
-    }
-
     for (auto& m : motifs) {
         switch (opts.output_format) {
             case output_format_t::bed:
-                output_file << names[seqan::getSequenceNo(m)] << "\t"
-                            << seqan::beginPosition(m) << "\t"
-                            << seqan::endPosition(m) << "\t"
-                            << seqan::score(m) << "\t"
-                            << seqan::getMotif(m) << "\t"
-                            << std::setprecision(2) << 1.0 - seqan::score(m) / (seqan::endPosition(m) - seqan::beginPosition(m)) << "\t"
-                            << seqan::errorString(m) << "\t"
-                            << seqan::guanineRate(m) << "\t"
-                            << seqan::duplicates(m) << "\t"
-                            << (opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m)) << "\t"
-                            << "-\n";
+                state.output_file << names[seqan::getSequenceNo(m)] << "\t"
+                                  << seqan::beginPosition(m) << "\t"
+                                  << seqan::endPosition(m) << "\t"
+                                  << seqan::score(m) << "\t"
+                                  << seqan::getMotif(m) << "\t"
+                                  << std::setprecision(2) << 1.0 - seqan::score(m) / (seqan::endPosition(m) - seqan::beginPosition(m)) << "\t"
+                                  << seqan::errorString(m) << "\t"
+                                  << seqan::guanineRate(m) << "\t"
+                                  << seqan::duplicates(m) << "\t"
+                                  << (opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m)) << "\t"
+                                  << "-\n";
                 break;
             case output_format_t::triplex:
-                output_file << ">"
-                            << names[seqan::getSequenceNo(m)] << "_"
-                            << counter++ << "\t"
-                            << seqan::beginPosition(m) << "-"
-                            << seqan::endPosition(m) << " "
-                            << seqan::getMotif(m) << "\t"
-                            << seqan::score(m) << "\t"
-                            << seqan::errorString(m) << "\t"
-                            << seqan::duplicates(m) << "\t"
-                            << seqan::guanineRate(m) << "\t"
-                            << "-\n"
-                            << (opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m))
-                            << "\n";
+                state.output_file << ">"
+                                  << names[seqan::getSequenceNo(m)] << "_"
+                                  << counter++ << "\t"
+                                  << seqan::beginPosition(m) << "-"
+                                  << seqan::endPosition(m) << " "
+                                  << seqan::getMotif(m) << "\t"
+                                  << seqan::score(m) << "\t"
+                                  << seqan::errorString(m) << "\t"
+                                  << seqan::duplicates(m) << "\t"
+                                  << seqan::guanineRate(m) << "\t"
+                                  << "-\n"
+                                  << (opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m))
+                                  << "\n";
                 break;
             default:
                 break;
@@ -344,34 +332,23 @@ void print_motifs(motif_set_t& motifs,
 
 void print_summary(motif_potential_set_t& potentials,
                    name_set_t& names,
+                   output_writer_state_t& state,
                    const options& opts)
 {
-    seqan::CharString output_file_name;
-    seqan::append(output_file_name, opts.output_file);
-    seqan::append(output_file_name, ".summary");
-
-    std::ofstream output_file(seqan::toCString(output_file_name),
-                              std::ios_base::out | std::ios_base::app);
-    if (!output_file) {
-        std::cerr << "PATO: error opening output file '"
-                  << output_file_name << "'\n";
-        return;
-    }
-
     for (auto& potential : potentials) {
         if (seqan::hasCount(potential)) {
-            output_file << names[seqan::getKey(potential)] << "\t"
-                        << seqan::getCounts(potential) << "\t"
-                        << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential);
+            state.summary_file << names[seqan::getKey(potential)] << "\t"
+                               << seqan::getCounts(potential) << "\t"
+                               << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential);
             if (opts.run_mode == run_mode_t::tfo_search) {
-                output_file << "\t" << seqan::getCount(potential, 'R') << "\t"
-                            << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
-                            << seqan::getCount(potential, 'Y') << "\t"
-                            << std::setprecision(3) << seqan::getCount(potential, 'Y') / seqan::getNorm(potential) << "\t"
-                            << seqan::getCount(potential, 'M') << "\t"
-                            << std::setprecision(3) << seqan::getCount(potential, 'M') /seqan:: getNorm(potential) << "\t";
+                state.summary_file << "\t" << seqan::getCount(potential, 'R') << "\t"
+                                   << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
+                                   << seqan::getCount(potential, 'Y') << "\t"
+                                   << std::setprecision(3) << seqan::getCount(potential, 'Y') / seqan::getNorm(potential) << "\t"
+                                   << seqan::getCount(potential, 'M') << "\t"
+                                   << std::setprecision(3) << seqan::getCount(potential, 'M') /seqan:: getNorm(potential) << "\t";
             }
-            output_file << "\n";
+            state.summary_file << "\n";
         }
     }
 }
@@ -382,6 +359,7 @@ void print_triplex_pairs(match_set_t& matches,
                          name_set_t& tfo_names,
                          motif_set_t& tts_motifs,
                          name_set_t& tts_names,
+                         output_writer_state_t& state,
                          const options& opts)
 #else
 void print_triplex_pairs(match_set_set_t& matches,
@@ -389,22 +367,11 @@ void print_triplex_pairs(match_set_set_t& matches,
                          name_set_t& tfo_names,
                          motif_set_t& tts_motifs,
                          name_set_t& tts_names,
+                         output_writer_state_t& state,
                          const options& opts)
 #endif
 {
     if (opts.output_format == output_format_t::summary) {
-        return;
-    }
-
-    seqan::CharString output_file_name;
-    seqan::append(output_file_name, opts.output_file);
-    seqan::append(output_file_name, ".out");
-
-    std::ofstream output_file(seqan::toCString(output_file_name),
-                              std::ios_base::out | std::ios_base::app);
-    if (!output_file) {
-        std::cerr << "PATO: error opening output file '"
-                  << output_file_name << "'\n";
         return;
     }
 
@@ -417,23 +384,23 @@ void print_triplex_pairs(match_set_set_t& matches,
             auto tfo_seq_id = tfo_motifs[match.tfoNo].seqNo;
             auto tts_seq_id = match.ttsSeqNo;
 
-            output_file << tfo_names[tfo_seq_id] << "\t"
-                        << match.oBegin << "\t"
-                        << match.oEnd << "\t"
-                        << tts_names[tts_seq_id] << "\t"
-                        << match.dBegin << "\t"
-                        << match.dEnd << "\t"
-                        << match.mScore << "\t"
-                        << std::setprecision(2) << 1.0 - match.mScore / (match.dEnd - match.dBegin) << "\t"
-                        << triplex_error_string(match, tfo_motifs, tts_motifs, opts) << "\t"
-                        << match.motif << "\t"
-                        << match.strand << "\t"
-                        << (match.parallel ? 'P' : 'A') << "\t"
-                        << match.guanines / (match.dEnd - match.dBegin);
+            state.output_file << tfo_names[tfo_seq_id] << "\t"
+                              << match.oBegin << "\t"
+                              << match.oEnd << "\t"
+                              << tts_names[tts_seq_id] << "\t"
+                              << match.dBegin << "\t"
+                              << match.dEnd << "\t"
+                              << match.mScore << "\t"
+                              << std::setprecision(2) << 1.0 - match.mScore / (match.dEnd - match.dBegin) << "\t"
+                              << triplex_error_string(match, tfo_motifs, tts_motifs, opts) << "\t"
+                              << match.motif << "\t"
+                              << match.strand << "\t"
+                              << (match.parallel ? 'P' : 'A') << "\t"
+                              << match.guanines / (match.dEnd - match.dBegin);
             if (opts.output_format == output_format_t::triplex) {
-                output_file << triplex_alignment_string(match, tfo_motifs, tts_motifs);
+                state.output_file << triplex_alignment_string(match, tfo_motifs, tts_motifs);
             }
-            output_file << "\n";
+            state.output_file << "\n";
 #if defined(_OPENMP)
         }
 #endif
@@ -443,34 +410,23 @@ void print_triplex_pairs(match_set_set_t& matches,
 void print_triplex_summary(potential_set_t& potentials,
                            name_set_t& tfo_names,
                            name_set_t& tts_names,
+                           output_writer_state_t& state,
                            const options& opts)
 {
-    seqan::CharString output_file_name;
-    seqan::append(output_file_name, opts.output_file);
-    seqan::append(output_file_name, ".summary");
-
-    std::ofstream output_file(seqan::toCString(output_file_name),
-                              std::ios_base::out | std::ios_base::app);
-    if (!output_file) {
-        std::cerr << "PATO: error opening output file '"
-                  << output_file_name << "'\n";
-        return;
-    }
-
     for (auto& potential_entry : potentials) {
         auto& potential = potential_entry.second;
         if (seqan::hasCount(potential)) {
-            output_file << tts_names[seqan::getKey(potential).second] << "\t"
-                        << tfo_names[seqan::getKey(potential).first] << "\t"
-                        << seqan::getCounts(potential) << "\t"
-                        << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential) << "\t"
-                        << seqan::getCount(potential, 'R') << "\t"
-                        << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
-                        << seqan::getCount(potential, 'Y') << "\t"
-                        << std::setprecision(3) << seqan::getCount(potential, 'Y') / seqan::getNorm(potential) << "\t"
-                        << seqan::getCount(potential, 'M') << "\t"
-                        << std::setprecision(3) << seqan::getCount(potential, 'M') /seqan:: getNorm(potential) << "\t"
-                        << "\n";
+            state.summary_file << tts_names[seqan::getKey(potential).second] << "\t"
+                               << tfo_names[seqan::getKey(potential).first] << "\t"
+                               << seqan::getCounts(potential) << "\t"
+                               << std::setprecision(3) << seqan::getCounts(potential) / seqan::getNorm(potential) << "\t"
+                               << seqan::getCount(potential, 'R') << "\t"
+                               << std::setprecision(3) << seqan::getCount(potential, 'R') / seqan::getNorm(potential) << "\t"
+                               << seqan::getCount(potential, 'Y') << "\t"
+                               << std::setprecision(3) << seqan::getCount(potential, 'Y') / seqan::getNorm(potential) << "\t"
+                               << seqan::getCount(potential, 'M') << "\t"
+                               << std::setprecision(3) << seqan::getCount(potential, 'M') /seqan:: getNorm(potential) << "\t"
+                               << "\n";
         }
     }
 }

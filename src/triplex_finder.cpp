@@ -274,7 +274,6 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
     matches.resize(omp_get_max_threads());
 #endif
 
-    double st = omp_get_wtime();
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
@@ -311,17 +310,6 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 } // #pragma omp critical
 #endif
 } // #pragma omp parallel
-
-    double nd = omp_get_wtime();
-#if !defined(_OPENMP)
-    std::cout << "TPX in: " << nd - st << " seconds (" << matches.size() << ")\n";
-#else
-    std::size_t total = 0;
-    for (auto& local_matches : matches) {
-        total += local_matches.size();
-    }
-    std::cout << "TPX in: " << nd - st << " seconds (" << total << ")\n";
-#endif
 }
 
 void find_triplexes(const options& opts)
@@ -331,25 +319,36 @@ void find_triplexes(const options& opts)
         std::cerr << "PATO: error opening input files\n";
         return;
     }
-    create_output_files(opts);
+
+    output_writer_state_t tpx_output_file_state;
+    create_output_state(tpx_output_file_state, opts);
 
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
 
+    double total_load = 0;
+    double total_ftts = 0;
+    double total_ftpx = 0;
+    double total_writ = 0;
+    double total_loop = 0;
+
+    double wall_st = omp_get_wtime();
     if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
         return;
     }
+    double ftfo_st = omp_get_wtime();
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
+    double ftfo_nd = omp_get_wtime();
 
     name_set_t tts_names;
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    sequence_loader_state_t tts_file_state;
+    sequence_loader_state_t tts_input_file_state;
 
 #if !defined(_OPENMP)
     match_set_t matches;
@@ -359,10 +358,21 @@ void find_triplexes(const options& opts)
     potential_set_t potentials;
 
     unsigned int offset = 0;
-    while (load_sequences(tts_sequences, tts_names, tts_file_state, opts)) {
+    while (true) {
+        double load_st = omp_get_wtime();
+        if (!load_sequences(tts_sequences, tts_names, tts_input_file_state, opts)) {
+            break;
+        }
+
+        double ftts_st = omp_get_wtime();
         find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
+        double ftpx_st = omp_get_wtime();
         match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
-        print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, opts);
+
+        double writ_st = omp_get_wtime();
+        print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, tpx_output_file_state, opts);
+        print_triplex_summary(potentials, tfo_names, tts_names, tpx_output_file_state, opts);
+        double writ_nd = omp_get_wtime();
 
         offset += opts.chunk_size;
 
@@ -375,6 +385,22 @@ void find_triplexes(const options& opts)
             local_matches.clear();
         }
 #endif
+        potentials.clear();
+        double loop_nd = omp_get_wtime();
+
+        total_load += ftts_st - load_st;
+        total_ftts += ftpx_st - ftts_st;
+        total_ftpx += writ_st - ftpx_st;
+        total_writ += writ_nd - writ_st;
+        total_loop += loop_nd - writ_nd;
     }
-    print_triplex_summary(potentials, tfo_names, tts_names, opts);
+    double wall_nd = omp_get_wtime();
+
+    std::cout << "     TFO: " << ftfo_nd - wall_st << "s (" << ftfo_st - wall_st << "s + " << ftfo_nd - ftfo_st << "s)\n";
+    std::cout << "     TTS: " << total_ftts + total_load << "s (" << total_load << "s + " << total_ftts << "s)\n";
+    std::cout << "     TPX: " << total_ftpx << "s\n";
+    std::cout << "   Clear: " << total_loop << "s\n";
+    std::cout << "   Write: " << total_writ << "s\n";
+    std::cout << "=========\n";
+    std::cout << "TPX time: " << wall_nd - wall_st << "s\n";
 }

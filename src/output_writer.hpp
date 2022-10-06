@@ -25,17 +25,27 @@
 #ifndef OUTPUT_WRITER_HPP
 #define OUTPUT_WRITER_HPP
 
+#include <fstream>
+
 #include "options.hpp"
 #include "triplex_definitions.hpp"
 
-bool create_output_files(const options& opts);
+struct output_writer_state_t
+{
+    std::ofstream output_file;
+    std::ofstream summary_file;
+};
+
+bool create_output_state(output_writer_state_t& state, const options& opts);
 
 void print_motifs(motif_set_t& motifs,
                   name_set_t& names,
+                  output_writer_state_t& state,
                   const options& opts,
                   unsigned int counter = 1);
 void print_summary(motif_potential_set_t& potentials,
                    name_set_t& names,
+                   output_writer_state_t& state,
                    const options& opts);
 
 #if !defined(_OPENMP)
@@ -44,6 +54,7 @@ void print_triplex_pairs(match_set_t& matches,
                          name_set_t& tfo_names,
                          motif_set_t& tts_motifs,
                          name_set_t& tts_names,
+                         output_writer_state_t& state,
                          const options& opts);
 #else
 void print_triplex_pairs(match_set_set_t& matches,
@@ -51,11 +62,13 @@ void print_triplex_pairs(match_set_set_t& matches,
                          name_set_t& tfo_names,
                          motif_set_t& tts_motifs,
                          name_set_t& tts_names,
+                         output_writer_state_t& state,
                          const options& opts);
 #endif
 void print_triplex_summary(potential_set_t& potentials,
                            name_set_t& tfo_names,
                            name_set_t& tts_names,
+                           output_writer_state_t& state,
                            const options& opts);
 
 #endif

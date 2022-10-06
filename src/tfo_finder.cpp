@@ -212,7 +212,6 @@ bool find_tfo_motifs(motif_set_t& motifs,
         return seqan::length(sequences[i]) > seqan::length(sequences[j]);
     });
 
-    double st = omp_get_wtime();
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
@@ -253,32 +252,44 @@ bool find_tfo_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    double nd = omp_get_wtime();
-    std::cout << "TFO in: " << nd - st << " seconds (" << motifs.size() << ")\n";
-
     return true;
 }
 
 void find_tfo_motifs(const options& opts)
 {
     if (!file_exists(seqan::toCString(opts.tfo_file))) {
-        std::cerr << "PATO: error opening TFO file '" << opts.tfo_file << "'\n";
+        std::cerr << "PATO: error opening TTS file '" << opts.tfo_file << "'\n";
         return;
     }
-    create_output_files(opts);
+
+    output_writer_state_t tfo_output_file_state;
+    if (!create_output_state(tfo_output_file_state, opts)) {
+        return;
+    }
 
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
 
+    double wall_st = omp_get_wtime();
     if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
         return;
     }
+    double load_nd = omp_get_wtime();
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
+    double comp_nd = omp_get_wtime();
 
-    print_motifs(tfo_motifs, tfo_names, opts);
-    print_summary(tfo_potentials, tfo_names, opts);
+    double writ_st = omp_get_wtime();
+    print_motifs(tfo_motifs, tfo_names, tfo_output_file_state, opts);
+    print_summary(tfo_potentials, tfo_names, tfo_output_file_state, opts);
+    double wall_nd = omp_get_wtime();
+
+    std::cout << "    Load: " << load_nd - wall_st << "s\n";
+    std::cout << " Compute: " << comp_nd - load_nd << "s\n";
+    std::cout << "   Write: " << wall_nd - writ_st << "s\n";
+    std::cout << "=========\n";
+    std::cout << "TFO time: " << wall_nd - wall_st << "s\n";
 }
