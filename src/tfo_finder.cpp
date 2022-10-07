@@ -283,8 +283,13 @@ void find_tfo_motifs(const options& opts)
     double comp_nd = omp_get_wtime();
 
     double writ_st = omp_get_wtime();
+#pragma omp parallel sections num_threads(2)
+{
+#pragma omp section
     print_motifs(tfo_motifs, tfo_names, tfo_output_file_state, opts);
+#pragma omp section
     print_summary(tfo_potentials, tfo_names, tfo_output_file_state, opts);
+} // #pragma omp parallel sections num_threads(2)
     double wall_nd = omp_get_wtime();
 
     destroy_output_state(tfo_output_file_state);

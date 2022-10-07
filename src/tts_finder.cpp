@@ -152,8 +152,7 @@ bool find_tts_motifs(motif_set_t& motifs,
                      motif_potential_set_t& potentials,
                      triplex_set_t& sequences,
                      name_set_t& names,
-                     const options& opts,
-                     unsigned int offset)
+                     const options& opts)
 {
     index_set_t indices(sequences.size(), 0);
     std::iota(indices.begin(), indices.end(), 0);
@@ -182,7 +181,7 @@ bool find_tts_motifs(motif_set_t& motifs,
                            opts.min_repeat_length,
                            opts.max_repeat_period);
         }
-        find_tts_motifs(sequences[indices[i]], offset + indices[i], tts_args, opts);
+        find_tts_motifs(sequences[indices[i]], indices[i], tts_args, opts);
     }
 
 #if defined(_OPENMP)
@@ -212,16 +211,18 @@ void find_tts_motifs(const options& opts)
     }
 
     output_writer_state_t tts_output_file_state;
-    create_output_state(tts_output_file_state, opts);
+    if (!create_output_state(tts_output_file_state, opts)) {
+        return;
+    }
+    sequence_loader_state_t tts_input_file_state;
+    if (!create_loader_state(tts_input_file_state, opts)) {
+        return;
+    }
 
     name_set_t tts_names;
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    sequence_loader_state_t tts_input_file_state;
-
-    unsigned int offset = 0;
-    unsigned int counter = 1;
 
     double total_load = 0;
     double total_comp = 0;
@@ -235,16 +236,19 @@ void find_tts_motifs(const options& opts)
             break;
         }
         double comp_st = omp_get_wtime();
-        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
+        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts);
 
         double writ_st = omp_get_wtime();
-        print_motifs(tts_motifs, tts_names, tts_output_file_state, opts, counter);
+#pragma omp parallel sections num_threads(2)
+{
+#pragma omp section
+        print_motifs(tts_motifs, tts_names, tts_output_file_state, opts);
+#pragma omp section
         print_summary(tts_potentials, tts_names, tts_output_file_state, opts);
+} // #pragma omp parallel sections num_threads(2)
         double writ_nd = omp_get_wtime();
 
-        offset += opts.chunk_size;
-        counter += tts_motifs.size();
-
+        tts_names.clear();
         tts_motifs.clear();
         tts_sequences.clear();
         tts_potentials.clear();
@@ -258,6 +262,7 @@ void find_tts_motifs(const options& opts)
     double wall_nd = omp_get_wtime();
 
     destroy_output_state(tts_output_file_state);
+    destroy_loader_state(tts_input_file_state);
 
     std::cout << "    Load: " << total_load << "s\n";
     std::cout << " Compute: " << total_comp << "s\n";

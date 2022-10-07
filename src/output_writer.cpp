@@ -297,12 +297,14 @@ void destroy_output_state(output_writer_state_t& state)
 void print_motifs(motif_set_t& motifs,
                   name_set_t& names,
                   output_writer_state_t& state,
-                  const options& opts,
-                  unsigned int counter)
+                  const options& opts)
 {
-    if (opts.output_format == output_format_t::summary) {
+    if (opts.output_format == output_format_t::summary || motifs.empty()) {
         return;
     }
+
+    unsigned int counter = 1;
+    unsigned int last_sequence_id = seqan::getSequenceNo(motifs[0]);
 
     for (auto& m : motifs) {
         if (opts.output_format == output_format_t::bed) {
@@ -319,8 +321,13 @@ void print_motifs(motif_set_t& motifs,
                          seqan::duplicates(m),
                          seqan::toCString(opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m)));
         } else {
+            if (last_sequence_id != seqan::getSequenceNo(m)) {
+                counter = 1;
+                last_sequence_id = seqan::getSequenceNo(m);
+            }
+
             std::fprintf(state.output_file,
-                         ">%s_%u\t%lu-%lu %c\t%u\t%s\t%d\t%f\t-\n%s\n",
+                         ">%s_%u\t%lu-%lu %c\t%u\t%s\t%g\t%d\t-\n%s\n",
                          seqan::toCString(names[seqan::getSequenceNo(m)]),
                          counter++,
                          seqan::beginPosition(m),
@@ -328,8 +335,8 @@ void print_motifs(motif_set_t& motifs,
                          seqan::getMotif(m),
                          seqan::score(m),
                          seqan::toCString(seqan::errorString(m)),
-                         seqan::duplicates(m),
                          seqan::guanineRate(m),
+                         seqan::duplicates(m),
                          seqan::toCString(opts.pretty_output ? seqan::prettyString(m) : seqan::outputString(m)));
         }
     }

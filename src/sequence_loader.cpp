@@ -44,19 +44,31 @@ bool file_exists(const char *file_name)
     return seqan::open(fasta_file, file_name);
 }
 
+bool create_loader_state(sequence_loader_state_t& state, const options& opts)
+{
+    if (!seqan::open(state.fasta_file, seqan::toCString(opts.tts_file))) {
+        std::cerr << "PATO: error opening input file '" << opts.tts_file << "'\n";
+        return false;
+    }
+    return true;
+}
+
+void destroy_loader_state(sequence_loader_state_t& state)
+{
+    seqan::close(state.fasta_file);
+}
+
 bool load_sequences(triplex_set_t& sequences,
                     name_set_t& names,
                     const char *file_name)
 {
     seqan::SeqFileIn fasta_file;
-
     if (!seqan::open(fasta_file, file_name)) {
         std::cerr << "PATO: error opening input file '" << file_name << "'\n";
         return false;
     }
-    seqan::readRecords(names, sequences, fasta_file);
 
-    // crop sequences names
+    seqan::readRecords(names, sequences, fasta_file);
     for (auto& name : names) {
         crop_sequence_name(name);
     }
@@ -69,15 +81,7 @@ bool load_sequences(triplex_set_t& sequences,
                     sequence_loader_state_t& state,
                     const options& opts)
 {
-    if (!seqan::isOpen(state.fasta_file)) {
-        if (!seqan::open(state.fasta_file, seqan::toCString(opts.tts_file))) {
-            std::cerr << "PATO: error opening input file '" << opts.tts_file << "'\n";
-            return false;
-        }
-    }
     seqan::readRecords(names, sequences, state.fasta_file, opts.chunk_size);
-
-    // crop sequences names
     for (auto& name : names) {
         crop_sequence_name(name);
     }

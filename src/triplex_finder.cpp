@@ -320,7 +320,13 @@ void find_triplexes(const options& opts)
     }
 
     output_writer_state_t tpx_output_file_state;
-    create_output_state(tpx_output_file_state, opts);
+    if (!create_output_state(tpx_output_file_state, opts)) {
+        return;
+    }
+    sequence_loader_state_t tts_input_file_state;
+    if (!create_loader_state(tts_input_file_state, opts)) {
+        return;
+    }
 
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
@@ -347,7 +353,6 @@ void find_triplexes(const options& opts)
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    sequence_loader_state_t tts_input_file_state;
 
 #if !defined(_OPENMP)
     match_set_t matches;
@@ -356,7 +361,6 @@ void find_triplexes(const options& opts)
 #endif
     potential_set_t potentials;
 
-    unsigned int offset = 0;
     while (true) {
         double load_st = omp_get_wtime();
         if (!load_sequences(tts_sequences, tts_names, tts_input_file_state, opts)) {
@@ -364,19 +368,24 @@ void find_triplexes(const options& opts)
         }
 
         double ftts_st = omp_get_wtime();
-        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts, offset);
+        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts);
         double ftpx_st = omp_get_wtime();
         match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
 
         double writ_st = omp_get_wtime();
-        print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, tpx_output_file_state, opts);
-        print_triplex_summary(potentials, tfo_names, tts_names, tpx_output_file_state, opts);
+#pragma omp parallel sections num_threads(2)
+{
+#pragma omp section
+    print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, tpx_output_file_state, opts);
+#pragma omp section
+    print_triplex_summary(potentials, tfo_names, tts_names, tpx_output_file_state, opts);
+} // #pragma omp parallel sections num_threads(2)
         double writ_nd = omp_get_wtime();
 
-        offset += opts.chunk_size;
-
+        tts_names.clear();
         tts_motifs.clear();
         tts_sequences.clear();
+
 #if !defined(_OPENMP)
         matches.clear();
 #else

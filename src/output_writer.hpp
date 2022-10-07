@@ -42,8 +42,7 @@ void destroy_output_state(output_writer_state_t& state);
 void print_motifs(motif_set_t& motifs,
                   name_set_t& names,
                   output_writer_state_t& state,
-                  const options& opts,
-                  unsigned int counter = 1);
+                  const options& opts);
 void print_summary(motif_potential_set_t& potentials,
                    name_set_t& names,
                    output_writer_state_t& state,
