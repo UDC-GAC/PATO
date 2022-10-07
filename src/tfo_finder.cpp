@@ -287,6 +287,8 @@ void find_tfo_motifs(const options& opts)
     print_summary(tfo_potentials, tfo_names, tfo_output_file_state, opts);
     double wall_nd = omp_get_wtime();
 
+    destroy_output_state(tfo_output_file_state);
+
     std::cout << "    Load: " << load_nd - wall_st << "s\n";
     std::cout << " Compute: " << comp_nd - load_nd << "s\n";
     std::cout << "   Write: " << wall_nd - writ_st << "s\n";

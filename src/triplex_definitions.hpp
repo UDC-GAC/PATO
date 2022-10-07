@@ -66,7 +66,7 @@ typedef seqan::ModStringTriplex<triplex_t, triplex_t> motif_t;
 typedef seqan::Repeat<unsigned int, unsigned int> repeat_t;
 typedef typename seqan::Infix<triplex_t>::Type segment_t;
 typedef seqan::ModifiedString<motif_t, seqan::ModView<seqan::FunctorRYFilter>> filter_t;
-typedef seqan::TriplexMatch<seqan::Difference<seqan::TriplexString>::Type, unsigned int, double> match_t;
+typedef seqan::TriplexMatch<seqan::Difference<seqan::TriplexString>::Type, unsigned int, unsigned int> match_t;
 typedef seqan::TriplexPotential<std::pair<unsigned int, unsigned int>> potential_t;
 typedef seqan::TriplexPotential<unsigned int> motif_potential_t;
 

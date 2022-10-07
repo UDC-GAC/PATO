@@ -25,18 +25,19 @@
 #ifndef OUTPUT_WRITER_HPP
 #define OUTPUT_WRITER_HPP
 
-#include <fstream>
+#include <cstdio>
 
 #include "options.hpp"
 #include "triplex_definitions.hpp"
 
 struct output_writer_state_t
 {
-    std::ofstream output_file;
-    std::ofstream summary_file;
+    std::FILE* output_file;
+    std::FILE* summary_file;
 };
 
 bool create_output_state(output_writer_state_t& state, const options& opts);
+void destroy_output_state(output_writer_state_t& state);
 
 void print_motifs(motif_set_t& motifs,
                   name_set_t& names,

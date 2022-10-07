@@ -186,8 +186,8 @@ void search_triplex(motif_t& tfo_motif,
         std::size_t tfo_start, tfo_end;
         std::size_t tts_start, tts_end;
         for (auto& triplex : tpx_args.tpx_motifs) {
-            int score = 0;
-            int guanines = 0;
+            unsigned int score = 0;
+            unsigned int guanines = 0;
 
             for (unsigned int i = seqan::beginPosition(triplex); i < seqan::endPosition(triplex); i++) {
                 if (tmp_tts[i] != 'N') {
@@ -296,7 +296,6 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
     }
 
 #if defined(_OPENMP)
-// TODO: evaluate if using a lock over a shared data structure is faster than this copy
 #pragma omp critical (potential_lock)
 {
     for (auto& potential_entry : tpx_args.potentials) {
@@ -395,6 +394,8 @@ void find_triplexes(const options& opts)
         total_loop += loop_nd - writ_nd;
     }
     double wall_nd = omp_get_wtime();
+
+    destroy_output_state(tpx_output_file_state);
 
     std::cout << "     TFO: " << ftfo_nd - wall_st << "s (" << ftfo_st - wall_st << "s + " << ftfo_nd - ftfo_st << "s)\n";
     std::cout << "     TTS: " << total_ftts + total_load << "s (" << total_load << "s + " << total_ftts << "s)\n";

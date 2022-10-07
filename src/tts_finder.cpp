@@ -257,6 +257,8 @@ void find_tts_motifs(const options& opts)
     }
     double wall_nd = omp_get_wtime();
 
+    destroy_output_state(tts_output_file_state);
+
     std::cout << "    Load: " << total_load << "s\n";
     std::cout << " Compute: " << total_comp << "s\n";
     std::cout << "   Clear: " << total_loop << "s\n";
