@@ -258,7 +258,7 @@ bool find_tfo_motifs(motif_set_t& motifs,
 void find_tfo_motifs(const options& opts)
 {
     if (!file_exists(seqan::toCString(opts.tfo_file))) {
-        std::cerr << "PATO: error opening TTS file '" << opts.tfo_file << "'\n";
+        std::cout << "PATO: error opening TTS file '" << opts.tfo_file << "'\n";
         return;
     }
 
@@ -272,17 +272,13 @@ void find_tfo_motifs(const options& opts)
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
 
-    double wall_st = omp_get_wtime();
     if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
         return;
     }
-    double load_nd = omp_get_wtime();
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
-    double comp_nd = omp_get_wtime();
 
-    double writ_st = omp_get_wtime();
 #pragma omp parallel sections num_threads(2)
 {
 #pragma omp section
@@ -290,13 +286,7 @@ void find_tfo_motifs(const options& opts)
 #pragma omp section
     print_summary(tfo_potentials, tfo_names, tfo_output_file_state, opts);
 } // #pragma omp parallel sections num_threads(2)
-    double wall_nd = omp_get_wtime();
 
     destroy_output_state(tfo_output_file_state);
-
-    std::cout << "    Load: " << load_nd - wall_st << "s\n";
-    std::cout << " Compute: " << comp_nd - load_nd << "s\n";
-    std::cout << "   Write: " << wall_nd - writ_st << "s\n";
-    std::cout << "=========\n";
-    std::cout << "TFO time: " << wall_nd - wall_st << "s\n";
+    std::cout << "TFO search: done\n";
 }

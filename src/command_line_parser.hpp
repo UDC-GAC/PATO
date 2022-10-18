@@ -27,7 +27,6 @@
 
 #include <cmath>
 #include <string>
-#include <climits>
 #include <iostream>
 #include <algorithm>
 
@@ -67,7 +66,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
 {
     seqan::ArgumentParser parser("PATO");
 
-    seqan::setShortDescription(parser, "PArallel TriplexatOr");
+    seqan::setShortDescription(parser, "high PerformAnce TriplexatOr");
     seqan::addUsageLine(parser, "[options] {-ss tfo_file | -ds tts_file | -ss tfo_file -ds tts_file}");
     seqan::addDescription(parser, "PATO is a high performance tool for the fast and efficient detection of acid triple helices and triplex features in nucleotide sequences. PATO is based on Triplexator and functions nearly as a drop in replacement to accelerate the triplex analyses in multicore computers.");
 
@@ -99,11 +98,11 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("mf", "merge-features", "Merge overlapping features into a cluster and report the spanning region.", seqan::ArgParseOption::BOOL));
     seqan::addSection(parser, "Output options");
     seqan::addOption(parser, seqan::ArgParseOption("o", "output", "Output file name", seqan::ArgParseOption::STRING));
-    seqan::addOption(parser, seqan::ArgParseOption("of", "output-format", "Set output format [0,1,2].", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("of", "output-format", "Set the output format [0,1,2].", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("po", "pretty-output", "Indicate matching/mismatching characters with upper/lower case.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("er", "error-reference", "Reference to which the error should correspond [0,1,2].", seqan::ArgParseOption::INTEGER));
     seqan::addSection(parser, "Performance options");
-    seqan::addOption(parser, seqan::ArgParseOption("cs", "chunk-size", "TTSs window size. Lower window size equals less memory usage but more overhead.", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("cs", "chunk-size", "Set the TTSs window processing size (lower size equals less memory usage but implies less parallelism).", seqan::ArgParseOption::INTEGER));
 
     // input options
     seqan::setDefaultValue(parser, "ss", "(null)");
@@ -136,7 +135,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::setDefaultValue(parser, "er", static_cast<unsigned int>(error_reference_t::watson_strand));
 
     // performance options
-    seqan::setDefaultValue(parser, "cs", INT32_MAX);
+    seqan::setDefaultValue(parser, "cs", 128);
 
     if (seqan::parse(parser, argc, argv) != seqan::ArgumentParser::PARSE_OK) {
         return false;

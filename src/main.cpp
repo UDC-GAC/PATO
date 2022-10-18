@@ -36,6 +36,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    print_options(opts);
     switch (opts.run_mode) {
         case run_mode_t::tfo_search:
             find_tfo_motifs(opts);

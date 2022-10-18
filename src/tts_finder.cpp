@@ -206,7 +206,7 @@ bool find_tts_motifs(motif_set_t& motifs,
 void find_tts_motifs(const options& opts)
 {
     if (!file_exists(seqan::toCString(opts.tts_file))) {
-        std::cerr << "PATO: error opening TTS file '" << opts.tts_file << "'\n";
+        std::cout << "PATO: error opening TTS file '" << opts.tts_file << "'\n";
         return;
     }
 
@@ -224,21 +224,12 @@ void find_tts_motifs(const options& opts)
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
 
-    double total_load = 0;
-    double total_comp = 0;
-    double total_writ = 0;
-    double total_loop = 0;
-
-    double wall_st = omp_get_wtime();
     while (true) {
-        double load_st = omp_get_wtime();
         if (!load_sequences(tts_sequences, tts_names, tts_input_file_state, opts)) {
             break;
         }
-        double comp_st = omp_get_wtime();
         find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts);
 
-        double writ_st = omp_get_wtime();
 #pragma omp parallel sections num_threads(2)
 {
 #pragma omp section
@@ -246,28 +237,14 @@ void find_tts_motifs(const options& opts)
 #pragma omp section
         print_summary(tts_potentials, tts_names, tts_output_file_state, opts);
 } // #pragma omp parallel sections num_threads(2)
-        double writ_nd = omp_get_wtime();
 
         tts_names.clear();
         tts_motifs.clear();
         tts_sequences.clear();
         tts_potentials.clear();
-        double loop_nd = omp_get_wtime();
-
-        total_load += comp_st - load_st;
-        total_comp += writ_st - comp_st;
-        total_writ += writ_nd - writ_st;
-        total_loop += loop_nd - writ_nd;
     }
-    double wall_nd = omp_get_wtime();
 
     destroy_output_state(tts_output_file_state);
     destroy_loader_state(tts_input_file_state);
-
-    std::cout << "    Load: " << total_load << "s\n";
-    std::cout << " Compute: " << total_comp << "s\n";
-    std::cout << "   Clear: " << total_loop << "s\n";
-    std::cout << "   Write: " << total_writ << "s\n";
-    std::cout << "=========\n";
-    std::cout << "TTS time: " << wall_nd - wall_st << "s\n";
+    std::cout << "TTS search: done\n";
 }

@@ -227,7 +227,7 @@ bool create_output_state(output_writer_state_t& state, const options& opts)
 
         state.summary_file = std::fopen(seqan::toCString(output_file_name), "w");
         if (!state.summary_file) {
-            std::cerr << "PATO: error opening output file '"
+            std::cout << "PATO: error opening output file '"
                       << output_file_name << "'\n";
             return false;
         }
@@ -258,7 +258,7 @@ bool create_output_state(output_writer_state_t& state, const options& opts)
 
         state.output_file = std::fopen(seqan::toCString(output_file_name), "w");
         if (!state.output_file) {
-            std::cerr << "PATO: error opening output file '"
+            std::cout << "PATO: error opening output file '"
                       << output_file_name << "'\n";
             return false;
         }

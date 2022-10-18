@@ -315,7 +315,7 @@ void find_triplexes(const options& opts)
 {
     if (!file_exists(seqan::toCString(opts.tfo_file))
         || !file_exists(seqan::toCString(opts.tts_file))) {
-        std::cerr << "PATO: error opening input files\n";
+        std::cout << "PATO: error opening input files\n";
         return;
     }
 
@@ -333,21 +333,12 @@ void find_triplexes(const options& opts)
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
 
-    double total_load = 0;
-    double total_ftts = 0;
-    double total_ftpx = 0;
-    double total_writ = 0;
-    double total_loop = 0;
-
-    double wall_st = omp_get_wtime();
     if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
         return;
     }
-    double ftfo_st = omp_get_wtime();
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
-    double ftfo_nd = omp_get_wtime();
 
     name_set_t tts_names;
     motif_set_t tts_motifs;
@@ -362,17 +353,13 @@ void find_triplexes(const options& opts)
     potential_set_t potentials;
 
     while (true) {
-        double load_st = omp_get_wtime();
         if (!load_sequences(tts_sequences, tts_names, tts_input_file_state, opts)) {
             break;
         }
 
-        double ftts_st = omp_get_wtime();
         find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts);
-        double ftpx_st = omp_get_wtime();
         match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
 
-        double writ_st = omp_get_wtime();
 #pragma omp parallel sections num_threads(2)
 {
 #pragma omp section
@@ -380,7 +367,6 @@ void find_triplexes(const options& opts)
 #pragma omp section
     print_triplex_summary(potentials, tfo_names, tts_names, tpx_output_file_state, opts);
 } // #pragma omp parallel sections num_threads(2)
-        double writ_nd = omp_get_wtime();
 
         tts_names.clear();
         tts_motifs.clear();
@@ -394,23 +380,9 @@ void find_triplexes(const options& opts)
         }
 #endif
         potentials.clear();
-        double loop_nd = omp_get_wtime();
-
-        total_load += ftts_st - load_st;
-        total_ftts += ftpx_st - ftts_st;
-        total_ftpx += writ_st - ftpx_st;
-        total_writ += writ_nd - writ_st;
-        total_loop += loop_nd - writ_nd;
     }
-    double wall_nd = omp_get_wtime();
 
     destroy_output_state(tpx_output_file_state);
-
-    std::cout << "     TFO: " << ftfo_nd - wall_st << "s (" << ftfo_st - wall_st << "s + " << ftfo_nd - ftfo_st << "s)\n";
-    std::cout << "     TTS: " << total_ftts + total_load << "s (" << total_load << "s + " << total_ftts << "s)\n";
-    std::cout << "     TPX: " << total_ftpx << "s\n";
-    std::cout << "   Clear: " << total_loop << "s\n";
-    std::cout << "   Write: " << total_writ << "s\n";
-    std::cout << "=========\n";
-    std::cout << "TPX time: " << wall_nd - wall_st << "s\n";
+    destroy_loader_state(tts_input_file_state);
+    std::cout << "TTS search: done\n";
 }

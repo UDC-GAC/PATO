@@ -21,7 +21,7 @@ total=0
 failed=0
 
 # start the test suite
-printf "\e[1mPATO: PArallel TriplexatOr\e[0m -- Test suite\n\n"
+printf "\e[1mPATO: high PerformAnce TriplexatOr\e[0m -- Test suite\n\n"
 
 # tfo tests
 declare -a tfo_length_args=("" "-l 10 -L 14")

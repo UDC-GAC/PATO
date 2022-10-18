@@ -25,6 +25,7 @@
 #ifndef OPTIONS_HPP
 #define OPTIONS_HPP
 
+#include <seqan/stream.h>
 #include <seqan/sequence.h>
 
 #include "triplex_enums.hpp"
@@ -64,5 +65,7 @@ struct options
     bool filter_repeats;
     bool merge_features;
 };
+
+void print_options(const options& opts);
 
 #endif
