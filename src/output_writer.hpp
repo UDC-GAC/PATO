@@ -32,6 +32,8 @@
 
 struct output_writer_state_t
 {
+    bool summary_only;
+
     std::FILE* output_file;
     std::FILE* summary_file;
 };

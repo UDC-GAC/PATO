@@ -247,6 +247,7 @@ bool create_output_state(output_writer_state_t& state, const options& opts)
         }
     }
 
+    state.summary_only = opts.output_format == output_format_t::summary;
     if (opts.output_format == output_format_t::summary) {
         return true;
     }
@@ -290,8 +291,10 @@ bool create_output_state(output_writer_state_t& state, const options& opts)
 
 void destroy_output_state(output_writer_state_t& state)
 {
-    std::fclose(state.output_file);
     std::fclose(state.summary_file);
+    if (!state.summary_only) {
+        std::fclose(state.output_file);
+    }
 }
 
 void print_motifs(motif_set_t& motifs,

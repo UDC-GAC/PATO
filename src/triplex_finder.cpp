@@ -384,5 +384,5 @@ void find_triplexes(const options& opts)
 
     destroy_output_state(tpx_output_file_state);
     destroy_loader_state(tts_input_file_state);
-    std::cout << "TTS search: done\n";
+    std::cout << "TPX search: done\n";
 }
