@@ -38,6 +38,7 @@
 #include "output_writer.hpp"
 #include "segment_parser.hpp"
 #include "guanine_filter.hpp"
+#include "sequence_loader.hpp"
 #include "triplex_pattern.hpp"
 
 struct tpx_arguments
@@ -185,8 +186,8 @@ void search_triplex(motif_t& tfo_motif,
         std::size_t tfo_start, tfo_end;
         std::size_t tts_start, tts_end;
         for (auto& triplex : tpx_args.tpx_motifs) {
-            int score = 0;
-            int guanines = 0;
+            unsigned int score = 0;
+            unsigned int guanines = 0;
 
             for (unsigned int i = seqan::beginPosition(triplex); i < seqan::endPosition(triplex); i++) {
                 if (tmp_tts[i] != 'N') {
@@ -273,7 +274,6 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
     matches.resize(omp_get_max_threads());
 #endif
 
-    double st = omp_get_wtime();
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
@@ -296,7 +296,6 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
     }
 
 #if defined(_OPENMP)
-// TODO: evaluate if using a lock over a shared data structure is faster than this copy
 #pragma omp critical (potential_lock)
 {
     for (auto& potential_entry : tpx_args.potentials) {
@@ -310,25 +309,33 @@ void match_tfo_tts_motifs(match_set_set_t& matches,
 } // #pragma omp critical
 #endif
 } // #pragma omp parallel
-
-    double nd = omp_get_wtime();
-#if !defined(_OPENMP)
-    std::cout << "TPX in: " << nd - st << " seconds (" << matches.size() << ")\n";
-#else
-    std::size_t total = 0;
-    for (auto& local_matches : matches) {
-        total += local_matches.size();
-    }
-    std::cout << "TPX in: " << nd - st << " seconds (" << total << ")\n";
-#endif
 }
 
 void find_triplexes(const options& opts)
 {
+    if (!file_exists(seqan::toCString(opts.tfo_file))
+        || !file_exists(seqan::toCString(opts.tts_file))) {
+        std::cout << "PATO: error opening input files\n";
+        return;
+    }
+
+    output_writer_state_t tpx_output_file_state;
+    if (!create_output_state(tpx_output_file_state, opts)) {
+        return;
+    }
+    sequence_loader_state_t tts_input_file_state;
+    if (!create_loader_state(tts_input_file_state, opts)) {
+        return;
+    }
+
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
+
+    if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
+        return;
+    }
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
@@ -337,9 +344,6 @@ void find_triplexes(const options& opts)
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    if (!find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts)) {
-        return;
-    }
 
 #if !defined(_OPENMP)
     match_set_t matches;
@@ -347,8 +351,38 @@ void find_triplexes(const options& opts)
     match_set_set_t matches;
 #endif
     potential_set_t potentials;
-    match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
 
-    print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, opts);
-    print_triplex_summary(potentials, tfo_names, tts_names, opts);
+    while (true) {
+        if (!load_sequences(tts_sequences, tts_names, tts_input_file_state, opts)) {
+            break;
+        }
+
+        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts);
+        match_tfo_tts_motifs(matches, potentials, tfo_motifs, tts_motifs, opts);
+
+#pragma omp parallel sections num_threads(2)
+{
+#pragma omp section
+    print_triplex_pairs(matches, tfo_motifs, tfo_names, tts_motifs, tts_names, tpx_output_file_state, opts);
+#pragma omp section
+    print_triplex_summary(potentials, tfo_names, tts_names, tpx_output_file_state, opts);
+} // #pragma omp parallel sections num_threads(2)
+
+        tts_names.clear();
+        tts_motifs.clear();
+        tts_sequences.clear();
+
+#if !defined(_OPENMP)
+        matches.clear();
+#else
+        for (auto& local_matches : matches) {
+            local_matches.clear();
+        }
+#endif
+        potentials.clear();
+    }
+
+    destroy_output_state(tpx_output_file_state);
+    destroy_loader_state(tts_input_file_state);
+    std::cout << "TTS search: done\n";
 }

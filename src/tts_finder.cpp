@@ -37,7 +37,6 @@
 #include "guanine_filter.hpp"
 #include "segment_parser.hpp"
 #include "sequence_loader.hpp"
-#include "duplicate_filter.hpp"
 
 struct tts_arguments
 {
@@ -155,17 +154,12 @@ bool find_tts_motifs(motif_set_t& motifs,
                      name_set_t& names,
                      const options& opts)
 {
-    if (!load_sequences(sequences, names, seqan::toCString(opts.tts_file))) {
-        return false;
-    }
-
     index_set_t indices(sequences.size(), 0);
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&](unsigned int i, unsigned int j) -> bool {
         return seqan::length(sequences[i]) > seqan::length(sequences[j]);
     });
 
-    double st = omp_get_wtime();
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
@@ -206,30 +200,51 @@ bool find_tts_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    if (opts.run_mode == run_mode_t::tts_search
-        && opts.detect_duplicates != detect_duplicates_t::off) {
-        count_duplicates(motifs, opts);
-        if (opts.duplicate_cutoff >= 0) {
-            filter_duplicates(motifs, opts.duplicate_cutoff);
-        }
-    }
-
-    double nd = omp_get_wtime();
-    std::cout << "TTS in: " << nd - st << " seconds (" << motifs.size() << ")\n";
-
     return true;
 }
 
 void find_tts_motifs(const options& opts)
 {
+    if (!file_exists(seqan::toCString(opts.tts_file))) {
+        std::cout << "PATO: error opening TTS file '" << opts.tts_file << "'\n";
+        return;
+    }
+
+    output_writer_state_t tts_output_file_state;
+    if (!create_output_state(tts_output_file_state, opts)) {
+        return;
+    }
+    sequence_loader_state_t tts_input_file_state;
+    if (!create_loader_state(tts_input_file_state, opts)) {
+        return;
+    }
+
     name_set_t tts_names;
     motif_set_t tts_motifs;
     triplex_set_t tts_sequences;
     motif_potential_set_t tts_potentials;
-    if (!find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts)) {
-        return;
+
+    while (true) {
+        if (!load_sequences(tts_sequences, tts_names, tts_input_file_state, opts)) {
+            break;
+        }
+        find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, tts_names, opts);
+
+#pragma omp parallel sections num_threads(2)
+{
+#pragma omp section
+        print_motifs(tts_motifs, tts_names, tts_output_file_state, opts);
+#pragma omp section
+        print_summary(tts_potentials, tts_names, tts_output_file_state, opts);
+} // #pragma omp parallel sections num_threads(2)
+
+        tts_names.clear();
+        tts_motifs.clear();
+        tts_sequences.clear();
+        tts_potentials.clear();
     }
 
-    print_motifs(tts_motifs, tts_names, opts);
-    print_summary(tts_potentials, tts_names, opts);
+    destroy_output_state(tts_output_file_state);
+    destroy_loader_state(tts_input_file_state);
+    std::cout << "TTS search: done\n";
 }

@@ -32,14 +32,6 @@ enum class orientation_t : int
     parallel = 1
 };
 
-enum class detect_duplicates_t : unsigned int
-{
-    off = 0,
-    permissive = 1,
-    strict = 2,
-    last = 3
-};
-
 enum class error_reference_t : unsigned int
 {
     watson_strand = 0,

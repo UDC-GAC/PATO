@@ -21,16 +21,15 @@ total=0
 failed=0
 
 # start the test suite
-printf "\e[1mPATO: PArallel TriplexatOr\e[0m -- Test suite\n\n"
+printf "\e[1mPATO: high PerformAnce TriplexatOr\e[0m -- Test suite\n\n"
 
 # tfo tests
 declare -a tfo_length_args=("" "-l 10 -L 14")
 declare -a tfo_error_args=("" "-e 8 -E 10 -c 3 -g 50 -G 70")
 declare -a tfo_match_args=("" "-b 3 -a on")
 declare -a tfo_filter_args=("" "-fr off")
-declare -a tfo_duplicate_args=("" "-dd 1 -dc 2" "-dd 2 -dc 2" "-dd 2 -dc 2 -ssd off")
 declare -a tfo_merge_args=("" "-mf on")
-declare -a tfo_output_args=("" "-po on" "-dl on")
+declare -a tfo_output_args=("" "-po on")
 
 fails=0
 counter=0
@@ -39,45 +38,43 @@ for len in "${tfo_length_args[@]}"; do
     for err in "${tfo_error_args[@]}"; do
         for mat in "${tfo_match_args[@]}"; do
             for fil in "${tfo_filter_args[@]}"; do
-                for dup in "${tfo_duplicate_args[@]}"; do
-                    for mer in "${tfo_merge_args[@]}"; do
-                        for out in "${tfo_output_args[@]}"; do
-                            args="${len} ${err} ${mat} ${fil} ${dup} ${mer} ${out}"
+                for mer in "${tfo_merge_args[@]}"; do
+                    for out in "${tfo_output_args[@]}"; do
+                        args="${len} ${err} ${mat} ${fil} ${mer} ${out}"
 
-                            printf "\e[1m[  --  ]\e[0m Test #${counter} ${args}"
+                        printf "\e[1m[  --  ]\e[0m Test #${counter} ${args}"
 
-                            sort $dir/ref/tfo${counter}.out > $dir/output/tfo${counter}.ref.sorted.out
-                            sort $dir/ref/tfo${counter}.summary > $dir/output/tfo${counter}.ref.sorted.summary
+                        sort $dir/ref/tfo${counter}.out > $dir/output/tfo${counter}.ref.sorted.out
+                        sort $dir/ref/tfo${counter}.summary > $dir/output/tfo${counter}.ref.sorted.summary
 
-                            $pato_seq $args -ss $tfo_file -o $dir/output/tfo${counter}.seq 1> /dev/null
-                            sort $dir/output/tfo${counter}.seq.out > $dir/output/tfo${counter}.seq.sorted.out
-                            sort $dir/output/tfo${counter}.seq.summary > $dir/output/tfo${counter}.seq.sorted.summary
+                        $pato_seq $args -ss $tfo_file -o $dir/output/tfo${counter}.seq 1> /dev/null
+                        sort $dir/output/tfo${counter}.seq.out > $dir/output/tfo${counter}.seq.sorted.out
+                        sort $dir/output/tfo${counter}.seq.summary > $dir/output/tfo${counter}.seq.sorted.summary
 
-                            $pato_par $args -ss $tfo_file -o $dir/output/tfo${counter}.par 1> /dev/null
-                            sort $dir/output/tfo${counter}.par.out > $dir/output/tfo${counter}.par.sorted.out
-                            sort $dir/output/tfo${counter}.par.summary > $dir/output/tfo${counter}.par.sorted.summary
+                        $pato_par $args -ss $tfo_file -o $dir/output/tfo${counter}.par 1> /dev/null
+                        sort $dir/output/tfo${counter}.par.out > $dir/output/tfo${counter}.par.sorted.out
+                        sort $dir/output/tfo${counter}.par.summary > $dir/output/tfo${counter}.par.sorted.summary
 
-                            diff $dir/output/tfo${counter}.seq.sorted.out $dir/output/tfo${counter}.ref.sorted.out > $dir/output/tfo${counter}.seq.diff.out
-                            diff $dir/output/tfo${counter}.par.sorted.out $dir/output/tfo${counter}.ref.sorted.out > $dir/output/tfo${counter}.par.diff.out
-                            diff $dir/output/tfo${counter}.seq.sorted.summary $dir/output/tfo${counter}.ref.sorted.summary > $dir/output/tfo${counter}.seq.diff.summary
-                            diff $dir/output/tfo${counter}.par.sorted.summary $dir/output/tfo${counter}.ref.sorted.summary > $dir/output/tfo${counter}.par.diff.summary
+                        diff $dir/output/tfo${counter}.seq.sorted.out $dir/output/tfo${counter}.ref.sorted.out > $dir/output/tfo${counter}.seq.diff.out
+                        diff $dir/output/tfo${counter}.par.sorted.out $dir/output/tfo${counter}.ref.sorted.out > $dir/output/tfo${counter}.par.diff.out
+                        diff $dir/output/tfo${counter}.seq.sorted.summary $dir/output/tfo${counter}.ref.sorted.summary > $dir/output/tfo${counter}.seq.diff.summary
+                        diff $dir/output/tfo${counter}.par.sorted.summary $dir/output/tfo${counter}.ref.sorted.summary > $dir/output/tfo${counter}.par.diff.summary
 
-                            result=0
-                            result=$(($result + $(wc -l < $dir/output/tfo${counter}.seq.diff.out)))
-                            result=$(($result + $(wc -l < $dir/output/tfo${counter}.par.diff.out)))
-                            result=$(($result + $(wc -l < $dir/output/tfo${counter}.seq.diff.summary)))
-                            result=$(($result + $(wc -l < $dir/output/tfo${counter}.par.diff.summary)))
+                        result=0
+                        result=$(($result + $(wc -l < $dir/output/tfo${counter}.seq.diff.out)))
+                        result=$(($result + $(wc -l < $dir/output/tfo${counter}.par.diff.out)))
+                        result=$(($result + $(wc -l < $dir/output/tfo${counter}.seq.diff.summary)))
+                        result=$(($result + $(wc -l < $dir/output/tfo${counter}.par.diff.summary)))
 
-                            if [[ $result -eq 0 ]]; then
-                                printf "\r\e[1m[  \033[0;32mOK\033[0m  \e[1m]\e[0m\n"
-                                rm -rf $dir/output/tfo${counter}*
-                            else
-                                printf "\r\e[1m[ \033[0;31mFAIL\033[0m \e[1m]\e[0m\n"
-                                fails=$(($fails + 1))
-                            fi
+                        if [[ $result -eq 0 ]]; then
+                            printf "\r\e[1m[  \033[0;32mOK\033[0m  \e[1m]\e[0m\n"
+                            rm -rf $dir/output/tfo${counter}*
+                        else
+                            printf "\r\e[1m[ \033[0;31mFAIL\033[0m \e[1m]\e[0m\n"
+                            fails=$(($fails + 1))
+                        fi
 
-                            counter=$(($counter + 1))
-                        done
+                        counter=$(($counter + 1))
                     done
                 done
             done
@@ -94,9 +91,8 @@ declare -a tts_length_args=("" "-l 10 -L 14")
 declare -a tts_error_args=("" "-e 8 -E 10 -c 3 -g 50 -G 70")
 declare -a tts_match_args=("" "-b 3 -a on")
 declare -a tts_filter_args=("" "-fr off")
-declare -a tts_duplicate_args=("" "-dd 1 -dc 2" "-dd 2 -dc 2" "-dd 2 -dc 2 -ssd off")
 declare -a tts_merge_args=("" "-mf on")
-declare -a tts_output_args=("" "-po on" "-dl on")
+declare -a tts_output_args=("" "-po on")
 
 fails=0
 counter=0
@@ -105,45 +101,43 @@ for len in "${tts_length_args[@]}"; do
     for err in "${tts_error_args[@]}"; do
         for mat in "${tts_match_args[@]}"; do
             for fil in "${tts_filter_args[@]}"; do
-                for dup in "${tts_duplicate_args[@]}"; do
-                    for mer in "${tts_merge_args[@]}"; do
-                        for out in "${tts_output_args[@]}"; do
-                            args="${len} ${err} ${mat} ${fil} ${dup} ${mer} ${out}"
+                for mer in "${tts_merge_args[@]}"; do
+                    for out in "${tts_output_args[@]}"; do
+                        args="-cs 6 ${len} ${err} ${mat} ${fil} ${mer} ${out}"
 
-                            printf "\e[1m[  --  ]\e[0m Test #${counter} ${args}"
+                        printf "\e[1m[  --  ]\e[0m Test #${counter} ${args}"
 
-                            sort $dir/ref/tts${counter}.out > $dir/output/tts${counter}.ref.sorted.out
-                            sort $dir/ref/tts${counter}.summary > $dir/output/tts${counter}.ref.sorted.summary
+                        sort $dir/ref/tts${counter}.out > $dir/output/tts${counter}.ref.sorted.out
+                        sort $dir/ref/tts${counter}.summary > $dir/output/tts${counter}.ref.sorted.summary
 
-                            $pato_seq $args -ds $tts_file -o $dir/output/tts${counter}.seq 1> /dev/null
-                            sort $dir/output/tts${counter}.seq.out > $dir/output/tts${counter}.seq.sorted.out
-                            sort $dir/output/tts${counter}.seq.summary > $dir/output/tts${counter}.seq.sorted.summary
+                        $pato_seq $args -ds $tts_file -o $dir/output/tts${counter}.seq 1> /dev/null
+                        sort $dir/output/tts${counter}.seq.out > $dir/output/tts${counter}.seq.sorted.out
+                        sort $dir/output/tts${counter}.seq.summary > $dir/output/tts${counter}.seq.sorted.summary
 
-                            $pato_par $args -ds $tts_file -o $dir/output/tts${counter}.par 1> /dev/null
-                            sort $dir/output/tts${counter}.par.out > $dir/output/tts${counter}.par.sorted.out
-                            sort $dir/output/tts${counter}.par.summary > $dir/output/tts${counter}.par.sorted.summary
+                        $pato_par $args -ds $tts_file -o $dir/output/tts${counter}.par 1> /dev/null
+                        sort $dir/output/tts${counter}.par.out > $dir/output/tts${counter}.par.sorted.out
+                        sort $dir/output/tts${counter}.par.summary > $dir/output/tts${counter}.par.sorted.summary
 
-                            diff $dir/output/tts${counter}.seq.sorted.out $dir/output/tts${counter}.ref.sorted.out > $dir/output/tts${counter}.seq.diff.out
-                            diff $dir/output/tts${counter}.par.sorted.out $dir/output/tts${counter}.ref.sorted.out > $dir/output/tts${counter}.par.diff.out
-                            diff $dir/output/tts${counter}.seq.sorted.summary $dir/output/tts${counter}.ref.sorted.summary > $dir/output/tts${counter}.seq.diff.summary
-                            diff $dir/output/tts${counter}.par.sorted.summary $dir/output/tts${counter}.ref.sorted.summary > $dir/output/tts${counter}.par.diff.summary
+                        diff $dir/output/tts${counter}.seq.sorted.out $dir/output/tts${counter}.ref.sorted.out > $dir/output/tts${counter}.seq.diff.out
+                        diff $dir/output/tts${counter}.par.sorted.out $dir/output/tts${counter}.ref.sorted.out > $dir/output/tts${counter}.par.diff.out
+                        diff $dir/output/tts${counter}.seq.sorted.summary $dir/output/tts${counter}.ref.sorted.summary > $dir/output/tts${counter}.seq.diff.summary
+                        diff $dir/output/tts${counter}.par.sorted.summary $dir/output/tts${counter}.ref.sorted.summary > $dir/output/tts${counter}.par.diff.summary
 
-                            result=0
-                            result=$(($result + $(wc -l < $dir/output/tts${counter}.seq.diff.out)))
-                            result=$(($result + $(wc -l < $dir/output/tts${counter}.par.diff.out)))
-                            result=$(($result + $(wc -l < $dir/output/tts${counter}.seq.diff.summary)))
-                            result=$(($result + $(wc -l < $dir/output/tts${counter}.par.diff.summary)))
+                        result=0
+                        result=$(($result + $(wc -l < $dir/output/tts${counter}.seq.diff.out)))
+                        result=$(($result + $(wc -l < $dir/output/tts${counter}.par.diff.out)))
+                        result=$(($result + $(wc -l < $dir/output/tts${counter}.seq.diff.summary)))
+                        result=$(($result + $(wc -l < $dir/output/tts${counter}.par.diff.summary)))
 
-                            if [[ $result -eq 0 ]]; then
-                                printf "\r\e[1m[  \033[0;32mOK\033[0m  \e[1m]\e[0m\n"
-                                rm -rf $dir/output/tts${counter}*
-                            else
-                                printf "\r\e[1m[ \033[0;31mFAIL\033[0m \e[1m]\e[0m\n"
-                                fails=$(($fails + 1))
-                            fi
+                        if [[ $result -eq 0 ]]; then
+                            printf "\r\e[1m[  \033[0;32mOK\033[0m  \e[1m]\e[0m\n"
+                            rm -rf $dir/output/tts${counter}*
+                        else
+                            printf "\r\e[1m[ \033[0;31mFAIL\033[0m \e[1m]\e[0m\n"
+                            fails=$(($fails + 1))
+                        fi
 
-                            counter=$(($counter + 1))
-                        done
+                        counter=$(($counter + 1))
                     done
                 done
             done
@@ -160,7 +154,6 @@ declare -a tpx_length_args=("" "-l 10 -L 14")
 declare -a tpx_error_args=("" "-e 8 -E 10 -c 3 -g 50 -G 70")
 declare -a tpx_match_args=("" "-b 3 -a on")
 declare -a tpx_filter_args=("" "-fr off")
-declare -a tpx_duplicate_args=("" "-dd 1 -dc 2" "-dd 2 -dc 2 -ssd off")
 declare -a tpx_merge_args=("" "-er 1" "-er 2")
 declare -a tpx_output_args=("" "-of 1")
 
@@ -171,45 +164,43 @@ for len in "${tpx_length_args[@]}"; do
     for err in "${tpx_error_args[@]}"; do
         for mat in "${tpx_match_args[@]}"; do
             for fil in "${tpx_filter_args[@]}"; do
-                for dup in "${tpx_duplicate_args[@]}"; do
-                    for mer in "${tpx_merge_args[@]}"; do
-                        for out in "${tpx_output_args[@]}"; do
-                            args="${len} ${err} ${mat} ${fil} ${dup} ${mer} ${out}"
+                for mer in "${tpx_merge_args[@]}"; do
+                    for out in "${tpx_output_args[@]}"; do
+                        args="-cs 4 ${len} ${err} ${mat} ${fil} ${mer} ${out}"
 
-                            printf "\e[1m[  --  ]\e[0m Test #${counter} ${args}"
+                        printf "\e[1m[  --  ]\e[0m Test #${counter} ${args}"
 
-                            sort $dir/ref/tpx${counter}.out > $dir/output/tpx${counter}.ref.sorted.out
-                            sort $dir/ref/tpx${counter}.summary > $dir/output/tpx${counter}.ref.sorted.summary
+                        sort $dir/ref/tpx${counter}.out > $dir/output/tpx${counter}.ref.sorted.out
+                        sort $dir/ref/tpx${counter}.summary > $dir/output/tpx${counter}.ref.sorted.summary
 
-                            $pato_seq $args -ss $tfo_file -ds $tts_file -o $dir/output/tpx${counter}.seq 1> /dev/null
-                            sort $dir/output/tpx${counter}.seq.out > $dir/output/tpx${counter}.seq.sorted.out
-                            sort $dir/output/tpx${counter}.seq.summary > $dir/output/tpx${counter}.seq.sorted.summary
+                        $pato_seq $args -ss $tfo_file -ds $tts_file -o $dir/output/tpx${counter}.seq 1> /dev/null
+                        sort $dir/output/tpx${counter}.seq.out > $dir/output/tpx${counter}.seq.sorted.out
+                        sort $dir/output/tpx${counter}.seq.summary > $dir/output/tpx${counter}.seq.sorted.summary
 
-                            $pato_par $args -ss $tfo_file -ds $tts_file -o $dir/output/tpx${counter}.par 1> /dev/null
-                            sort $dir/output/tpx${counter}.par.out > $dir/output/tpx${counter}.par.sorted.out
-                            sort $dir/output/tpx${counter}.par.summary > $dir/output/tpx${counter}.par.sorted.summary
+                        $pato_par $args -ss $tfo_file -ds $tts_file -o $dir/output/tpx${counter}.par 1> /dev/null
+                        sort $dir/output/tpx${counter}.par.out > $dir/output/tpx${counter}.par.sorted.out
+                        sort $dir/output/tpx${counter}.par.summary > $dir/output/tpx${counter}.par.sorted.summary
 
-                            diff $dir/output/tpx${counter}.seq.sorted.out $dir/output/tpx${counter}.ref.sorted.out > $dir/output/tpx${counter}.seq.diff.out
-                            diff $dir/output/tpx${counter}.par.sorted.out $dir/output/tpx${counter}.ref.sorted.out > $dir/output/tpx${counter}.par.diff.out
-                            diff $dir/output/tpx${counter}.seq.sorted.summary $dir/output/tpx${counter}.ref.sorted.summary > $dir/output/tpx${counter}.seq.diff.summary
-                            diff $dir/output/tpx${counter}.par.sorted.summary $dir/output/tpx${counter}.ref.sorted.summary > $dir/output/tpx${counter}.par.diff.summary
+                        diff $dir/output/tpx${counter}.seq.sorted.out $dir/output/tpx${counter}.ref.sorted.out > $dir/output/tpx${counter}.seq.diff.out
+                        diff $dir/output/tpx${counter}.par.sorted.out $dir/output/tpx${counter}.ref.sorted.out > $dir/output/tpx${counter}.par.diff.out
+                        diff $dir/output/tpx${counter}.seq.sorted.summary $dir/output/tpx${counter}.ref.sorted.summary > $dir/output/tpx${counter}.seq.diff.summary
+                        diff $dir/output/tpx${counter}.par.sorted.summary $dir/output/tpx${counter}.ref.sorted.summary > $dir/output/tpx${counter}.par.diff.summary
 
-                            result=0
-                            result=$(($result + $(wc -l < $dir/output/tpx${counter}.seq.diff.out)))
-                            result=$(($result + $(wc -l < $dir/output/tpx${counter}.par.diff.out)))
-                            result=$(($result + $(wc -l < $dir/output/tpx${counter}.seq.diff.summary)))
-                            result=$(($result + $(wc -l < $dir/output/tpx${counter}.par.diff.summary)))
+                        result=0
+                        result=$(($result + $(wc -l < $dir/output/tpx${counter}.seq.diff.out)))
+                        result=$(($result + $(wc -l < $dir/output/tpx${counter}.par.diff.out)))
+                        result=$(($result + $(wc -l < $dir/output/tpx${counter}.seq.diff.summary)))
+                        result=$(($result + $(wc -l < $dir/output/tpx${counter}.par.diff.summary)))
 
-                            if [[ $result -eq 0 ]]; then
-                                printf "\r\e[1m[  \033[0;32mOK\033[0m  \e[1m]\e[0m\n"
-                                rm -rf $dir/output/tpx${counter}*
-                            else
-                                printf "\r\e[1m[ \033[0;31mFAIL\033[0m \e[1m]\e[0m\n"
-                                fails=$(($fails + 1))
-                            fi
+                        if [[ $result -eq 0 ]]; then
+                            printf "\r\e[1m[  \033[0;32mOK\033[0m  \e[1m]\e[0m\n"
+                            rm -rf $dir/output/tpx${counter}*
+                        else
+                            printf "\r\e[1m[ \033[0;31mFAIL\033[0m \e[1m]\e[0m\n"
+                            fails=$(($fails + 1))
+                        fi
 
-                            counter=$(($counter + 1))
-                        done
+                        counter=$(($counter + 1))
                     done
                 done
             done

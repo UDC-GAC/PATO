@@ -25,10 +25,27 @@
 #ifndef SEQUENCE_LOADER_HPP
 #define SEQUENCE_LOADER_HPP
 
+#include <seqan/seq_io.h>
+
+#include "options.hpp"
 #include "triplex_definitions.hpp"
+
+struct sequence_loader_state_t
+{
+    seqan::SeqFileIn fasta_file;
+};
+
+bool file_exists(const char *file_name);
+
+bool create_loader_state(sequence_loader_state_t& state, const options& opts);
+void destroy_loader_state(sequence_loader_state_t& state);
 
 bool load_sequences(triplex_set_t& sequences,
                     name_set_t& names,
                     const char *file_name);
+bool load_sequences(triplex_set_t& sequences,
+                    name_set_t& names,
+                    sequence_loader_state_t& state,
+                    const options& opts);
 
 #endif

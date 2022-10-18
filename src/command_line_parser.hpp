@@ -66,7 +66,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
 {
     seqan::ArgumentParser parser("PATO");
 
-    seqan::setShortDescription(parser, "PArallel TriplexatOr");
+    seqan::setShortDescription(parser, "high PerformAnce TriplexatOr");
     seqan::addUsageLine(parser, "[options] {-ss tfo_file | -ds tts_file | -ss tfo_file -ds tts_file}");
     seqan::addDescription(parser, "PATO is a high performance tool for the fast and efficient detection of acid triple helices and triplex features in nucleotide sequences. PATO is based on Triplexator and functions nearly as a drop in replacement to accelerate the triplex analyses in multicore computers.");
 
@@ -95,16 +95,14 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::addOption(parser, seqan::ArgParseOption("fr", "filter-repeats", "Disregards repeated and low-complex regions if enabled.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("mrl", "minimum-repeat-length", "Minimum length requirement for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("mrp", "maximum-repeat-period", "Maximum repeat period for low-complex regions to be filtered.", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("dd", "detect-duplicates", "Indicates whether and how duplicates should be detected [0,1,2].", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("dc", "duplicate-cutoff", "Disregard feature if it occurs more often than this cutoff (disable with -1).", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("ssd", "same-sequence-duplicates", "Whether to count a feature copy in the same sequence as duplicate or not.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("mf", "merge-features", "Merge overlapping features into a cluster and report the spanning region.", seqan::ArgParseOption::BOOL));
     seqan::addSection(parser, "Output options");
     seqan::addOption(parser, seqan::ArgParseOption("o", "output", "Output file name", seqan::ArgParseOption::STRING));
-    seqan::addOption(parser, seqan::ArgParseOption("of", "output-format", "Set output format [0,1,2].", seqan::ArgParseOption::INTEGER));
+    seqan::addOption(parser, seqan::ArgParseOption("of", "output-format", "Set the output format [0,1,2].", seqan::ArgParseOption::INTEGER));
     seqan::addOption(parser, seqan::ArgParseOption("po", "pretty-output", "Indicate matching/mismatching characters with upper/lower case.", seqan::ArgParseOption::BOOL));
     seqan::addOption(parser, seqan::ArgParseOption("er", "error-reference", "Reference to which the error should correspond [0,1,2].", seqan::ArgParseOption::INTEGER));
-    seqan::addOption(parser, seqan::ArgParseOption("dl", "duplicate-locations", "Report the location of duplicates", seqan::ArgParseOption::BOOL));
+    seqan::addSection(parser, "Performance options");
+    seqan::addOption(parser, seqan::ArgParseOption("cs", "chunk-size", "Set the TTSs window processing size (lower size equals less memory usage but implies less parallelism).", seqan::ArgParseOption::INTEGER));
 
     // input options
     seqan::setDefaultValue(parser, "ss", "(null)");
@@ -128,9 +126,6 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::setDefaultValue(parser, "fr", true);
     seqan::setDefaultValue(parser, "mrl", 10);
     seqan::setDefaultValue(parser, "mrp", 4);
-    seqan::setDefaultValue(parser, "dd", static_cast<unsigned int>(detect_duplicates_t::off));
-    seqan::setDefaultValue(parser, "dc", -1);
-    seqan::setDefaultValue(parser, "ssd", true);
     seqan::setDefaultValue(parser, "mf", false);
 
     // output options
@@ -138,7 +133,9 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::setDefaultValue(parser, "of", static_cast<unsigned int>(output_format_t::bed));
     seqan::setDefaultValue(parser, "po", false);
     seqan::setDefaultValue(parser, "er", static_cast<unsigned int>(error_reference_t::watson_strand));
-    seqan::setDefaultValue(parser, "dl", false);
+
+    // performance options
+    seqan::setDefaultValue(parser, "cs", 128);
 
     if (seqan::parse(parser, argc, argv) != seqan::ArgumentParser::PARSE_OK) {
         return false;
@@ -169,23 +166,20 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::getOptionValue(opts.filter_repeats, parser, "fr");
     seqan::getOptionValue(opts.min_repeat_length, parser, "mrl");
     seqan::getOptionValue(opts.max_repeat_period, parser, "mrp");
-    seqan::getOptionValue(opts.duplicate_cutoff, parser, "dc");
-    seqan::getOptionValue(opts.same_sequence_duplicates, parser, "ssd");
     seqan::getOptionValue(opts.merge_features, parser, "mf");
-
-    unsigned int tmp;
-    seqan::getOptionValue(tmp, parser, "dd");
-    opts.detect_duplicates = detect_duplicates_t(tmp);
 
     // output options
     seqan::getOptionValue(opts.output_file, parser, "o");
     seqan::getOptionValue(opts.pretty_output, parser, "po");
-    seqan::getOptionValue(opts.report_duplicate_locations, parser, "dl");
 
+    unsigned int tmp;
     seqan::getOptionValue(tmp, parser, "of");
     opts.output_format = output_format_t(tmp);
     seqan::getOptionValue(tmp, parser, "er");
     opts.error_reference = error_reference_t(tmp);
+
+    // performance options
+    seqan::getOptionValue(opts.chunk_size, parser, "cs");
 
     // check options
     if (opts.tfo_file == "(null)" && opts.tts_file == "(null)") {
@@ -228,20 +222,16 @@ bool parse_command_line(options& opts, int argc, char *argv[])
         std::cerr << "PATO: the minimum guanine proportion in an anti-parallel mixed motif must be a value between 0 and 100\n";
         return false;
     }
-    if (opts.detect_duplicates >= detect_duplicates_t::last) {
-        std::cerr << "PATO: detect duplicates not known\n";
-        return false;
-    }
-    if (opts.duplicate_cutoff >= 0 && opts.detect_duplicates == detect_duplicates_t::off) {
-        std::cerr << "PATO: duplicate filtering with the specified cutoff value requires duplicate detection mode to be enabled\n";
-        return false;
-    }
     if (opts.error_reference >= error_reference_t::last) {
         std::cerr << "PATO: error reference not known\n";
         return false;
     }
     if (opts.output_format >= output_format_t::last) {
         std::cerr << "PATO: output format not known\n";
+        return false;
+    }
+    if (opts.chunk_size == 0) {
+        std::cerr << "PATO: chunk size must be a positive number\n";
         return false;
     }
 

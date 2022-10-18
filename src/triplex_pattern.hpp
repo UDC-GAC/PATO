@@ -71,7 +71,7 @@ public:
 	int copies;								// number of copies
 	bool isTFO;								// indicates whether this is a TFO (=true) or a TTS (=false)
 	char motif;								// the motif of the triplex
-	double score;
+	unsigned int score;
 	TDuplicates duplicates;
 	
 	void _updateMaskString(){
@@ -427,14 +427,14 @@ endPosition(ModStringTriplex<THost_, TString> const & me)
 }
 
 template <typename THost_, typename TString>
-inline double
+inline unsigned int
 score(ModStringTriplex<THost_, TString> & me)
 {
 	return me.score;
 }
 
 template <typename THost_, typename TString>
-inline double
+inline unsigned int
 score(ModStringTriplex<THost_, TString> const & me)
 {
 	return me.score;

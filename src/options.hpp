@@ -25,6 +25,7 @@
 #ifndef OPTIONS_HPP
 #define OPTIONS_HPP
 
+#include <seqan/stream.h>
 #include <seqan/sequence.h>
 
 #include "triplex_enums.hpp"
@@ -44,8 +45,8 @@ struct options
     int min_length;
     int max_length;
     int maximal_error;
-    int duplicate_cutoff;
 
+    unsigned int chunk_size;
     unsigned int min_block_run;
     unsigned int min_repeat_length;
     unsigned int max_repeat_period;
@@ -54,7 +55,6 @@ struct options
     run_mode_t run_mode;
     output_format_t output_format;
     error_reference_t error_reference;
-    detect_duplicates_t detect_duplicates;
 
     bool tc_motif;
     bool ga_motif;
@@ -64,8 +64,8 @@ struct options
     bool pretty_output;
     bool filter_repeats;
     bool merge_features;
-    bool same_sequence_duplicates;
-    bool report_duplicate_locations;
 };
+
+void print_options(const options& opts);
 
 #endif

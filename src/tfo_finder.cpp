@@ -37,7 +37,6 @@
 #include "guanine_filter.hpp"
 #include "segment_parser.hpp"
 #include "sequence_loader.hpp"
-#include "duplicate_filter.hpp"
 
 struct tfo_arguments
 {
@@ -207,17 +206,12 @@ bool find_tfo_motifs(motif_set_t& motifs,
                      name_set_t& names,
                      const options& opts)
 {
-    if (!load_sequences(sequences, names, seqan::toCString(opts.tfo_file))) {
-        return false;
-    }
-
     index_set_t indices(sequences.size(), 0);
     std::iota(indices.begin(), indices.end(), 0);
     std::sort(indices.begin(), indices.end(), [&](unsigned int i, unsigned int j) -> bool {
         return seqan::length(sequences[i]) > seqan::length(sequences[j]);
     });
 
-    double st = omp_get_wtime();
 #pragma omp parallel
 {
 #if !defined(_OPENMP)
@@ -258,29 +252,41 @@ bool find_tfo_motifs(motif_set_t& motifs,
 #endif
 } // #pragma omp parallel
 
-    if (opts.detect_duplicates != detect_duplicates_t::off) {
-        count_duplicates(motifs, opts);
-        if (opts.duplicate_cutoff >= 0) {
-            filter_duplicates(motifs, opts.duplicate_cutoff);
-        }
-    }
-
-    double nd = omp_get_wtime();
-    std::cout << "TFO in: " << nd - st << " seconds (" << motifs.size() << ")\n";
-
     return true;
 }
 
 void find_tfo_motifs(const options& opts)
 {
+    if (!file_exists(seqan::toCString(opts.tfo_file))) {
+        std::cout << "PATO: error opening TTS file '" << opts.tfo_file << "'\n";
+        return;
+    }
+
+    output_writer_state_t tfo_output_file_state;
+    if (!create_output_state(tfo_output_file_state, opts)) {
+        return;
+    }
+
     name_set_t tfo_names;
     motif_set_t tfo_motifs;
     triplex_set_t tfo_sequences;
     motif_potential_set_t tfo_potentials;
+
+    if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
+        return;
+    }
     if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
         return;
     }
 
-    print_motifs(tfo_motifs, tfo_names, opts);
-    print_summary(tfo_potentials, tfo_names, opts);
+#pragma omp parallel sections num_threads(2)
+{
+#pragma omp section
+    print_motifs(tfo_motifs, tfo_names, tfo_output_file_state, opts);
+#pragma omp section
+    print_summary(tfo_potentials, tfo_names, tfo_output_file_state, opts);
+} // #pragma omp parallel sections num_threads(2)
+
+    destroy_output_state(tfo_output_file_state);
+    std::cout << "TFO search: done\n";
 }
