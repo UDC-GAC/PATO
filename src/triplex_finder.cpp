@@ -336,9 +336,7 @@ void find_triplexes(const options& opts)
     if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
         return;
     }
-    if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
-        return;
-    }
+    find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts);
 
     name_set_t tts_names;
     motif_set_t tts_motifs;
@@ -384,5 +382,5 @@ void find_triplexes(const options& opts)
 
     destroy_output_state(tpx_output_file_state);
     destroy_loader_state(tts_input_file_state);
-    std::cout << "TPX search: done\n";
+    std::cout << "\e[1mTPX search:\e[0m done\n";
 }

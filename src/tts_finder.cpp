@@ -148,7 +148,7 @@ void find_tts_motifs(triplex_t& sequence,
     }
 }
 
-bool find_tts_motifs(motif_set_t& motifs,
+void find_tts_motifs(motif_set_t& motifs,
                      motif_potential_set_t& potentials,
                      triplex_set_t& sequences,
                      name_set_t& names,
@@ -199,8 +199,6 @@ bool find_tts_motifs(motif_set_t& motifs,
     }
 #endif
 } // #pragma omp parallel
-
-    return true;
 }
 
 void find_tts_motifs(const options& opts)
@@ -246,5 +244,5 @@ void find_tts_motifs(const options& opts)
 
     destroy_output_state(tts_output_file_state);
     destroy_loader_state(tts_input_file_state);
-    std::cout << "TTS search: done\n";
+    std::cout << "\e[1mTTS search:\e[0m done\n";
 }

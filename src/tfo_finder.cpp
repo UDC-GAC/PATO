@@ -200,7 +200,7 @@ void find_tfo_motifs(triplex_t& sequence,
     }
 }
 
-bool find_tfo_motifs(motif_set_t& motifs,
+void find_tfo_motifs(motif_set_t& motifs,
                      motif_potential_set_t& potentials,
                      triplex_set_t& sequences,
                      name_set_t& names,
@@ -251,14 +251,12 @@ bool find_tfo_motifs(motif_set_t& motifs,
     }
 #endif
 } // #pragma omp parallel
-
-    return true;
 }
 
 void find_tfo_motifs(const options& opts)
 {
     if (!file_exists(seqan::toCString(opts.tfo_file))) {
-        std::cout << "PATO: error opening TTS file '" << opts.tfo_file << "'\n";
+        std::cout << "PATO: error opening TFO file '" << opts.tfo_file << "'\n";
         return;
     }
 
@@ -275,9 +273,7 @@ void find_tfo_motifs(const options& opts)
     if (!load_sequences(tfo_sequences, tfo_names, seqan::toCString(opts.tfo_file))) {
         return;
     }
-    if (!find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts)) {
-        return;
-    }
+    find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, tfo_names, opts);
 
 #pragma omp parallel sections num_threads(2)
 {
@@ -288,5 +284,5 @@ void find_tfo_motifs(const options& opts)
 } // #pragma omp parallel sections num_threads(2)
 
     destroy_output_state(tfo_output_file_state);
-    std::cout << "TFO search: done\n";
+    std::cout << "\e[1mTFO search:\e[0m done\n";
 }
