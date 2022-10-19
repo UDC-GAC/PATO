@@ -68,7 +68,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
 
     seqan::setShortDescription(parser, "high PerformAnce TriplexatOr");
     seqan::addUsageLine(parser, "[options] {-ss tfo_file | -ds tts_file | -ss tfo_file -ds tts_file}");
-    seqan::addDescription(parser, "PATO is a high performance tool for the fast and efficient detection of acid triple helices and triplex features in nucleotide sequences. PATO is based on Triplexator and functions nearly as a drop in replacement to accelerate the triplex analyses in multicore computers.");
+    seqan::addDescription(parser, "PATO is a high performance tool for the fast and efficient detection of triple helices and triplex features in nucleotide sequences. PATO is based on Triplexator and functions nearly as a drop in replacement to accelerate the triplex analyses in multicore computers.");
 
     seqan::setDate(parser, "October 2022");
     seqan::setVersion(parser, "v0.0.0");
@@ -186,8 +186,8 @@ bool parse_command_line(options& opts, int argc, char *argv[])
         std::cerr << "PATO: at least one type of input file has to be supplied\n";
         return false;
     }
-    if (opts.min_length < 10) {
-        std::cerr << "PATO: the minimum triplex length must be greater or equal to 10\n";
+    if (opts.min_length < 5) {
+        std::cerr << "PATO: the minimum triplex length must be greater or equal to 5\n";
         return false;
     }
     if (opts.max_length > 1000) {
