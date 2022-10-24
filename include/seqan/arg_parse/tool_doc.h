@@ -642,6 +642,7 @@ public:
     CharString _url;
     CharString _date;
     CharString _version;
+    CharString _compilationOpts;
     CharString _shortCopyright;
     CharString _longCopyright;
     CharString _citation;
@@ -658,7 +659,7 @@ public:
 
     ToolDoc(ToolDoc const & toolDoc) :
         _name(toolDoc._name), _shortDescription(toolDoc._shortDescription), _url(toolDoc._url),
-        _date(toolDoc._date), _version(toolDoc._version), _shortCopyright(toolDoc._shortCopyright),
+        _date(toolDoc._date), _version(toolDoc._version), _compilationOpts(toolDoc._compilationOpts), _shortCopyright(toolDoc._shortCopyright),
         _longCopyright(toolDoc._longCopyright), _citation(toolDoc._citation), _manTitle(toolDoc._manTitle),
         _category(toolDoc._category), _manSection(1)
     {
@@ -1002,6 +1003,47 @@ inline void setVersion(ToolDoc & doc, CharString const & version)
 inline CharString const & getVersion(ToolDoc const & doc)
 {
     return doc._version;
+}
+
+// --------------------------------------------------------------------------
+// Function setCompilationOpts()                                              ToolDoc
+// --------------------------------------------------------------------------
+
+/*!
+ * @fn ToolDoc#setCompilationOpts
+ * @headerfile <seqan/arg_parse.h>
+ * @brief Set the tool CompilationOpts string.
+ *
+ * @signature void setCompilationOpts(toolDoc, str);
+ *
+ * @param[in,out] toolDoc The ToolDoc object to the set the CompilationOpts string for.
+ * @param[in]     str     The CompilationOpts string of the tool (@link CharString @endlink).
+ */
+
+inline void setCompilationOpts(ToolDoc & doc, CharString const & CompilationOpts)
+{
+    doc._compilationOpts = CompilationOpts;
+}
+
+// --------------------------------------------------------------------------
+// Function getCompilationOpts()                                              ToolDoc
+// --------------------------------------------------------------------------
+
+/*!
+ * @fn ToolDoc#getCompilationOpts
+ * @headerfile <seqan/arg_parse.h>
+ * @brief Get the tool CompilationOpts string.
+ *
+ * @signature CharString getCompilationOpts(toolDoc);
+ *
+ * @param[in] toolDoc The ToolDoc object to the get the CompilationOpts string.
+ *
+ * @return CharString Resulting CompilationOpts string (@link CharString @endlink).
+ */
+
+inline CharString const & getCompilationOpts(ToolDoc const & doc)
+{
+    return doc._compilationOpts;
 }
 
 // --------------------------------------------------------------------------
@@ -1384,7 +1426,8 @@ void HtmlToolDocPrinter_::print(std::ostream & stream, ToolDoc const & doc)
     // Print version, date and url.
     stream << "<h2>Version</h2>\n"
            << "<strong>Last update:</strong> " << _toHtml(doc._date) << "<br>\n<strong>"
-           << doc._name << " version:</strong> " << doc._version << "<br>\n"
+           << doc._name << " version:</strong> " << doc._version << "<br>\n<strong>"
+           << doc._name << " compilation options:</strong> <code>" << doc._compilationOpts << "</code><br>\n"
            << "<strong>SeqAn version:</strong> " << SEQAN_VERSION_MAJOR << '.' <<  SEQAN_VERSION_MINOR << '.'
            << SEQAN_VERSION_PATCH;
     if (SEQAN_VERSION_PRE_RELEASE != 0)
@@ -1489,6 +1532,8 @@ void TextToolDocPrinter_::print(std::ostream & stream, ToolDoc const & doc)
     stream << _toText("\\fB") << "Last update: " << _toText("\\fP") << doc._date << "\n";
     std::fill_n(out, _layout.leftPadding, ' ');
     stream << _toText("\\fB") << doc._name << " version: " << _toText("\\fP") << doc._version << "\n";
+    std::fill_n(out, _layout.leftPadding, ' ');
+    stream << _toText("\\fB") << doc._name << " compilation options: " << _toText("\\fP") << doc._compilationOpts << "\n";
     std::fill_n(out, _layout.leftPadding, ' ');
     stream << _toText("\\fB") << "SeqAn version: " << _toText("\\fP") << SEQAN_VERSION_MAJOR << '.'
            <<  SEQAN_VERSION_MINOR << '.' << SEQAN_VERSION_PATCH;

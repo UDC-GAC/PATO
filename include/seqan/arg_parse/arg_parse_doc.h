@@ -329,6 +329,45 @@ inline CharString const & getVersion(ArgumentParser const & me)
 }
 
 // ----------------------------------------------------------------------------
+// Function setCompilationOpts()
+// ----------------------------------------------------------------------------
+
+/*!
+ * @fn ArgumentParser#setVersion
+ * @brief Sets compilation options of ArgumentParser.
+ *
+ * @signature void setCompilationOpts(parser, opts);
+ *
+ * @param[in,out] parser  The ArgumentParser to set the version of.
+ * @param[in]     opts The compilation options string to set, <tt>std::string</tt>.
+ */
+
+inline void setCompilationOpts(ArgumentParser & me, std::string const & compilationOptions)
+{
+    setCompilationOpts(me._toolDoc, compilationOptions);
+}
+
+// --------------------------------------------------------------------------
+// Function getCompilationOpts()
+// --------------------------------------------------------------------------
+
+/*!
+ * @fn ArgumentParser#getCompilationOpts
+ * @brief Returns the CompilationOpts string.
+ *
+ * @signature TCharStringRef getCompilationOpts(parser);
+ *
+ * @param[in,out] parser The ArgumentParser to get the CompilationOpts string from.
+ *
+ * @return TCharString A const-ref to a @link CharString @endlink with the CompilationOpts string.
+ */
+
+inline CharString const & getCompilationOpts(ArgumentParser const & me)
+{
+    return getCompilationOpts(me._toolDoc);
+}
+
+// ----------------------------------------------------------------------------
 // Function setShortCopyright()
 // ----------------------------------------------------------------------------
 
@@ -634,6 +673,7 @@ inline void printShortHelp(ArgumentParser const & me)
 inline void printVersion(ArgumentParser const & me, std::ostream & stream)
 {
     stream << getAppName(me) << " version: " << getVersion(me) << std::endl;
+    stream << getAppName(me) << " compilation options: " << getCompilationOpts(me) << std::endl;
     stream << "SeqAn version: " << SEQAN_VERSION_MAJOR << '.' <<  SEQAN_VERSION_MINOR << '.'
            << SEQAN_VERSION_PATCH;
     if (SEQAN_VERSION_PRE_RELEASE != 0)

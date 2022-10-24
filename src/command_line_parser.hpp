@@ -74,6 +74,7 @@ bool parse_command_line(options& opts, int argc, char *argv[])
     seqan::setVersion(parser, "v0.0.0");
     seqan::setUrl(parser, "https://github.com/amatria/pato");
     seqan::setShortCopyright(parser, "2022 Iñaki Amatria-Barral.");
+    seqan::setCompilationOpts(parser, "COMPILATIONOPTS_PLACEHOLDER");
 
     seqan::addSection(parser, "Input options");
     seqan::addOption(parser, seqan::ArgParseOption("ss", "single-strand-file", "File in FASTA format that is searched for TFOs (e.g. RNA or DNA).", seqan::ArgParseOption::STRING));
