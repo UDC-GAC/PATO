@@ -24,10 +24,10 @@ user@host:/path/to/pato$ make gnu -j$(getconf _NPROCESSORS_ONLN)
 ## Execution
 Now that PATO: high PerformAnce TriplexatOr has been compiled, execute the application as follows:
 ```bash
-user@host:/pato/to/pato$ ./target/gnu/pato.release [options] {-ss tfo_file | -ds tts_file | -ss tfo_file -ds tts_file}
+user@host:/path/to/pato$ ./target/gnu/pato.release [options] {-ss tfo_file | -ds tts_file | -ss tfo_file -ds tts_file}
 ```
 
-Execute `./target/gnu/pato.release --help` for a detailed list of execution modes, command line options, and flags.
+Execute `./target/gnu/pato.release --help` for a detailed list of execution modes, options, and flags.
 
 ## Test
 If you are interested in testing the correctness of your installation, run the following commands:
