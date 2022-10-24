@@ -1,5 +1,6 @@
 # PATO: high PerformAnce TriplexatOr
 [![AUR package](https://repology.org/badge/version-for-repo/aur/pato.svg)](https://repology.org/project/pato/versions)
+
 [![compile and test gnu](https://github.com/amatria/pato/actions/workflows/compile-and-test-gnu.yml/badge.svg)](https://github.com/amatria/pato/actions/workflows/compile-and-test-gnu.yml)
 [![compile and test clang](https://github.com/amatria/pato/actions/workflows/compile-and-test-clang.yml/badge.svg)](https://github.com/amatria/pato/actions/workflows/compile-and-test-clang.yml)
 
