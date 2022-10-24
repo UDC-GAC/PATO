@@ -29,8 +29,8 @@ OBJS=$(patsubst $(SRCSDIR)/%.cpp,$(OBJSDIR)/$(BUILD)/%.o,$(SRCS))
 DEPS=$(patsubst $(SRCSDIR)/%.cpp,$(OBJSDIR)/$(BUILD)/%.d,$(SRCS))
 
 patch_compilationopts:
-        @sed "s/seqan::setCompilationOpts(parser,.*);/seqan::setCompilationOpts(parser, \"CXX=${CXX} CXXFLAGS=${CXXFLAGS} LD=${LD} LDFLAGS=${LDFLAGS}\")/g" src/command_line_parser.hpp
-        $(MAKE) -f makefiles/Makefile.gnu pato.$(BUILD)
+	@sed "s/seqan::setCompilationOpts(parser,.*);/seqan::setCompilationOpts(parser, \"CXX=${CXX} CXXFLAGS=${CXXFLAGS} LD=${LD} LDFLAGS=${LDFLAGS}\")/g" src/command_line_parser.hpp
+	$(MAKE) -f makefiles/Makefile.gnu pato.$(BUILD)
 
 pato.$(BUILD): $(OBJS)
 	@mkdir -p $(DESTDIR)
