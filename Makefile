@@ -1,11 +1,11 @@
 gnu:
-	$(MAKE) -f Makefile.gnu
+	$(MAKE) -f makefiles/Makefile.gnu
 
 clang:
-	$(MAKE) -f Makefile.clang
+	$(MAKE) -f makefiles/Makefile.clang
 
 intel:
-	$(MAKE) -f Makefile.intel
+	$(MAKE) -f makefiles/Makefile.intel
 
 clean:
 	rm -rf obj target
