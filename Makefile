@@ -7,6 +7,8 @@ clang:
 intel:
 	$(MAKE) -f makefiles/Makefile.intel
 
+c: clean
 clean:
-	rm -rf obj target
-
+	@sed -i `[ $(shell uname -s) = "Darwin" ] && echo "-E"` "s/seqan::setCompilationOpts(parser,.*);/seqan::setCompilationOpts(parser, \"COMPILATIONOPTS_PLACEHOLDER\");/g" src/command_line_parser.hpp
+	@[ $(shell uname -s) = "Darwin" ] && rm -rf src/command_line_parser.hpp-E || :
+	@rm -rf obj target
