@@ -35,6 +35,8 @@
 #ifndef TRIPLEX_FUNCTORS_HPP
 #define TRIPLEX_FUNCTORS_HPP
 
+#include <functional>
+
 #include "triplex_alphabet.hpp"
 
 namespace seqan
@@ -43,7 +45,7 @@ namespace seqan
 /**
  * mask all purines (G,A) in a sequences with 'R' and pyrimidins (C,T/U) as 'Y'
  */
-struct FunctorRYFilter : public std::function<Triplex(Triplex)>
+struct FunctorRYFilter : std::function<Triplex(Triplex)>
 {
 	inline Triplex operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g') || (x == 'A') || (x == 'a') || (x == 'R'))
@@ -59,7 +61,7 @@ struct FunctorRYFilter : public std::function<Triplex(Triplex)>
  * Translate the TC motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorTCMotif : public ::std::unary_function<Triplex,Triplex>
+struct FunctorTCMotif : std::function<Triplex(Triplex)>
 {
 	inline Triplex operator()(Triplex x) const {
 		if ((x == 'C') || (x == 'c') )
@@ -75,7 +77,7 @@ struct FunctorTCMotif : public ::std::unary_function<Triplex,Triplex>
  * Translate the TC motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorGAMotif : public ::std::unary_function<Triplex,Triplex>
+struct FunctorGAMotif : std::function<Triplex(Triplex)>
 {
 	inline Triplex operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g'))
@@ -91,7 +93,7 @@ struct FunctorGAMotif : public ::std::unary_function<Triplex,Triplex>
  * Translate the GT motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorGTMotif : public ::std::unary_function<Triplex,Triplex>
+struct FunctorGTMotif : std::function<Triplex(Triplex)>
 {
 	inline Triplex operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g') )
@@ -107,7 +109,7 @@ struct FunctorGTMotif : public ::std::unary_function<Triplex,Triplex>
  * Translate the TC motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorTCMotifPretty : public ::std::unary_function<Triplex,char>
+struct FunctorTCMotifPretty : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'C') || (x == 'c') )
@@ -127,7 +129,7 @@ struct FunctorTCMotifPretty : public ::std::unary_function<Triplex,char>
  * Translate the TC motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorGAMotifPretty : public ::std::unary_function<Triplex,char>
+struct FunctorGAMotifPretty : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g'))
@@ -147,7 +149,7 @@ struct FunctorGAMotifPretty : public ::std::unary_function<Triplex,char>
  * Translate the GT motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorGTMotifPretty : public ::std::unary_function<Triplex,char>
+struct FunctorGTMotifPretty : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g') )
@@ -167,7 +169,7 @@ struct FunctorGTMotifPretty : public ::std::unary_function<Triplex,char>
  * Translate the TC motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorTCMotifOutput : public ::std::unary_function<Triplex,char>
+struct FunctorTCMotifOutput : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'C') || (x == 'c') )
@@ -187,7 +189,7 @@ struct FunctorTCMotifOutput : public ::std::unary_function<Triplex,char>
  * Translate the TC motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorGAMotifOutput : public ::std::unary_function<Triplex,char>
+struct FunctorGAMotifOutput : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g'))
@@ -207,7 +209,7 @@ struct FunctorGAMotifOutput : public ::std::unary_function<Triplex,char>
  * Translate the GT motif into a corresponding triplex target site and mask all remaining
  * character with 'N'
  */
-struct FunctorGTMotifOutput : public ::std::unary_function<Triplex,char>
+struct FunctorGTMotifOutput : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g') )
@@ -227,7 +229,7 @@ struct FunctorGTMotifOutput : public ::std::unary_function<Triplex,char>
  * Masks non-purine characters of a putative triplex target site 
  * with 'Y' (Different character than masking for TFOs!)
  */
-struct FunctorTTSMotif : public ::std::unary_function<Triplex,Triplex>
+struct FunctorTTSMotif : std::function<Triplex(Triplex)>
 {
 	inline Triplex operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g'))
@@ -243,7 +245,7 @@ struct FunctorTTSMotif : public ::std::unary_function<Triplex,Triplex>
  * Masks non-purine characters of a putative triplex target site 
  * with 'Y' (Different character than masking for TFOs!)
  */
-struct FunctorTTSMotifPretty : public ::std::unary_function<Triplex,char>
+struct FunctorTTSMotifPretty : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g'))
@@ -263,7 +265,7 @@ struct FunctorTTSMotifPretty : public ::std::unary_function<Triplex,char>
  * Masks non-purine characters of a putative triplex target site 
  * with 'Y' (Different character than masking for TFOs!)
  */
-struct FunctorTTSMotifOutput : public ::std::unary_function<Triplex,char>
+struct FunctorTTSMotifOutput : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'G') || (x == 'g'))
@@ -283,7 +285,7 @@ struct FunctorTTSMotifOutput : public ::std::unary_function<Triplex,char>
  * Masks non-pyrimidine characters of a putative triplex target site 
  * with 'Y' (Different character than masking for TFOs!)
  */
-struct FunctorTTSMotifCompl : public ::std::unary_function<Triplex,Triplex>
+struct FunctorTTSMotifCompl : std::function<Triplex(Triplex)>
 {
 	inline Triplex operator()(Triplex x) const {
 		if ((x == 'C') || (x == 'c'))
@@ -299,7 +301,7 @@ struct FunctorTTSMotifCompl : public ::std::unary_function<Triplex,Triplex>
  * Masks non-pyrimidine characters of a putative triplex target site 
  * with 'Y' (Different character than masking for TFOs!)
  */
-struct FunctorTTSMotifComplPretty : public ::std::unary_function<Triplex,char>
+struct FunctorTTSMotifComplPretty : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'C') || (x == 'c'))
@@ -319,7 +321,7 @@ struct FunctorTTSMotifComplPretty : public ::std::unary_function<Triplex,char>
  * Masks non-pyrimidine characters of a putative triplex target site 
  * with 'Y' (Different character than masking for TFOs!)
  */
-struct FunctorTTSMotifComplOutput : public ::std::unary_function<Triplex,char>
+struct FunctorTTSMotifComplOutput : std::function<char(Triplex)>
 {
 	inline char operator()(Triplex x) const {
 		if ((x == 'C') || (x == 'c'))
