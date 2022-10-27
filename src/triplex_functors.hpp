@@ -43,82 +43,13 @@ namespace seqan
 /**
  * mask all purines (G,A) in a sequences with 'R' and pyrimidins (C,T/U) as 'Y'
  */
-auto FunctorRYFilter = [](Triplex x) -> Triplex {
-	if ((x == 'G') || (x == 'g') || (x == 'A') || (x == 'a') || (x == 'R'))
-		return 'R';
-	else if ((x == 'C') || (x == 'c') || (x == 'T') || (x == 't') || (x == 'U') || (x == 'u') || (x == 'Y'))
-		return 'Y';
-	else
-		return 'N';
-};
-
-/**
- * mask all pyrimidins (C,T/U) as 'Y'
- */
-struct FunctorGAYFilter : public ::std::unary_function<Triplex,Triplex>
+struct FunctorRYFilter : public std::function<Triplex(Triplex)>
 {
 	inline Triplex operator()(Triplex x) const {
-		if ((x == 'G') || (x == 'g'))
-			return 'G';
-		else if ((x == 'A') || (x == 'a'))
-			return 'A';
-		else if (x == 'R')
+		if ((x == 'G') || (x == 'g') || (x == 'A') || (x == 'a') || (x == 'R'))
 			return 'R';
 		else if ((x == 'C') || (x == 'c') || (x == 'T') || (x == 't') || (x == 'U') || (x == 'u') || (x == 'Y'))
 			return 'Y';
-		else
-			return 'N';
-	}
-};
-
-/**
- * mask all purines (G,A) in a sequences with 'R'
- */
-struct FunctorCTRFilter : public ::std::unary_function<Triplex,Triplex>
-{
-	inline Triplex operator()(Triplex x) const {
-		if ((x == 'C') || (x == 'c'))
-			return 'C';
-		else if ((x == 'T') || (x == 't') || (x == 'U') || (x == 'u'))
-			return 'T';
-		else if (x == 'Y')
-			return 'Y';
-		else if ((x == 'G') || (x == 'g') || (x == 'A') || (x == 'a') || (x == 'R'))
-			return 'R';
-		else
-			return 'N';
-	}
-};
-
-/**
- * mask all (C,A) in a sequences with 'M'
- */
-struct FunctorGTMFilter : public ::std::unary_function<Triplex,Triplex>
-{
-	inline Triplex operator()(Triplex x) const {
-		if ((x == 'G') || (x == 'g'))
-			return 'G';
-		else if ((x == 'T') || (x == 't') || (x == 'U') || (x == 'u'))
-			return 'T';
-		else if (x == 'K')
-			return 'K';
-		else if ((x == 'C') || (x == 'c') || (x == 'A') || (x == 'a') || (x == 'M'))
-			return 'M';
-		else
-			return 'N';
-	}
-};
-
-/**
- * mask all (T/U,G) in a sequences with 'K' and all (A,C) with 'M'. Covers both DNA and RNA.
- */
-struct FunctorKMFilter : public ::std::unary_function<Triplex,Triplex>
-{
-	inline Triplex operator()(Triplex x) const {
-		if ((x == 'C') || (x == 'c') || (x == 'A') || (x == 'a') || (x == 'M'))
-			return 'M';
-		else if ((x == 'G') || (x == 'g') || (x == 'T') || (x == 't') || (x == 'U') || (x == 'u') || (x == 'K'))
-			return 'K';
 		else
 			return 'N';
 	}
