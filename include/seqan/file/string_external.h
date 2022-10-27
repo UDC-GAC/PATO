@@ -37,6 +37,8 @@
 #ifndef SEQAN_HEADER_STRING_EXTERNAL_H
 #define SEQAN_HEADER_STRING_EXTERNAL_H
 
+#include <functional>
+
 /* IOREV
  * _nottested_
  * _doc_

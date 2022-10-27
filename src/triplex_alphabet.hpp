@@ -35,6 +35,8 @@
 #ifndef TRIPLEX_ALPHABET_HPP
 #define TRIPLEX_ALPHABET_HPP
 
+#include <functional>
+
 #include <seqan/basic.h>
 #include <seqan/modifier.h>
 #include <seqan/sequence.h>
