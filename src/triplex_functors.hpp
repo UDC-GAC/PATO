@@ -43,16 +43,13 @@ namespace seqan
 /**
  * mask all purines (G,A) in a sequences with 'R' and pyrimidins (C,T/U) as 'Y'
  */
-struct FunctorRYFilter : public ::std::unary_function<Triplex,Triplex>
-{
-	inline Triplex operator()(Triplex x) const {
-		if ((x == 'G') || (x == 'g') || (x == 'A') || (x == 'a') || (x == 'R'))
-			return 'R';
-		else if ((x == 'C') || (x == 'c') || (x == 'T') || (x == 't') || (x == 'U') || (x == 'u') || (x == 'Y'))
-			return 'Y';
-		else
-			return 'N';
-	}
+auto FunctorRYFilter = [](Triplex x) -> Triplex {
+	if ((x == 'G') || (x == 'g') || (x == 'A') || (x == 'a') || (x == 'R'))
+		return 'R';
+	else if ((x == 'C') || (x == 'c') || (x == 'T') || (x == 't') || (x == 'U') || (x == 'u') || (x == 'Y'))
+		return 'Y';
+	else
+		return 'N';
 };
 
 /**
