@@ -1,0 +1,30 @@
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  Compile-and-test-PATO:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+      - name: Configure PATO
+        run: cmake -B build .
+        working-directory: ${{ github.workspace }}
+      - name: Compile PATO
+        run: make -C build
+        working-directory: ${{ github.workspace }}
+      - name: Test PATO
+        run: bash test/test.bash
+        working-directory: ${{ github.workspace }}
+      - name: Configure PATO (OpenMP disabled)
+        run: cmake -B build -D PATO_ENABLE_OPENMP=OFF .
+        working-directory: ${{ github.workspace }}
+      - name: Compile PATO (OpenMP disabled)
+        run: make -C build
+        working-directory: ${{ github.workspace }}
+      - name: Test PATO (OpenMP disabled)
+        run: bash test/test.bash
+        working-directory: ${{ github.workspace }}
