@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10.0)
 
 project(PATO
-  VERSION 0.0.0
+  VERSION 1.0.0
   DESCRIPTION "PATO: high PerformAnce TriplexatOr"
   HOMEPAGE_URL "https://github.com/UDC-GAC/PATO"
   LANGUAGES CXX)
