@@ -20,6 +20,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#include <PATO/config.h>
 #include <PATO/tfo_finder.h>
 #include <PATO/tpx_finder.h>
 #include <PATO/tts_finder.h>
@@ -73,8 +74,8 @@ static std::variant<int, pato::options_t> parse_command_line(int argc,
       "the art.");
 
   seqan::setDate(parser, "August 2024");
-  seqan::setVersion(parser, "v1.0.0");
-  seqan::setUrl(parser, "https://github.com/UDC-GAC/PATO");
+  seqan::setVersion(parser, PATO_VERSION);
+  seqan::setUrl(parser, PATO_HOMEPAGE_URL);
   seqan::setShortCopyright(parser,
                            "2022-onwards Iñaki Amatria-Barral, Universidade da "
                            "Coruña; released under the MIT License.");

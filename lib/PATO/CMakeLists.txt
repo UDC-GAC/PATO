@@ -8,7 +8,10 @@ add_library(libPATO
   tpx_finder.cpp
   tts_finder.cpp)
 
-target_include_directories(libPATO PUBLIC ${PATO_SOURCE_DIR}/include/PATO)
+target_include_directories(libPATO
+  PUBLIC
+  ${PATO_SOURCE_DIR}/include/PATO
+  ${PATO_BINARY_DIR}/include/PATO)
 target_link_libraries(libPATO PUBLIC libSeqAn libTriplexator)
 
 set_target_properties(libPATO PROPERTIES PREFIX "")
