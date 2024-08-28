@@ -53,16 +53,12 @@ public:
                              const name_vector_t &tfo_names,
                              const name_vector_t &tts_names);
 
-  // FIXME: Use RAII!
-  void destroy();
-
 private:
   output_writer_t(std::FILE *output_file_, std::FILE *summary_file_,
-                  const options_t &opts_)
-      : output_file{output_file_}, summary_file{summary_file_}, opts{opts_} {}
+                  const options_t &opts_);
 
-  std::FILE *output_file;
-  std::FILE *summary_file;
+  std::shared_ptr<std::FILE> output_file;
+  std::shared_ptr<std::FILE> summary_file;
 
   const options_t &opts;
 };

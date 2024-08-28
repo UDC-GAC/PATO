@@ -213,7 +213,6 @@ pato::find_tts_motifs(const pato::options_t &opts) {
     tts_sequences.clear();
     tts_potentials.clear();
   }
-  output_writer->destroy();
 
   return pato::find_tts_motifs_result::success;
 }

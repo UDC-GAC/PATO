@@ -246,7 +246,6 @@ pato::find_tfo_motifs(const pato::options_t &opts) {
 #pragma omp section
     output_writer->print_motifs_summary(tfo_potentials, tfo_names);
   } // #pragma omp parallel sections num_threads(2)
-  output_writer->destroy();
 
   return pato::find_tfo_motifs_result::success;
 }

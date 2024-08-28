@@ -90,6 +90,18 @@ pato::output_writer_t::create(const pato::options_t &opts) {
   return pato::output_writer_t{output_file, summary_file, opts};
 }
 
+pato::output_writer_t::output_writer_t(std::FILE *output_file_,
+                                       std::FILE *summary_file_,
+                                       const options_t &opts_)
+    : output_file{output_file_,
+                  [this](std::FILE *f) -> void {
+                    if (opts.output_format != output_format_t::summary) {
+                      std::fclose(f);
+                    }
+                  }},
+      summary_file{summary_file_, [](std::FILE *f) -> void { std::fclose(f); }},
+      opts{opts_} {}
+
 void pato::output_writer_t::print_motifs(const pato::motif_vector_t &motifs,
                                          const pato::name_vector_t &names) {
   if (opts.output_format == output_format_t::summary || motifs.empty()) {
@@ -101,17 +113,18 @@ void pato::output_writer_t::print_motifs(const pato::motif_vector_t &motifs,
 
   for (const auto &m : motifs) {
     if (opts.output_format == output_format_t::bed) {
-      std::fprintf(
-          output_file, "%s\t%lu\t%lu\t%u\t%c\t%.2g\t%s\t%.2g\t%d\t%s\t-\n",
-          seqan::toCString(names[seqan::getSequenceNo(m)]),
-          seqan::beginPosition(m), seqan::endPosition(m), seqan::score(m),
-          seqan::getMotif(m),
-          1.0 - static_cast<double>(seqan::score(m)) /
-                    (seqan::endPosition(m) - seqan::beginPosition(m)),
-          seqan::toCString(seqan::errorString(m)), seqan::guanineRate(m),
-          seqan::duplicates(m),
-          seqan::toCString(opts.pretty_output ? seqan::prettyString(m)
-                                              : seqan::outputString(m)));
+      std::fprintf(output_file.get(),
+                   "%s\t%lu\t%lu\t%u\t%c\t%.2g\t%s\t%.2g\t%d\t%s\t-\n",
+                   seqan::toCString(names[seqan::getSequenceNo(m)]),
+                   seqan::beginPosition(m), seqan::endPosition(m),
+                   seqan::score(m), seqan::getMotif(m),
+                   1.0 - static_cast<double>(seqan::score(m)) /
+                             (seqan::endPosition(m) - seqan::beginPosition(m)),
+                   seqan::toCString(seqan::errorString(m)),
+                   seqan::guanineRate(m), seqan::duplicates(m),
+                   seqan::toCString(opts.pretty_output
+                                        ? seqan::prettyString(m)
+                                        : seqan::outputString(m)));
     } else {
       if (last_sequence_id != seqan::getSequenceNo(m)) {
         counter = 1;
@@ -119,7 +132,7 @@ void pato::output_writer_t::print_motifs(const pato::motif_vector_t &motifs,
       }
 
       std::fprintf(
-          output_file, ">%s_%u\t%lu-%lu %c\t%u\t%s\t%g\t%d\t-\n%s\n",
+          output_file.get(), ">%s_%u\t%lu-%lu %c\t%u\t%s\t%g\t%d\t-\n%s\n",
           seqan::toCString(names[seqan::getSequenceNo(m)]), counter++,
           seqan::beginPosition(m), seqan::endPosition(m), seqan::getMotif(m),
           seqan::score(m), seqan::toCString(seqan::errorString(m)),
@@ -317,13 +330,13 @@ void pato::output_writer_t::print_motifs_summary(
     const pato::name_vector_t &names) {
   for (const auto &potential : potentials) {
     if (seqan::hasCount(potential)) {
-      std::fprintf(summary_file, "%s\t%u\t%.3g",
+      std::fprintf(summary_file.get(), "%s\t%u\t%.3g",
                    seqan::toCString(names[seqan::getKey(potential)]),
                    seqan::getCounts(potential),
                    seqan::getCounts(potential) / seqan::getNorm(potential));
       if (opts.run_mode == run_mode_t::tfo_search) {
         std::fprintf(
-            summary_file, "\t%u\t%.3g\t%u\t%.3g\t%u\t%.3g\t",
+            summary_file.get(), "\t%u\t%.3g\t%u\t%.3g\t%u\t%.3g\t",
             seqan::getCount(potential, 'R'),
             seqan::getCount(potential, 'R') / seqan::getNorm(potential),
             seqan::getCount(potential, 'Y'),
@@ -331,7 +344,7 @@ void pato::output_writer_t::print_motifs_summary(
             seqan::getCount(potential, 'M'),
             seqan::getCount(potential, 'M') / seqan::getNorm(potential));
       }
-      std::fprintf(summary_file, "\n");
+      std::fprintf(summary_file.get(), "\n");
     }
   }
 }
@@ -362,7 +375,7 @@ void pato::output_writer_t::print_triplexes(
     auto tts_seq_id = match.ttsSeqNo;
 
     std::fprintf(
-        output_file,
+        output_file.get(),
         "%s\t%lu\t%lu\t%s\t%lu\t%lu\t%u\t%.2g\t%s\t%c\t%c\t%c\t%.2g",
         seqan::toCString(tfo_names[tfo_seq_id]), match.oBegin, match.oEnd,
         seqan::toCString(tts_names[tts_seq_id]), match.dBegin, match.dEnd,
@@ -373,11 +386,11 @@ void pato::output_writer_t::print_triplexes(
         match.motif, match.strand, match.parallel ? 'P' : 'A',
         static_cast<double>(match.guanines) / (match.dEnd - match.dBegin));
     if (opts.output_format == output_format_t::triplex) {
-      std::fprintf(output_file, "%s",
+      std::fprintf(output_file.get(), "%s",
                    seqan::toCString(triplex_alignment_string(match, tfo_motifs,
                                                              tts_motifs)));
     }
-    std::fprintf(output_file, "\n");
+    std::fprintf(output_file.get(), "\n");
 #if defined(_OPENMP)
   }
 #endif
@@ -391,7 +404,7 @@ void pato::output_writer_t::print_triplex_summary(
   for (const auto &potential_entry : potentials) {
     const auto &potential = potential_entry.second;
     if (seqan::hasCount(potential)) {
-      std::fprintf(summary_file,
+      std::fprintf(summary_file.get(),
                    "%s\t%s\t%u\t%.3g\t%u\t%.3g\t%u\t%.3g\t%u\t%.3g\t\n",
                    seqan::toCString(tts_names[seqan::getKey(potential).second]),
                    seqan::toCString(tfo_names[seqan::getKey(potential).first]),
@@ -405,11 +418,4 @@ void pato::output_writer_t::print_triplex_summary(
                    seqan::getCount(potential, 'M') / seqan::getNorm(potential));
     }
   }
-}
-
-void pato::output_writer_t::destroy() {
-  if (opts.output_format != pato::output_format_t::summary) {
-    std::fclose(output_file);
-  }
-  std::fclose(summary_file);
 }

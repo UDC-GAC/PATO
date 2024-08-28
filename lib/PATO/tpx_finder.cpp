@@ -334,7 +334,6 @@ pato::find_tpx_result pato::find_tpxes(const pato::options_t &opts) {
 #endif
     potentials.clear();
   }
-  output_writer->destroy();
 
   return pato::find_tpx_result::success;
 }
