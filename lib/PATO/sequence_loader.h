@@ -26,19 +26,24 @@
 #include <PATO/options.h>
 #include <seqan/seq_io.h>
 
+#include <optional>
+
 #include "types.h"
 
 namespace pato {
 
 class sequence_loader_t {
 public:
-  // FIXME: Use RAII!
-  bool init(const seqan::CharString &file_name);
+  static std::optional<sequence_loader_t>
+  create(const seqan::CharString &file_name);
+
   bool load_sequences(triplex_vector_t &sequences, name_vector_t &names,
                       unsigned num_sequences);
 
 private:
-  seqan::SeqFileIn fasta_file;
+  sequence_loader_t(seqan::SeqFileIn *fasta_file_) : fasta_file{fasta_file_} {}
+
+  std::shared_ptr<seqan::SeqFileIn> fasta_file;
 };
 
 } // namespace pato

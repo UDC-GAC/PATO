@@ -22,8 +22,13 @@
 
 #include "sequence_loader.h"
 
-bool pato::sequence_loader_t::init(const seqan::CharString &file_name) {
-  return seqan::open(fasta_file, seqan::toCString(file_name));
+std::optional<pato::sequence_loader_t>
+pato::sequence_loader_t::create(const seqan::CharString &file_name) {
+  seqan::SeqFileIn *fasta_file{new seqan::SeqFileIn{}};
+  if (seqan::open(*fasta_file, seqan::toCString(file_name))) {
+    return pato::sequence_loader_t{fasta_file};
+  }
+  return std::nullopt;
 }
 
 static void crop_sequence_name(seqan::CharString &name) {
@@ -36,7 +41,7 @@ static void crop_sequence_name(seqan::CharString &name) {
 bool pato::sequence_loader_t::load_sequences(pato::triplex_vector_t &sequences,
                                              pato::name_vector_t &names,
                                              unsigned num_sequences) {
-  seqan::readRecords(names, sequences, fasta_file, num_sequences);
+  seqan::readRecords(names, sequences, *fasta_file, num_sequences);
   for (seqan::CharString &name : names) {
     crop_sequence_name(name);
   }

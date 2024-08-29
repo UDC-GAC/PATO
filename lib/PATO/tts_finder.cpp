@@ -178,8 +178,8 @@ void pato::find_tts_motifs(pato::motif_vector_t &motifs,
 
 pato::find_tts_motifs_result
 pato::find_tts_motifs(const pato::options_t &opts) {
-  pato::sequence_loader_t sequence_loader;
-  if (!sequence_loader.init(opts.tts_file)) {
+  auto sequence_loader = pato::sequence_loader_t::create(opts.tts_file);
+  if (!sequence_loader) {
     return pato::find_tts_motifs_result::cannot_open_tts_file;
   }
 
@@ -194,8 +194,8 @@ pato::find_tts_motifs(const pato::options_t &opts) {
   pato::motif_potential_vector_t tts_potentials;
 
   while (true) {
-    if (!sequence_loader.load_sequences(tts_sequences, tts_names,
-                                        opts.chunk_size)) {
+    if (!sequence_loader->load_sequences(tts_sequences, tts_names,
+                                         opts.chunk_size)) {
       break;
     }
     pato::find_tts_motifs(tts_motifs, tts_potentials, tts_sequences, opts);

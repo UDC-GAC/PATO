@@ -269,12 +269,12 @@ static void match_tfo_tts_motifs(
 }
 
 pato::find_tpx_result pato::find_tpxes(const pato::options_t &opts) {
-  pato::sequence_loader_t tfo_sequence_loader;
-  if (!tfo_sequence_loader.init(opts.tfo_file)) {
+  auto tfo_sequence_loader = pato::sequence_loader_t::create(opts.tfo_file);
+  if (!tfo_sequence_loader) {
     return pato::find_tpx_result::cannot_open_tfo_file;
   }
-  pato::sequence_loader_t tts_sequence_loader;
-  if (!tts_sequence_loader.init(opts.tts_file)) {
+  auto tts_sequence_loader = pato::sequence_loader_t::create(opts.tts_file);
+  if (!tts_sequence_loader) {
     return pato::find_tpx_result::cannot_open_tts_file;
   }
 
@@ -285,8 +285,8 @@ pato::find_tpx_result pato::find_tpxes(const pato::options_t &opts) {
 
   pato::name_vector_t tfo_names;
   pato::triplex_vector_t tfo_sequences;
-  tfo_sequence_loader.load_sequences(tfo_sequences, tfo_names,
-                                     std::numeric_limits<unsigned>::max());
+  tfo_sequence_loader->load_sequences(tfo_sequences, tfo_names,
+                                      std::numeric_limits<unsigned>::max());
   pato::motif_vector_t tfo_motifs;
   pato::motif_potential_vector_t tfo_potentials;
   pato::find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, opts);
@@ -304,8 +304,8 @@ pato::find_tpx_result pato::find_tpxes(const pato::options_t &opts) {
   pato::potential_map_t potentials;
 
   while (true) {
-    if (!tts_sequence_loader.load_sequences(tts_sequences, tts_names,
-                                            opts.chunk_size)) {
+    if (!tts_sequence_loader->load_sequences(tts_sequences, tts_names,
+                                             opts.chunk_size)) {
       break;
     }
 

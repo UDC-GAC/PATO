@@ -221,8 +221,8 @@ void pato::find_tfo_motifs(pato::motif_vector_t &motifs,
 
 pato::find_tfo_motifs_result
 pato::find_tfo_motifs(const pato::options_t &opts) {
-  pato::sequence_loader_t sequence_loader;
-  if (!sequence_loader.init(opts.tfo_file)) {
+  auto sequence_loader = pato::sequence_loader_t::create(opts.tfo_file);
+  if (!sequence_loader) {
     return pato::find_tfo_motifs_result::cannot_open_tfo_file;
   }
 
@@ -233,8 +233,8 @@ pato::find_tfo_motifs(const pato::options_t &opts) {
 
   pato::name_vector_t tfo_names;
   pato::triplex_vector_t tfo_sequences;
-  sequence_loader.load_sequences(tfo_sequences, tfo_names,
-                                 std::numeric_limits<unsigned>::max());
+  sequence_loader->load_sequences(tfo_sequences, tfo_names,
+                                  std::numeric_limits<unsigned>::max());
   pato::motif_vector_t tfo_motifs;
   pato::motif_potential_vector_t tfo_potentials;
   pato::find_tfo_motifs(tfo_motifs, tfo_potentials, tfo_sequences, opts);
