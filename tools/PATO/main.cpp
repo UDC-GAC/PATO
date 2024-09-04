@@ -58,7 +58,7 @@ static std::variant<int, pato::options_t> parse_command_line(int argc,
                                                              char *argv[]) {
   seqan::ArgumentParser parser{"PATO"};
 
-  seqan::setShortDescription(parser, "high PerformAnce TriplexatOr");
+  seqan::setShortDescription(parser, PATO_DESCRIPTION);
   seqan::addUsageLine(
       parser,
       "[options] {-ss tfo_file | -ds tts_file | -ss tfo_file -ds tts_file}");
