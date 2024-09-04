@@ -171,32 +171,44 @@ inline void assign(Ascii &c_target, Triplex const &source) {
   c_target = TranslateTableTriplex2Ascii_<>::VALUE[source.value];
 }
 
-template <> struct CompareType<Triplex, uint8_t> { typedef Triplex Type; };
+template <> struct CompareType<Triplex, uint8_t> {
+  typedef Triplex Type;
+};
 inline void assign(Triplex &target, uint8_t c_source) {
   target.value = TranslateTableByte2Triplex_<>::VALUE[c_source];
 }
 
-template <> struct CompareType<Triplex, Ascii> { typedef Triplex Type; };
+template <> struct CompareType<Triplex, Ascii> {
+  typedef Triplex Type;
+};
 inline void assign(Triplex &target, Ascii c_source) {
   target.value = TranslateTableAscii2Triplex_<>::VALUE[(unsigned char)c_source];
 }
 
-template <> struct CompareType<Triplex, Unicode> { typedef Triplex Type; };
+template <> struct CompareType<Triplex, Unicode> {
+  typedef Triplex Type;
+};
 inline void assign(Triplex &target, Unicode c_source) {
   target.value = TranslateTableAscii2Triplex_<>::VALUE[(unsigned char)c_source];
 }
 
-template <> struct CompareType<Triplex, Dna> { typedef Triplex Type; };
+template <> struct CompareType<Triplex, Dna> {
+  typedef Triplex Type;
+};
 inline void assign(Triplex &target, Dna const &c_source) {
   target.value = TranslateTableDna2Triplex_<>::VALUE[(unsigned char)c_source];
 }
 
-template <> struct CompareType<Triplex, Dna5> { typedef Triplex Type; };
+template <> struct CompareType<Triplex, Dna5> {
+  typedef Triplex Type;
+};
 inline void assign(Triplex &target, Dna5 const &c_source) {
   target.value = TranslateTableDna52Triplex_<>::VALUE[(unsigned char)c_source];
 }
 
-template <> struct CompareType<Triplex, Iupac> { typedef Triplex Type; };
+template <> struct CompareType<Triplex, Iupac> {
+  typedef Triplex Type;
+};
 inline void assign(Triplex &target, Iupac const &source) {
   target.value = TranslateTableIupac2Triplex_<>::VALUE[source.value];
 }
