@@ -73,7 +73,7 @@ static std::variant<int, pato::options_t> parse_command_line(int argc,
       "prediction accuracy in far less time than other tools in the state of "
       "the art.");
 
-  seqan::setDate(parser, "August 2024");
+  seqan::setDate(parser, "September 2024");
   seqan::setVersion(parser, PATO_VERSION);
   seqan::setUrl(parser, PATO_HOMEPAGE_URL);
   seqan::setShortCopyright(parser,
