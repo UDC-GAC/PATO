@@ -1,1 +1,1 @@
-add_subdirectory(PATO)
+configure_file(config.h.in config.h)

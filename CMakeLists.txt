@@ -31,6 +31,8 @@ option(PATO_ENABLE_OPENMP "Enable OpenMP" ON)
 set(PATO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 set(PATO_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
+include_directories(${PATO_SOURCE_DIR}/include ${PATO_BINARY_DIR}/include)
+
 add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(tools)

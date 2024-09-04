@@ -7,13 +7,6 @@ add_library(libPATO
   tfo_finder.cpp
   tpx_finder.cpp
   tts_finder.cpp)
-
-target_include_directories(libPATO
-  PUBLIC
-  ${PATO_SOURCE_DIR}/include/PATO
-  ${PATO_BINARY_DIR}/include/PATO)
-target_link_libraries(libPATO PUBLIC libSeqAn PRIVATE libTriplexator)
-
 set_target_properties(libPATO PROPERTIES PREFIX "")
 
 if (PATO_ENABLE_OPENMP)
