@@ -39,6 +39,41 @@ $ ./build/tools/PATO/PATO [options] {-ss tfo_file | -ds tts_file | -ss tfo_file 
 Execute `./build/tools/PATO/PATO --help` for a detailed list of execution modes,
 options, and flags.
 
+### Cheatsheet
+
+To predict Triplex-forming Oligonucleotides (TFOs): run PATO with a
+single-stranded sequence file to detect regions that may form triplexes:
+
+```bash
+$ ./build/tools/PATO/PATO -ss single_stranded.fa
+```
+
+This will generate a file containing TFO regions.
+
+To predict Triplex Target Sites (TTSs): run PATO with a double-stranded sequence
+file to detect regions in the sequences that may serve as targets for triplex
+formation:
+
+```bash
+$ ./build/tools/PATO/PATO -ds double_stranded.fa
+```
+
+This will generate a file containing TTS regions.
+
+To predict potential triplexes: match TFO regions from a single-stranded
+sequence file with TTS regions from a double-stranded sequence file:
+
+```bash
+$ ./build/tools/PATO/PATO -ss single_stranded.fa -ds double_stranded.fa
+```
+
+This will produce a file containing all individual triple helices found between
+the sequences, and another file listing the interaction strength between each
+sequence pair.
+
+To select candidate triplexes, sort the interactions between each sequence pair
+according to `Total (rel)` and study the strongest triplexes.
+
 ### Setting the number of threads
 
 PATO: high PerformAnce TriplexatOr uses OpenMP to parallelize its triplex search
