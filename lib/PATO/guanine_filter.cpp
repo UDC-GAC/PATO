@@ -297,7 +297,11 @@ unsigned pato::filter_guanine_error_rate(motif_t &motif,
   pato::motif_vector_t tmp_set;
   pato::motif_vector_t &motifs_ref = args.reduce_set ? tmp_set : args.motifs;
 
-  // TODO: Explain why this is important!
+  // The following lines optimize memory usage and runtime performance in PATO
+  // by reusing allocated memory. Since this function is called frequently
+  // throughout the application, minimizing memory allocations and deallocations
+  // is crucial. By reusing the capacity already allocated for storing the
+  // encoded sequence, we reduce memory pressure and improve overall efficiency.
   auto motif_length = seqan::length(motif);
   if (args.block_runs.empty() ||
       motif_length - opts.min_block_run + 1 > args.block_runs.size()) {
