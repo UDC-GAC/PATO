@@ -188,11 +188,18 @@ static void search_triplex(pato::motif_t &tfo_motif, unsigned tfo_id,
         strand = '-';
       }
 
-      // FIXME: Use list initialization and make all type narrowing explicit!
-      pato::match_t match(tfo_id, tfo_start, tfo_end,
-                          seqan::getSequenceNo(tts_motif), tts_id, tts_start,
-                          tts_end, score, seqan::isParallel(tfo_motif),
-                          seqan::getMotif(tfo_motif), strand, guanines);
+      pato::match_t match{tfo_id,
+                          static_cast<long>(tfo_start),
+                          static_cast<long>(tfo_end),
+                          seqan::getSequenceNo(tts_motif),
+                          tts_id,
+                          static_cast<long>(tts_start),
+                          static_cast<long>(tts_end),
+                          score,
+                          seqan::isParallel(tfo_motif),
+                          seqan::getMotif(tfo_motif),
+                          strand,
+                          guanines};
       tpx_args.matches.push_back(match);
     }
     tpx_args.tpx_motifs.clear();
