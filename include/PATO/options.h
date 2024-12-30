@@ -23,7 +23,7 @@
 #ifndef PATO_OPTIONS_H
 #define PATO_OPTIONS_H
 
-#include <seqan/sequence.h>
+#include <string>
 
 namespace pato {
 
@@ -48,9 +48,9 @@ enum class error_reference_t : unsigned {
 };
 
 struct options_t {
-  seqan::CharString tfo_file;
-  seqan::CharString tts_file;
-  seqan::CharString output_file;
+  std::string tfo_file;
+  std::string tts_file;
+  std::string output_file;
 
   double error_rate;
   double min_guanine_rate;

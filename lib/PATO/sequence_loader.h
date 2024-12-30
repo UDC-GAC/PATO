@@ -34,8 +34,7 @@ namespace pato {
 
 class sequence_loader_t {
 public:
-  static std::optional<sequence_loader_t>
-  create(const seqan::CharString &file_name);
+  static std::optional<sequence_loader_t> create(const std::string &file_name);
 
   bool load_sequences(triplex_vector_t &sequences, name_vector_t &names,
                       unsigned num_sequences);

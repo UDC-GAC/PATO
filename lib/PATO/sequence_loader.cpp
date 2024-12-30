@@ -23,9 +23,9 @@
 #include "sequence_loader.h"
 
 std::optional<pato::sequence_loader_t>
-pato::sequence_loader_t::create(const seqan::CharString &file_name) {
+pato::sequence_loader_t::create(const std::string &file_name) {
   seqan::SeqFileIn *fasta_file{new seqan::SeqFileIn{}};
-  if (seqan::open(*fasta_file, seqan::toCString(file_name))) {
+  if (seqan::open(*fasta_file, file_name.c_str())) {
     return pato::sequence_loader_t{fasta_file};
   }
   return std::nullopt;
