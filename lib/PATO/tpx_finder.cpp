@@ -65,8 +65,8 @@ struct tpx_finder_args_t {
   }
 #else
   tpx_finder_args_t(pato::match_vector_t &matches_, const pato::options_t &opts)
-      : matches{matches_}, filter_args{tpx_motifs, block_runs, encoded_seq,
-                                       false,      'G',        'Y'} {
+      : matches{matches_},
+        filter_args{tpx_motifs, block_runs, encoded_seq, false, 'G', 'Y'} {
     filter_args.ornt = pato::orientation_t::both;
     min_score = opts.min_length -
                 static_cast<int>(std::ceil(opts.error_rate * opts.min_length));
