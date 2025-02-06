@@ -42,7 +42,7 @@ int main(int argc, char *argv[]) {
   return std::visit(
       visitors_t{
           [](int return_code) { return return_code; },
-          [](pato::options_t &opts) {
+          [](const pato::options_t &opts) {
             bool success = false;
             switch (opts.run_mode) {
             case pato::run_mode_t::tfo_search: {
