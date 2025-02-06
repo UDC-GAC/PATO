@@ -1,4 +1,5 @@
 add_library(libPATO
+  command_line_parser.cpp
   guanine_filter.cpp
   output_writer.cpp
   repeat_filter.cpp
