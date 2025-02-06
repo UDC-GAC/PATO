@@ -35,6 +35,8 @@ enum class find_tpx_result : unsigned {
 };
 
 find_tpx_result find_tpxes(const options_t &opts);
+bool handle_find_tpx_result(find_tpx_result result, std::ostream &errs,
+                            const options_t &opts);
 
 } // namespace pato
 

@@ -27,54 +27,6 @@
 
 #include <iostream>
 
-static int handle_tfo_search(const pato::options_t &opts) {
-  switch (pato::find_tfo_motifs(opts)) {
-  case pato::find_tfo_motifs_result::success:
-    return 0;
-  case pato::find_tfo_motifs_result::cannot_open_tfo_file:
-    std::cerr << "PATO: error opening input file '" << opts.tfo_file << "'\n";
-    break;
-  case pato::find_tfo_motifs_result::cannot_create_output_file:
-    std::cerr << "PATO: error opening output file '" << opts.output_file
-              << "'\n";
-    break;
-  }
-  return 1;
-}
-
-static int handle_tts_search(const pato::options_t &opts) {
-  switch (pato::find_tts_motifs(opts)) {
-  case pato::find_tts_motifs_result::success:
-    return 0;
-  case pato::find_tts_motifs_result::cannot_open_tts_file:
-    std::cerr << "PATO: error opening input file '" << opts.tts_file << "'\n";
-    break;
-  case pato::find_tts_motifs_result::cannot_create_output_file:
-    std::cerr << "PATO: error opening output file '" << opts.output_file
-              << "'\n";
-    break;
-  }
-  return 1;
-}
-
-static int handle_tpx_search(const pato::options_t &opts) {
-  switch (pato::find_tpxes(opts)) {
-  case pato::find_tpx_result::success:
-    return 0;
-  case pato::find_tpx_result::cannot_open_tfo_file:
-    std::cerr << "PATO: error opening input file '" << opts.tfo_file << "'\n";
-    break;
-  case pato::find_tpx_result::cannot_open_tts_file:
-    std::cerr << "PATO: error opening input file '" << opts.tts_file << "'\n";
-    break;
-  case pato::find_tpx_result::cannot_create_output_file:
-    std::cerr << "PATO: error opening output file '" << opts.output_file
-              << "'\n";
-    break;
-  }
-  return 1;
-}
-
 namespace {
 
 template <typename... Tys> struct visitors_t : Tys... {
@@ -87,21 +39,31 @@ template <typename... Tys> visitors_t(Tys...) -> visitors_t<Tys...>;
 int main(int argc, char *argv[]) {
   pato::parse_result_t result =
       pato::parse_command_line(argc, argv, std::cout, std::cerr);
-  return std::visit(visitors_t{[](int return_code) { return return_code; },
-                               [](pato::options_t &opts) {
-                                 int result;
-                                 switch (opts.run_mode) {
-                                 case pato::run_mode_t::tfo_search:
-                                   result = handle_tfo_search(opts);
-                                   break;
-                                 case pato::run_mode_t::tts_search:
-                                   result = handle_tts_search(opts);
-                                   break;
-                                 case pato::run_mode_t::tpx_search:
-                                   result = handle_tpx_search(opts);
-                                   break;
-                                 }
-                                 return result;
-                               }},
-                    result);
+  return std::visit(
+      visitors_t{
+          [](int return_code) { return return_code; },
+          [](pato::options_t &opts) {
+            bool success = false;
+            switch (opts.run_mode) {
+            case pato::run_mode_t::tfo_search: {
+              pato::find_tfo_motifs_result result = pato::find_tfo_motifs(opts);
+              success =
+                  pato::handle_find_tfo_motifs_result(result, std::cerr, opts);
+              break;
+            }
+            case pato::run_mode_t::tts_search: {
+              pato::find_tts_motifs_result result = pato::find_tts_motifs(opts);
+              success =
+                  pato::handle_find_tts_motifs_result(result, std::cerr, opts);
+              break;
+            }
+            case pato::run_mode_t::tpx_search: {
+              pato::find_tpx_result result = pato::find_tpxes(opts);
+              success = pato::handle_find_tpx_result(result, std::cerr, opts);
+              break;
+            }
+            }
+            return success ? 0 : 1;
+          }},
+      result);
 }

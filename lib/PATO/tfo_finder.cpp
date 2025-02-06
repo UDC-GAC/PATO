@@ -249,3 +249,19 @@ pato::find_tfo_motifs(const pato::options_t &opts) {
 
   return pato::find_tfo_motifs_result::success;
 }
+
+bool pato::handle_find_tfo_motifs_result(pato::find_tfo_motifs_result result,
+                                         std::ostream &errs,
+                                         const pato::options_t &opts) {
+  switch (result) {
+  case pato::find_tfo_motifs_result::success:
+    return true;
+  case pato::find_tfo_motifs_result::cannot_open_tfo_file:
+    errs << "PATO: error opening input file '" << opts.tfo_file << "'\n";
+    break;
+  case pato::find_tfo_motifs_result::cannot_create_output_file:
+    errs << "PATO: error opening output file '" << opts.output_file << "'\n";
+    break;
+  }
+  return false;
+}

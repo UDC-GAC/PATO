@@ -34,6 +34,8 @@ enum class find_tts_motifs_result : unsigned {
 };
 
 find_tts_motifs_result find_tts_motifs(const options_t &opts);
+bool handle_find_tts_motifs_result(find_tts_motifs_result result,
+                                   std::ostream &errs, const options_t &opts);
 
 } // namespace pato
 
