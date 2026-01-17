@@ -90,17 +90,18 @@ pato::output_writer_t::create(const pato::options_t &opts) {
   return pato::output_writer_t{output_file, summary_file, opts};
 }
 
+static void close_file(std::FILE *f) {
+  if (!f) {
+    return;
+  }
+  std::fclose(f);
+}
+
 pato::output_writer_t::output_writer_t(std::FILE *output_file_,
                                        std::FILE *summary_file_,
                                        const options_t &opts_)
-    : output_file{output_file_,
-                  [this](std::FILE *f) -> void {
-                    if (opts.output_format != output_format_t::summary) {
-                      std::fclose(f);
-                    }
-                  }},
-      summary_file{summary_file_, [](std::FILE *f) -> void { std::fclose(f); }},
-      opts{opts_} {}
+    : output_file{output_file_, close_file},
+      summary_file{summary_file_, close_file}, opts{opts_} {}
 
 void pato::output_writer_t::print_motifs(const pato::motif_vector_t &motifs,
                                          const pato::name_vector_t &names) {
