@@ -29,14 +29,12 @@ endif()
 option(PATO_ENABLE_OPENMP "Enable OpenMP" ON)
 
 set(PATO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-set(PATO_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
-include_directories(${PATO_SOURCE_DIR}/include ${PATO_BINARY_DIR}/include)
+include_directories(${PATO_SOURCE_DIR}/include)
 
 include(CTest)
 enable_testing()
 
-add_subdirectory(include)
 add_subdirectory(lib)
 add_subdirectory(test)
 add_subdirectory(tools)

@@ -22,8 +22,9 @@
 
 #include <PATO/command_line_parser.h>
 
-#include <PATO/config.h>
 #include <seqan/arg_parse.h>
+
+#include "config.h"
 
 pato::parse_result_t pato::parse_command_line(int argc, char *argv[],
                                               std::ostream &outs,

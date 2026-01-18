@@ -10,6 +10,9 @@ add_library(libPATO
   tts_finder.cpp)
 set_target_properties(libPATO PROPERTIES PREFIX "")
 
+configure_file(config.h.in config.h)
+target_include_directories(libPATO PRIVATE ${CMAKE_CURRENT_BINARY_DIR})
+
 if (PATO_ENABLE_OPENMP)
   find_package(OpenMP REQUIRED COMPONENTS CXX)
   target_link_libraries(libPATO PRIVATE OpenMP::OpenMP_CXX)
