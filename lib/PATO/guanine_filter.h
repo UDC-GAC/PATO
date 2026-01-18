@@ -20,12 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#ifndef PATO_LIB_GUANINE_FILTER_H
+#define PATO_LIB_GUANINE_FILTER_H
+
 #include <PATO/options.h>
 
 #include "types.h"
-
-#ifndef PATO_LIB_GUANINE_FILTER_H
-#define PATO_LIB_GUANINE_FILTER_H
 
 namespace pato {
 
