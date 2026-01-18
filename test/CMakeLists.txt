@@ -1,3 +1,7 @@
+if(NOT BUILD_TESTING)
+  return()
+endif()
+
 set(TEST_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/test.bash)
 
 set(TFO_LENGTH_ARGS " ;-l 10 -L 14")

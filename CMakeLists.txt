@@ -33,7 +33,6 @@ set(PATO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 include_directories(${PATO_SOURCE_DIR}/include)
 
 include(CTest)
-enable_testing()
 
 add_subdirectory(lib)
 add_subdirectory(test)
