@@ -33,8 +33,12 @@ set(PATO_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
 
 include_directories(${PATO_SOURCE_DIR}/include ${PATO_BINARY_DIR}/include)
 
+include(CTest)
+enable_testing()
+
 add_subdirectory(include)
 add_subdirectory(lib)
+add_subdirectory(test)
 add_subdirectory(tools)
 
 include(GNUInstallDirs)
