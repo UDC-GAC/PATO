@@ -23,12 +23,11 @@
 #ifndef PATO_LIB_TYPES_H
 #define PATO_LIB_TYPES_H
 
-#include <seqan/graph_types.h>
-#include <seqan/index.h>
-
 #include <Triplexator/alphabet.h>
 #include <Triplexator/match.h>
 #include <Triplexator/pattern.h>
+#include <seqan/graph_types.h>
+#include <seqan/index.h>
 
 namespace pato {
 
