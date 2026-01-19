@@ -25,7 +25,7 @@ function(add_pato_tests MODE LABEL EXTRA_ARGS
 
               set_tests_properties(${test_name}
                 PROPERTIES
-                LABELS "${LABEL}")
+                LABELS "PATO;${LABEL}")
 
               math(EXPR counter "${counter} + 1")
             endforeach()
@@ -70,5 +70,5 @@ add_pato_tests(
   " ;-of 1")
 
 add_custom_target(check-PATO
-  COMMAND ${CMAKE_CTEST_COMMAND} --parallel 0
+  COMMAND ${CMAKE_CTEST_COMMAND} --parallel 0 -L PATO
   DEPENDS PATO)
