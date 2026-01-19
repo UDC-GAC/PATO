@@ -4,7 +4,6 @@ endif()
 
 function(add_pato_tests
   MODE
-  LABEL
   EXTRA_ARGS
   LENGTH_ARGS
   ERROR_ARGS
@@ -33,7 +32,7 @@ function(add_pato_tests
 
               set_tests_properties(${test_name}
                 PROPERTIES
-                  LABELS "PATO;${LABEL}")
+                  LABELS PATO)
 
               math(EXPR counter "${counter} + 1")
             endforeach()
@@ -46,7 +45,6 @@ endfunction()
 
 add_pato_tests(
   tfo
-  tfo
   ""
   " ;-l 10 -L 14"
   " ;-e 8 -E 10 -c 3 -g 50 -G 70"
@@ -57,7 +55,6 @@ add_pato_tests(
 
 add_pato_tests(
   tts
-  tts
   "-cs 6"
   " ;-l 10 -L 14"
   " ;-e 8 -E 10 -c 3 -g 50 -G 70"
@@ -67,7 +64,6 @@ add_pato_tests(
   " ;-po on")
 
 add_pato_tests(
-  tpx
   tpx
   "-cs 4"
   " ;-l 10 -L 14"
