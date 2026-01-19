@@ -2,8 +2,16 @@ if(NOT BUILD_TESTING)
   return()
 endif()
 
-function(add_pato_tests MODE LABEL EXTRA_ARGS
-         LENGTH_ARGS ERROR_ARGS MATCH_ARGS FILTER_ARGS MERGE_ARGS OUTPUT_ARGS)
+function(add_pato_tests
+  MODE
+  LABEL
+  EXTRA_ARGS
+  LENGTH_ARGS
+  ERROR_ARGS
+  MATCH_ARGS
+  FILTER_ARGS
+  MERGE_ARGS
+  OUTPUT_ARGS)
   set(counter 0)
   foreach(len ${LENGTH_ARGS})
     foreach(err ${ERROR_ARGS})
@@ -16,16 +24,16 @@ function(add_pato_tests MODE LABEL EXTRA_ARGS
               add_test(
                 NAME ${test_name}
                 COMMAND
-                ${CMAKE_CURRENT_SOURCE_DIR}/test.bash
-                $<TARGET_FILE:PATO>
-                ${MODE}
-                ${counter}
-                ${EXTRA_ARGS}
-                ${len} ${err} ${mat} ${fil} ${mer} ${out})
+                  ${CMAKE_CURRENT_SOURCE_DIR}/test.bash
+                  $<TARGET_FILE:PATO>
+                  ${MODE}
+                  ${counter}
+                  ${EXTRA_ARGS}
+                  ${len} ${err} ${mat} ${fil} ${mer} ${out})
 
               set_tests_properties(${test_name}
                 PROPERTIES
-                LABELS "PATO;${LABEL}")
+                  LABELS "PATO;${LABEL}")
 
               math(EXPR counter "${counter} + 1")
             endforeach()
