@@ -70,6 +70,6 @@ add_pato_tests(
   " ;-of 1")
 
 add_custom_target(check-PATO
-  COMMAND ${CMAKE_CTEST_COMMAND} --parallel 4 -L PATO
+  COMMAND ${CMAKE_CTEST_COMMAND} --parallel 4 --output-on-failure -L PATO
   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
   DEPENDS PATO)
