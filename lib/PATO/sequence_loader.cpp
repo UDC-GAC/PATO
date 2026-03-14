@@ -33,8 +33,7 @@ pato::sequence_loader_t::create(const std::string &file_name) {
 
 static void crop_sequence_name(seqan::CharString &name) {
   std::string tmp_name{name.data_begin, seqan::length(name)};
-  std::size_t num_chars =
-      std::min(tmp_name.find_first_of(' '), tmp_name.size());
+  std::size_t num_chars{std::min(tmp_name.find_first_of(' '), tmp_name.size())};
   name = tmp_name.substr(0, num_chars);
 }
 

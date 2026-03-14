@@ -77,9 +77,9 @@ motif_specific_constraint(double filter_rate, pato::orientation_t ornt,
 static void add_match(pato::motif_vector_t &motifs, pato::motif_t &motif,
                       unsigned start, unsigned end, unsigned errors,
                       [[maybe_unused]] const pato::tfo_t &tag) {
-  auto motif_length = seqan::length(motif);
-  auto st = seqan::isParallel(motif) ? start : motif_length - end;
-  auto nd = seqan::isParallel(motif) ? end : motif_length - start;
+  auto motif_length{seqan::length(motif)};
+  auto st{seqan::isParallel(motif) ? start : motif_length - end};
+  auto nd{seqan::isParallel(motif) ? end : motif_length - start};
 
   pato::motif_t tmp_motif{seqan::host(motif),
                           seqan::beginPosition(motif) + st,
@@ -114,9 +114,9 @@ static void add_match(pato::motif_vector_t &motifs, pato::motif_t &motif,
 static void add_match(pato::motif_vector_t &motifs, pato::motif_t &motif,
                       unsigned start, unsigned end, unsigned errors,
                       [[maybe_unused]] const pato::tts_t &tag) {
-  auto motif_length = seqan::length(motif);
-  auto st = seqan::getMotif(motif) == '+' ? start : motif_length - end;
-  auto nd = seqan::getMotif(motif) == '+' ? end : motif_length - start;
+  auto motif_length{seqan::length(motif)};
+  auto st{seqan::getMotif(motif) == '+' ? start : motif_length - end};
+  auto nd{seqan::getMotif(motif) == '+' ? end : motif_length - start};
 
   pato::motif_t tmp_motif{seqan::host(motif),
                           seqan::beginPosition(motif) + st,
@@ -145,8 +145,8 @@ static void encode_sequence(string_t &motif, char filter_char,
     encoded_seq[2].assign(seqan::length(motif), false);
   }
 
-  unsigned counter = 0;
-  unsigned run_counter = 0;
+  unsigned counter{0};
+  unsigned run_counter{0};
 
   for (auto m : motif) {
     if (m == filter_char) {
@@ -156,8 +156,8 @@ static void encode_sequence(string_t &motif, char filter_char,
       encoded_seq[2][counter] = true;
 
       if (counter - run_counter >= min_block_run) {
-        for (unsigned i = 0; i <= counter - min_block_run; ++i) {
-          for (unsigned j = std::max(i, run_counter) + min_block_run;
+        for (unsigned i{0}; i <= counter - min_block_run; ++i) {
+          for (unsigned j{std::max(i, run_counter) + min_block_run};
                j <= seqan::length(motif); ++j) {
             block_runs[i][j] = true;
           }
@@ -172,8 +172,8 @@ static void encode_sequence(string_t &motif, char filter_char,
   }
 
   if (counter - run_counter >= min_block_run) {
-    for (unsigned i = 0; i <= counter - min_block_run; ++i) {
-      for (unsigned j = std::max(i, run_counter) + min_block_run;
+    for (unsigned i{0}; i <= counter - min_block_run; ++i) {
+      for (unsigned j{std::max(i, run_counter) + min_block_run};
            j <= seqan::length(motif); ++j) {
         block_runs[i][j] = true;
       }
@@ -228,9 +228,9 @@ static void reduce_motif_vector(pato::motif_vector_t &output,
   prop_map.reserve(input.size());
   intervals.resize(input.size());
 
-  unsigned count = 0;
+  unsigned count{0};
   for (auto &motif : input) {
-    vertex_descriptor_t vtx = seqan::addVertex(parser);
+    vertex_descriptor_t vtx{seqan::addVertex(parser)};
 
     intervals[count].i1 =
         static_cast<interval_value_t>(seqan::beginPosition(motif));
@@ -247,7 +247,7 @@ static void reduce_motif_vector(pato::motif_vector_t &output,
   interval_tree_t tree(intervals);
   vertex_iterator_t vertex_it(parser);
   while (!seqan::atEnd(vertex_it)) {
-    auto &motif = prop_map.find(*vertex_it)->second;
+    auto &motif{prop_map.find(*vertex_it)->second};
 
     seqan::findIntervals(tree_results, tree, seqan::beginPosition(motif),
                          seqan::endPosition(motif));
@@ -263,20 +263,20 @@ static void reduce_motif_vector(pato::motif_vector_t &output,
   }
 
   component_t components;
-  graph_size_t num_components = seqan::connectedComponents(components, parser);
+  graph_size_t num_components{seqan::connectedComponents(components, parser)};
 
   comp_map_t comp_map;
   comp_map.reserve(num_components);
 
   seqan::goBegin(vertex_it);
   while (!seqan::atEnd(vertex_it)) {
-    auto result_ptr = comp_map.find(seqan::getProperty(components, *vertex_it));
+    auto result_ptr{comp_map.find(seqan::getProperty(components, *vertex_it))};
 
     if (result_ptr != comp_map.end()) {
-      auto &motif = result_ptr->second;
+      auto &motif{result_ptr->second};
       merge(motif, prop_map.find(*vertex_it)->second);
     } else {
-      auto &motif = prop_map.find(*vertex_it)->second;
+      auto &motif{prop_map.find(*vertex_it)->second};
       comp_map.insert(std::make_pair(seqan::getProperty(components, *vertex_it),
                                      std::move(motif)));
     }
@@ -295,27 +295,27 @@ unsigned pato::filter_guanine_error_rate(motif_t &motif,
                                          const tag_t &tag,
                                          const pato::options_t &opts) {
   pato::motif_vector_t tmp_set;
-  pato::motif_vector_t &motifs_ref = args.reduce_set ? tmp_set : args.motifs;
+  pato::motif_vector_t &motifs_ref{args.reduce_set ? tmp_set : args.motifs};
 
   // The following lines optimize memory usage and runtime performance in PATO
   // by reusing allocated memory. Since this function is called frequently
   // throughout the application, minimizing memory allocations and deallocations
   // is crucial. By reusing the capacity already allocated for storing the
   // encoded sequence, we reduce memory pressure and improve overall efficiency.
-  auto motif_length = seqan::length(motif);
+  auto motif_length{seqan::length(motif)};
   if (args.block_runs.empty() ||
       motif_length - opts.min_block_run + 1 > args.block_runs.size()) {
     args.block_runs.clear();
     args.block_runs.resize((motif_length - opts.min_block_run + 1) * 2,
                            pato::char_vector_t((motif_length + 1) * 2, false));
   } else {
-    for (unsigned i = 0; i < motif_length - opts.min_block_run + 1; i++) {
+    for (unsigned i{0}; i < motif_length - opts.min_block_run + 1; i++) {
       args.block_runs[i].assign(motif_length + 1, false);
     }
   }
 
-  char filter_char = args.filter_char;
-  char interrupt_char = args.interrupt_char;
+  char filter_char{args.filter_char};
+  char interrupt_char{args.interrupt_char};
   if (opts.min_guanine_rate <= 0.0) {
     pato::filter_t filtered_sequence{motif};
     filter_char = filter_char == 'G' ? 'R' : 'Y';
@@ -326,31 +326,31 @@ unsigned pato::filter_guanine_error_rate(motif_t &motif,
                     args.encoded_seq, opts.min_block_run);
   }
 
-  double max_error = std::floor(motif_length * opts.error_rate);
-  double max_tolerated =
-      std::floor(motif_length * (1.0 - opts.min_guanine_rate));
+  double max_error{std::floor(motif_length * opts.error_rate)};
+  double max_tolerated{
+      std::floor(motif_length * (1.0 - opts.min_guanine_rate))};
   if (opts.maximal_error >= 0) {
     max_error = std::min(max_error, static_cast<double>(opts.maximal_error));
   }
 
-  unsigned filter_chars = 0;
-  unsigned interrupt_chars = 0;
-  unsigned non_filter_chars = 0;
+  unsigned filter_chars{0};
+  unsigned interrupt_chars{0};
+  unsigned non_filter_chars{0};
 
-  unsigned max_length = motif_length;
+  auto max_length{static_cast<unsigned>(motif_length)};
   if (opts.max_length >= opts.min_length) {
     max_length = static_cast<unsigned>(opts.max_length);
   }
 
-  unsigned tmp_start = 0;
-  unsigned tmp_end = 0;
-  unsigned tmp_errors = 0;
-  unsigned covered_end = 0;
+  unsigned tmp_start{0};
+  unsigned tmp_end{0};
+  unsigned tmp_errors{0};
+  unsigned covered_end{0};
 
-  unsigned left = 0;
-  unsigned right = 0;
+  unsigned left{0};
+  unsigned right{0};
 
-  unsigned matches = 0;
+  unsigned matches{0};
   while (args.block_runs[left][motif_length] &&
          left + opts.min_length <= motif_length) {
     while (static_cast<int>(right - left) < opts.min_length &&
@@ -386,14 +386,14 @@ unsigned pato::filter_guanine_error_rate(motif_t &motif,
       break;
     }
 
-    bool is_match = false;
+    bool is_match{false};
 
     while (interrupt_chars <= max_error && non_filter_chars <= max_tolerated &&
            right - left <= max_length) {
-      double filter_chars_rate =
-          static_cast<double>(filter_chars) / (right - left);
-      double interrupt_chars_rate =
-          static_cast<double>(interrupt_chars) / (right - left);
+      auto filter_chars_rate{static_cast<double>(filter_chars) /
+                             (right - left)};
+      auto interrupt_chars_rate{static_cast<double>(interrupt_chars) /
+                                (right - left)};
 
       if (args.block_runs[left][right] &&
           !is_interrupt_char(args.encoded_seq, right - 1) &&

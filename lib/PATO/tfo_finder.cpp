@@ -85,9 +85,9 @@ static void make_tfo_parsers(tfo_finder_args_t &args, unsigned max_interrupts) {
 static void find_tfo_motifs(pato::triplex_t &sequence, unsigned id,
                             tfo_finder_args_t &args,
                             const pato::options_t &opts) {
-  unsigned matches_y = 0;
-  unsigned matches_r = 0;
-  unsigned matches_m = 0;
+  unsigned matches_y{0};
+  unsigned matches_r{0};
+  unsigned matches_m{0};
 
   // TC motif
   if (opts.tc_motif) {
@@ -221,12 +221,12 @@ void pato::find_tfo_motifs(pato::motif_vector_t &motifs,
 
 pato::find_tfo_motifs_result
 pato::find_tfo_motifs(const pato::options_t &opts) {
-  auto sequence_loader = pato::sequence_loader_t::create(opts.tfo_file);
+  auto sequence_loader{pato::sequence_loader_t::create(opts.tfo_file)};
   if (!sequence_loader) {
     return pato::find_tfo_motifs_result::cannot_open_tfo_file;
   }
 
-  auto output_writer = pato::output_writer_t::create(opts);
+  auto output_writer{pato::output_writer_t::create(opts)};
   if (!output_writer) {
     return pato::find_tfo_motifs_result::cannot_create_output_file;
   }

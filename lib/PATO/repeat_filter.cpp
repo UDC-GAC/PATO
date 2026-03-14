@@ -27,7 +27,7 @@ void pato::filter_repeats(pato::repeat_vector_t &repeats,
                           unsigned max_repeat_period) {
   seqan::findRepeats(repeats, sequence, min_repeat_length, max_repeat_period);
   for (auto &repeat : repeats) {
-    for (unsigned i = repeat.beginPosition; i < repeat.endPosition; ++i) {
+    for (unsigned i{repeat.beginPosition}; i < repeat.endPosition; ++i) {
       sequence[i] = 'N';
     }
   }

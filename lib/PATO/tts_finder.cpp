@@ -86,8 +86,8 @@ static void make_tts_parsers(tts_finder_args_t &args, unsigned max_interrupts) {
 static void find_tts_motifs(pato::triplex_t &sequence, unsigned id,
                             tts_finder_args_t &args,
                             const pato::options_t &opts) {
-  unsigned matches_plus = 0;
-  unsigned matches_minus = 0;
+  unsigned matches_plus{0};
+  unsigned matches_minus{0};
 
   // + motif
   pato::parse_segments(args.plus_parser, args.segments, sequence,
@@ -178,12 +178,12 @@ void pato::find_tts_motifs(pato::motif_vector_t &motifs,
 
 pato::find_tts_motifs_result
 pato::find_tts_motifs(const pato::options_t &opts) {
-  auto sequence_loader = pato::sequence_loader_t::create(opts.tts_file);
+  auto sequence_loader{pato::sequence_loader_t::create(opts.tts_file)};
   if (!sequence_loader) {
     return pato::find_tts_motifs_result::cannot_open_tts_file;
   }
 
-  auto output_writer = pato::output_writer_t::create(opts);
+  auto output_writer{pato::output_writer_t::create(opts)};
   if (!output_writer) {
     return pato::find_tts_motifs_result::cannot_create_output_file;
   }

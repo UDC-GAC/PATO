@@ -78,8 +78,8 @@ struct tpx_finder_args_t {
 
 static void make_triplex_parser(tpx_finder_args_t &args,
                                 unsigned max_interrupts) {
-  pato::triplex_t valid_chars = "GAR";
-  pato::triplex_t invalid_chars = "TCYN";
+  pato::triplex_t valid_chars{"GAR"};
+  pato::triplex_t invalid_chars{"TCYN"};
   pato::make_parser(args.tpx_parser, valid_chars, invalid_chars,
                     max_interrupts);
 }
@@ -90,7 +90,7 @@ static unsigned find_tpx_motifs(pato::triplex_t &sequence, unsigned id,
   pato::parse_segments(tpx_args.tpx_parser, tpx_args.segments, sequence,
                        opts.max_interruptions, opts.min_length);
 
-  unsigned matches = 0;
+  unsigned matches{0};
   for (auto &segment : tpx_args.segments) {
     pato::motif_t motif{segment, true, id, false, '+'};
     matches += filter_guanine_error_rate(motif, tpx_args.filter_args,
@@ -105,26 +105,26 @@ static void search_triplex(pato::motif_t &tfo_motif, unsigned tfo_id,
                            pato::motif_t &tts_motif, unsigned tts_id,
                            tpx_finder_args_t &tpx_args,
                            const pato::options_t &opts) {
-  auto tfo_candidate = seqan::ttsString(tfo_motif);
-  auto tts_candidate = seqan::ttsString(tts_motif);
+  auto tfo_candidate{seqan::ttsString(tfo_motif)};
+  auto tts_candidate{seqan::ttsString(tts_motif)};
 
-  int tfo_length = seqan::length(tfo_candidate);
-  int tts_length = seqan::length(tts_candidate);
+  auto tfo_length{static_cast<int>(seqan::length(tfo_candidate))};
+  auto tts_length{static_cast<int>(seqan::length(tts_candidate))};
 
-  for (int diag = -(tts_length - opts.min_length);
+  for (int diag{-(tts_length - opts.min_length)};
        diag <= tfo_length - opts.min_length; ++diag) {
-    int tfo_offset = 0;
-    int tts_offset = 0;
+    int tfo_offset{0};
+    int tts_offset{0};
     if (diag < 0) {
       tts_offset = -diag;
     } else {
       tfo_offset = diag;
     }
-    int match_length =
-        std::min(tts_length - tts_offset, tfo_length - tfo_offset);
+    int match_length{
+        std::min(tts_length - tts_offset, tfo_length - tfo_offset)};
 
-    int match_score = 0;
-    for (int i = 0; i < match_length; ++i) {
+    int match_score{0};
+    for (int i{0}; i < match_length; ++i) {
       if (tfo_candidate[tfo_offset + i] == tts_candidate[tts_offset + i]) {
         ++match_score;
       }
@@ -136,14 +136,14 @@ static void search_triplex(pato::motif_t &tfo_motif, unsigned tfo_id,
     pato::triplex_t tmp_tts{
         seqan::infix(tts_candidate, tts_offset, tts_offset + match_length)};
 
-    for (int i = 0; i < match_length; ++i) {
+    for (int i{0}; i < match_length; ++i) {
       if (tmp_tts[i] != tfo_candidate[tfo_offset + i]) {
         tmp_tts[i] = 'N';
       }
     }
 
-    unsigned total = find_tpx_motifs(tmp_tts, seqan::getSequenceNo(tts_motif),
-                                     tpx_args, opts);
+    unsigned total{find_tpx_motifs(tmp_tts, seqan::getSequenceNo(tts_motif),
+                                   tpx_args, opts)};
     if (total == 0) {
       tpx_args.tpx_motifs.clear();
       continue;
@@ -153,8 +153,8 @@ static void search_triplex(pato::motif_t &tfo_motif, unsigned tfo_id,
     std::size_t tfo_start, tfo_end;
     std::size_t tts_start, tts_end;
     for (auto &triplex : tpx_args.tpx_motifs) {
-      unsigned score = 0;
-      unsigned guanines = 0;
+      unsigned score{0};
+      unsigned guanines{0};
 
       for (unsigned i = seqan::beginPosition(triplex);
            i < seqan::endPosition(triplex); ++i) {
@@ -204,9 +204,9 @@ static void search_triplex(pato::motif_t &tfo_motif, unsigned tfo_id,
     }
     tpx_args.tpx_motifs.clear();
 
-    auto key = std::make_pair(seqan::getSequenceNo(tfo_motif),
-                              seqan::getSequenceNo(tts_motif));
-    auto result_ptr = tpx_args.potentials.find(key);
+    auto key{std::make_pair(seqan::getSequenceNo(tfo_motif),
+                            seqan::getSequenceNo(tts_motif))};
+    auto result_ptr{tpx_args.potentials.find(key)};
     if (result_ptr != tpx_args.potentials.end()) {
       seqan::addCount(result_ptr->second, total, seqan::getMotif(tfo_motif));
     } else {
@@ -246,10 +246,10 @@ static void match_tfo_tts_motifs(
 
     make_triplex_parser(tpx_args, opts.max_interruptions);
 
-    auto tfo_size = static_cast<uint64_t>(tfo_motifs.size());
-    auto tts_size = static_cast<uint64_t>(tts_motifs.size());
+    auto tfo_size{static_cast<uint64_t>(tfo_motifs.size())};
+    auto tts_size{static_cast<uint64_t>(tts_motifs.size())};
 #if defined(_OPENMP)
-    uint64_t chunk_size = std::min(tfo_size, tts_size);
+    uint64_t chunk_size{std::min(tfo_size, tts_size)};
 #endif
 
 #pragma omp for schedule(dynamic, chunk_size) collapse(2) nowait
@@ -263,7 +263,7 @@ static void match_tfo_tts_motifs(
 #pragma omp critical(potential_lock)
     {
       for (auto &potential_entry : tpx_args.potentials) {
-        auto result_ptr = potentials.find(potential_entry.first);
+        auto result_ptr{potentials.find(potential_entry.first)};
         if (result_ptr == potentials.end()) {
           potentials.insert(std::move(potential_entry));
         } else {
@@ -276,16 +276,16 @@ static void match_tfo_tts_motifs(
 }
 
 pato::find_tpx_result pato::find_tpxes(const pato::options_t &opts) {
-  auto tfo_sequence_loader = pato::sequence_loader_t::create(opts.tfo_file);
+  auto tfo_sequence_loader{pato::sequence_loader_t::create(opts.tfo_file)};
   if (!tfo_sequence_loader) {
     return pato::find_tpx_result::cannot_open_tfo_file;
   }
-  auto tts_sequence_loader = pato::sequence_loader_t::create(opts.tts_file);
+  auto tts_sequence_loader{pato::sequence_loader_t::create(opts.tts_file)};
   if (!tts_sequence_loader) {
     return pato::find_tpx_result::cannot_open_tts_file;
   }
 
-  auto output_writer = output_writer_t::create(opts);
+  auto output_writer{output_writer_t::create(opts)};
   if (!output_writer) {
     return pato::find_tpx_result::cannot_create_output_file;
   }

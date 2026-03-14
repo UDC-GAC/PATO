@@ -25,18 +25,18 @@
 void pato::make_parser(pato::graph_t &parser, pato::triplex_t &valid_chars,
                        pato::triplex_t &invalid_chars,
                        unsigned max_interrupts) {
-  pato::vertex_descriptor_t root = seqan::addVertex(parser);
+  pato::vertex_descriptor_t root{seqan::addVertex(parser)};
   seqan::assignRoot(parser, root);
 
-  pato::vertex_descriptor_t valid_child = seqan::addVertex(parser);
+  pato::vertex_descriptor_t valid_child{seqan::addVertex(parser)};
   for (auto valid_char : valid_chars) {
     seqan::addEdge(parser, root, valid_child, valid_char);
     seqan::addEdge(parser, valid_child, valid_child, valid_char);
   }
 
-  pato::vertex_descriptor_t last_child = valid_child;
-  for (unsigned i = 0; i < max_interrupts; ++i) {
-    pato::vertex_descriptor_t invalid_child = seqan::addVertex(parser);
+  pato::vertex_descriptor_t last_child{valid_child};
+  for (unsigned i{0}; i < max_interrupts; ++i) {
+    pato::vertex_descriptor_t invalid_child{seqan::addVertex(parser)};
 
     for (auto invalid_char : invalid_chars) {
       seqan::addEdge(parser, last_child, invalid_child, invalid_char);
@@ -55,19 +55,18 @@ void pato::parse_segments(pato::graph_t &parser,
                           int min_length) {
   using iterator_t = seqan::Iterator<pato::triplex_t>::Type;
 
-  iterator_t it = seqan::begin(sequence);
-  iterator_t run_it = seqan::begin(sequence);
-  iterator_t end_it = seqan::end(sequence);
+  iterator_t it{seqan::begin(sequence)};
+  iterator_t run_it{seqan::begin(sequence)};
+  iterator_t end_it{seqan::end(sequence)};
 
-  pato::vertex_descriptor_t root = seqan::getRoot(parser);
+  pato::vertex_descriptor_t root{seqan::getRoot(parser)};
   seqan::parseString(parser, root, run_it, end_it);
 
   while (run_it != end_it) {
-    unsigned shift =
-        std::min(max_interrupts, static_cast<unsigned>(run_it - it));
+    auto shift{std::min(max_interrupts, static_cast<unsigned>(run_it - it))};
     run_it -= shift;
 
-    unsigned size = std::max(run_it - run_it, run_it - it);
+    auto size{static_cast<unsigned>(std::max(run_it - run_it, run_it - it))};
     if (static_cast<int>(size) >= min_length) {
       segments.push_back(seqan::infix(sequence, it, run_it));
     }
@@ -80,7 +79,7 @@ void pato::parse_segments(pato::graph_t &parser,
     }
   }
 
-  unsigned size = std::max(end_it - end_it, end_it - it);
+  auto size{static_cast<unsigned>(std::max(end_it - end_it, end_it - it))};
   if (static_cast<int>(size) >= min_length) {
     segments.push_back(seqan::infix(sequence, it, end_it));
   }

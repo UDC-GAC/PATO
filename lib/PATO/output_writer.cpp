@@ -109,8 +109,8 @@ void pato::output_writer_t::print_motifs(const pato::motif_vector_t &motifs,
     return;
   }
 
-  unsigned counter = 1;
-  unsigned last_sequence_id = seqan::getSequenceNo(motifs[0]);
+  unsigned counter{1};
+  unsigned last_sequence_id{seqan::getSequenceNo(motifs[0])};
 
   for (const auto &m : motifs) {
     if (opts.output_format == output_format_t::bed) {
@@ -165,8 +165,8 @@ triplex_alignment_string(const pato::match_t &match,
                           false,
                           match.strand};
 
-  seqan::CharString tfo_ps = seqan::prettyString(tfo_motif);
-  seqan::CharString tts_ps = seqan::prettyString(tts_motif);
+  seqan::CharString tfo_ps{seqan::prettyString(tfo_motif)};
+  seqan::CharString tts_ps{seqan::prettyString(tts_motif)};
 
   seqan::CharString opp{tts_ps};
   seqan::complement(opp);
@@ -179,10 +179,10 @@ triplex_alignment_string(const pato::match_t &match,
     alignment << "TTS: 3'- " << tts_ps << " -5'\n";
     alignment << "         ";
 
-    auto tts_it = seqan::begin(tts_motif);
-    auto tts_end = seqan::end(tts_motif);
-    auto tfo_it = seqan::begin(tfo_motif);
-    auto tfo_end = seqan::end(tfo_motif);
+    auto tts_it{seqan::begin(tts_motif)};
+    auto tts_end{seqan::end(tts_motif)};
+    auto tfo_it{seqan::begin(tfo_motif)};
+    auto tfo_end{seqan::end(tfo_motif)};
     while (tts_end != tts_it && tfo_end != tfo_it) {
       --tts_end;
       --tfo_end;
@@ -209,10 +209,10 @@ triplex_alignment_string(const pato::match_t &match,
     }
     alignment << "         ";
 
-    auto tts_it = seqan::begin(tts_motif);
-    auto tts_end = seqan::end(tts_motif);
-    auto tfo_it = seqan::begin(tfo_motif);
-    auto tfo_end = seqan::end(tfo_motif);
+    auto tts_it{seqan::begin(tts_motif)};
+    auto tts_end{seqan::end(tts_motif)};
+    auto tfo_it{seqan::begin(tfo_motif)};
+    auto tfo_end{seqan::end(tfo_motif)};
     while (tts_it != tts_end && tfo_it != tfo_end) {
       if (*tts_it == *tfo_it) {
         alignment << "|";
@@ -251,8 +251,8 @@ static seqan::CharString triplex_error_string(
                           false,
                           match.strand};
 
-  seqan::CharString tfo_ps = seqan::prettyString(tfo_motif);
-  seqan::CharString tts_ps = seqan::prettyString(tts_motif);
+  seqan::CharString tfo_ps{seqan::prettyString(tfo_motif)};
+  seqan::CharString tts_ps{seqan::prettyString(tts_motif)};
 
   if (opts.error_reference == pato::error_reference_t::purine_strand) {
     if (!tfo_motifs[match.tfoNo].parallel) {
@@ -275,11 +275,11 @@ static seqan::CharString triplex_error_string(
     }
   }
 
-  auto tts_it = seqan::begin(tts_motif);
-  auto tts_end = seqan::end(tts_motif);
-  auto tfo_it = seqan::begin(tfo_motif);
-  auto tfo_end = seqan::end(tfo_motif);
-  unsigned i = 0;
+  auto tts_it{seqan::begin(tts_motif)};
+  auto tts_end{seqan::end(tts_motif)};
+  auto tfo_it{seqan::begin(tfo_motif)};
+  auto tfo_end{seqan::end(tfo_motif)};
+  unsigned i{0};
 
   if (opts.error_reference == pato::error_reference_t::purine_strand ||
       (opts.error_reference == pato::error_reference_t::watson_strand &&
@@ -372,8 +372,8 @@ void pato::output_writer_t::print_triplexes(
   for (const auto &local_matches : matches) {
     for (const auto &match : local_matches) {
 #endif
-    auto tfo_seq_id = tfo_motifs[match.tfoNo].seqNo;
-    auto tts_seq_id = match.ttsSeqNo;
+    auto tfo_seq_id{tfo_motifs[match.tfoNo].seqNo};
+    auto tts_seq_id{match.ttsSeqNo};
 
     std::fprintf(
         output_file.get(),
@@ -403,7 +403,7 @@ void pato::output_writer_t::print_triplex_summary(
     const pato::name_vector_t &tfo_names,
     const pato::name_vector_t &tts_names) {
   for (const auto &potential_entry : potentials) {
-    const auto &potential = potential_entry.second;
+    const auto &potential{potential_entry.second};
     if (seqan::hasCount(potential)) {
       std::fprintf(summary_file.get(),
                    "%s\t%s\t%u\t%.3g\t%u\t%.3g\t%u\t%.3g\t%u\t%.3g\t\n",

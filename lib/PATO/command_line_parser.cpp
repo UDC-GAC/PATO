@@ -205,8 +205,8 @@ pato::parse_result_t pato::parse_command_line(int argc, char *argv[],
   // performance options
   seqan::setDefaultValue(parser, "cs", 128);
 
-  seqan::ArgumentParser::ParseResult result =
-      seqan::parse(parser, argc, argv, outs, errs);
+  seqan::ArgumentParser::ParseResult result{
+      seqan::parse(parser, argc, argv, outs, errs)};
   switch (result) {
   case seqan::ArgumentParser::PARSE_OK:
     break;
@@ -351,8 +351,8 @@ pato::parse_result_t pato::parse_command_line(int argc, char *argv[],
     return 1;
   }
 
-  unsigned tolerated_error =
-      static_cast<unsigned>(std::floor(opts.error_rate * opts.min_length));
+  auto tolerated_error{
+      static_cast<unsigned>(std::floor(opts.error_rate * opts.min_length))};
   if (opts.min_block_run > opts.min_length - 2 * tolerated_error) {
     errs << "PATO: block match too large given minimum length constraint "
             "and error rate\n";
